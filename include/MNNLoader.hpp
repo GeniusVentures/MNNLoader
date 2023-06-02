@@ -11,7 +11,7 @@ namespace sgns
 {
 
   /*
-   * This is class parsing all information of MNN model file.
+   * This class is for parsing the information of a MNN model file.
    * If you want to use this class, we can inheritance from this class
    * and implement logic base on model info
    */

@@ -2,7 +2,7 @@
 #define INCLUDE_MNNCOMMON_HPP_
 
 /**
- * Contain all common header include for MNN using
+ * Contains all the common header includes for MNN to use.
  */
 
 #include <MNN/MNNDefine.h>

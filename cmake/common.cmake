@@ -13,7 +13,7 @@ function(add_mnnloader_library version soversion)
    list(APPEND MNNLOADER_TARGETS mnnloader)
 
    ## 3. library
-   # TODO: Add flag for build SHARED or STATIC library. Currently just default is static (GNS was not use shared library)
+   # TODO: Add flag for build SHARED or STATIC library. Currently just default is static (GNUS is not using shared libraries)
    add_library(${MNNLoader_LIB} ${MNNLOADER_SRCS})
    target_link_libraries(${MNNLoader_LIB} ${MNN_LIBS})
 
