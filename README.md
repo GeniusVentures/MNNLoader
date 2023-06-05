@@ -14,8 +14,7 @@ The first design is just support a MNN format. </br>
 
 ## Build with Linux
 ```sh
-$ mkdir .build
-$ cd .build
+$ cd build
 $ cmake ..
 -- C flags: 
 -- CXX flags: 
