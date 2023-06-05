@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 
-project(MNNLoader C CXX)
+project(FileLoader C CXX)
 
 # Print debug current flag
 message(STATUS "C flags: ${CMAKE_C_FLAGS}")
@@ -20,27 +20,27 @@ endif ()
 
 # ---------------------------
 # Set default variable
-# MNNLoader define version
+# FileLoader define version
 set(VERSION_STRING 0.0.1)
 set(SOVERSION_STRING 0.0.1)
 
 # root dir
-set(MNNLOADER_ROOT_DIR ${CMAKE_SOURCE_DIR})
+set(FILELOADER_ROOT_DIR ${CMAKE_SOURCE_DIR})
 # set default build dir
 
-if (NOT DEFINED BUILD_MNNLOADER_DIR)
-    set(BUILD_MNNLOADER_DIR ${MNNLOADER_ROOT_DIR}/.build/MNNLoader)
+if (NOT DEFINED BUILD_FILELOADER_DIR)
+    set(BUILD_FILELOADER_DIR ${FILELOADER_ROOT_DIR}/.build/FILELOADER)
 endif ()
-message(STATUS "BUILD_MNNLOADER_DIR: ${BUILD_MNNLOADER_DIR}")
+message(STATUS "BUILD_FILELOADER_DIR: ${BUILD_FILELOADER_DIR}")
 # Set source file dir
 set(PROJECT.Path ${CMAKE_SOURCE_DIR}/src)
 set(PROJECT.Source_DIR
     ${PROJECT.Path}
 )
 
-set(MNNLoader_LIB "mnnloader")
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_MNNLOADER_DIR}/lib" )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_MNNLOADER_DIR}/lib" )
+set(FileLoader_LIB "fileloader")
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_FILELOADER_DIR}/lib" )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_FILELOADER_DIR}/lib" )
 
 SET(TESTAPP MNNExample )
 
@@ -93,16 +93,16 @@ file(GLOB PROJECT_LIB_LIST "${MNN_LIBRARY_DIR}/*")
 
 # ------------------------------------------
 # Build Binary
-add_mnnloader_library(${VERSION_STRING} ${SOVERSION_STRING})
+add_fileloader_library(${VERSION_STRING} ${SOVERSION_STRING})
 if (NEED_BUILD_MNN)
 	# in case we need to build MNN library. Just waiting
-	add_dependencies(${MNNLoader_LIB} MNN)
+	add_dependencies(${FileLoader_LIB} MNN)
 endif()
 # -------------------------------------------
 # Combine binary for execute example
 
-link_directories(${BUILD_MNNLOADER_DIR}/lib)
-add_mnnloader_executable("${TESTAPP}")
+link_directories(${BUILD_FILELOADER_DIR}/lib)
+add_fileloader_executable("${TESTAPP}")
 
 # install example binary to bin
-install(TARGETS ${TESTAPP} DESTINATION "${BUILD_MNNLOADER_DIR}/bin")
+install(TARGETS ${TESTAPP} DESTINATION "${BUILD_FILELOADER_DIR}/bin")
