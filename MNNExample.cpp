@@ -1,11 +1,13 @@
 #include <iostream>
 #include <string>
-#include "MNNLoader.hpp"
+//#include "MNNLoader.hpp"
+#include "FileLoaderManager.hpp"
 
 /**
  * This program is example to loading MNN model file
  */
-#define FILE_PATH_NAME "./test/example.mnn"
+#define IPFS_FILE_PATH_NAME "ipfs://example.mnn"
+#define FILE_PATH_NAME "file://./test/example.mnn"
 
 int main(int argc, char **argv)
 {
@@ -17,6 +19,11 @@ int main(int argc, char **argv)
   else {
     file_name = std::string(argv[1]);
   }
+
+  std::cout << (char *)(FileLoaderManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME)) << std::endl;
+  std::cout << (char *)(FileLoaderManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME, true)) << std::endl;
+
+#if 0
   sgns::MNNLoader *loader = new sgns::MNNLoader(file_name);
   if (loader == nullptr)
   {
@@ -25,6 +32,7 @@ int main(int argc, char **argv)
   }
   std::string info = loader->get_info();
   std::cout << info << std::endl;
+#endif
   return 0;
 }
 

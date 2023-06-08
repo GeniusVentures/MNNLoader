@@ -8,13 +8,14 @@ function(add_fileloader_library version soversion)
    set(FILELOADER_OBJECT_LINK "")
    set(FILELOADER_TARGETS "")
 
-   FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
-   list(APPEND FILELOADER_OBJECT_LINK ${FILELOADER_OBJECT_LINK} ${MNN_LIBS} ${FILELOADER_SRCS})
+   #FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
+   #list(APPEND FILELOADER_OBJECT_LINK ${FILELOADER_OBJECT_LINK} ${MNN_LIBS} ${FILELOADER_SRCS})
+   list(APPEND FILELOADER_OBJECT_LINK ${FILELOADER_OBJECT_LINK} ${FILELOADER_SRCS})
    list(APPEND FILELOADER_TARGETS ${FileLoader_LIB})
 
    ## 3. library
    # TODO: Add flag for build SHARED or STATIC library. Currently just default is static (GNUS is not using shared libraries)
-   add_library(${FileLoader_LIB} ${FILELOADER_SRCS})
+   add_library(${FileLoader_LIB} OBJECT ${FILELOADER_SRCS})
    target_link_libraries(${FileLoader_LIB} ${MNN_LIBS})
 
    message(STATUS "Installing FileLoader Headers ...")

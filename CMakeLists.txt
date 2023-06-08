@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(FileLoader C CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Print debug current flag
 message(STATUS "C flags: ${CMAKE_C_FLAGS}")
 message(STATUS "CXX flags: ${CMAKE_CXX_FLAGS}")
@@ -52,7 +56,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include
 )
 
-
+set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
 # ----------------------BUILD EXTERNAL PROJECT------------------
 # Builds MNN
 message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")

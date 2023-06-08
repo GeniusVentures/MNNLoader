@@ -1,6 +1,7 @@
 #include <sstream>
 #include "MNNLoader.hpp"
 
+#if 0
 namespace sgns
 {
 
@@ -128,3 +129,4 @@ namespace sgns
     } // End print_info()
 } // End sgns namespace
 
+#endif
