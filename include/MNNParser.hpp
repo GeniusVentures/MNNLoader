@@ -5,12 +5,9 @@
 #include "FileParser.hpp"
 
 class MNNParser : public FileParser {
-private:
-    static MNNParser *instance;
-    MNNParser() {}
+    SINGLETON_PTR(MNNParser);
 public:
-    static MNNParser *GetInstance();
-    virtual void *ParseData(void *data) override;
+    virtual shared_ptr<void> ParseData(shared_ptr<void> data) override;
 };
 
 #endif  // MNNPARSER_HPP

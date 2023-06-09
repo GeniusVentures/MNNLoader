@@ -1,17 +1,15 @@
 // FileParsers.hpp
 
-#ifndef FILEPARSERS_HPP
-#define FILEPARSERS_HPP
+#ifndef FILEPARSER_HPP
+#define FILEPARSER_HPP
 
 #include <string>
-
-using namespace std;
+#include <memory>
 
 class FileParser {
 public:
     virtual ~FileParser() {}
-
-    virtual void *ParseData(void *data) = 0;
+    virtual std::shared_ptr<void> ParseData(std::shared_ptr<void> data) = 0;
 };
 
 #endif

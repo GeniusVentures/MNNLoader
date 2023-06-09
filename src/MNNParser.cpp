@@ -1,20 +1,20 @@
 // MNNParser.cpp
 
-#include "FileLoaderManager.hpp"
+#include <iostream>
+#include "FileManager.hpp"
 #include "MNNParser.hpp"
 
-MNNParser *MNNParser::instance = MNNParser::GetInstance();
+SINGLETON_PTR_INIT(MNNParser);
 
-MNNParser *MNNParser::GetInstance() {
-    if (instance == nullptr) {
-        instance = new MNNParser();
-        FileLoaderManager::GetInstance().RegisterParser(".mnn", instance);
-    }
-    return instance;
+MNNParser::MNNParser() {
+    FileManager::GetInstance().RegisterParser(".mnn", this);
 }
 
-void *MNNParser::ParseData(void *data) {
-    static char *dummyValue = "Inside the MNNParser::ParseData Function";
-    return dummyValue;
+std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data) {
+    const char *dummyValue = "Inside the MNNParser::ParseData Function";
+    std::cout << (char *)data.get() << " -> ";
+    // for this test, we don't need to delete the shared_ptr as the data is static, so pass null lambda delete function
+    return {(void *)dummyValue, [](void *) {}};
+
     // TODO: Implement the logic to parse the file data.
 }

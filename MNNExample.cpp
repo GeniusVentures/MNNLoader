@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 //#include "MNNLoader.hpp"
-#include "FileLoaderManager.hpp"
+#include "FileManager.hpp"
 
 /**
  * This program is example to loading MNN model file
@@ -20,8 +20,14 @@ int main(int argc, char **argv)
     file_name = std::string(argv[1]);
   }
 
-  std::cout << (char *)(FileLoaderManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME)) << std::endl;
-  std::cout << (char *)(FileLoaderManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME, true)) << std::endl;
+  std::cout << "LoadFile: " << (char *)(FileManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME).get()) << std::endl;
+  std::cout << "LoadFile Parse: " << (char *)(FileManager::GetInstance().LoadFile(IPFS_FILE_PATH_NAME, true).get()) << std::endl;
+  std::cout << "ParseFile: ";
+  FileManager::GetInstance().ParseData(".mnn", { (void *)"Just something for me to parse, YAY!", [](void *) {} });
+  std::cout << std::endl;
+  std::cout << "SaveFile: ";
+  FileManager::GetInstance().SaveFile(IPFS_FILE_PATH_NAME, { (void *)"Saving File...", [](void *) {} });
+  std::cout << std::endl;
 
 #if 0
   sgns::MNNLoader *loader = new sgns::MNNLoader(file_name);

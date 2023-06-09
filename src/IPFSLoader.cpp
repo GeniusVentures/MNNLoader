@@ -1,20 +1,17 @@
 // IPFSLoader.cpp
 
-#include "FileLoaderManager.hpp"
+#include "FileManager.hpp"
 #include "IPFSLoader.hpp"
 
-IPFSLoader *IPFSLoader::instance = IPFSLoader::GetInstance();
+SINGLETON_PTR_INIT(IPFSLoader);
 
-IPFSLoader *IPFSLoader::GetInstance() {
-    if (instance == nullptr) {
-        instance = new IPFSLoader();
-        FileLoaderManager::GetInstance().RegisterLoader("ipfs:", instance);
-    }
-    return instance;
+IPFSLoader::IPFSLoader() {
+    FileManager::GetInstance().RegisterLoader("ipfs:", this);
 }
 
-void *IPFSLoader::LoadFile(string filename) {
-    static char *dummyValue = "Inside the IPFSLoader::LoadFile Function";
-    return dummyValue;
+std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {
+    const char *dummyValue = "Inside the IPFSLoader::LoadFile Function";
+    // for this test, we don't need to delete the shared_ptr as the data is static, so pass null lambda delete function
+    return {(void *)dummyValue, [](void *) {} };
 }
 
