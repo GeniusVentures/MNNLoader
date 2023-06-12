@@ -6,7 +6,7 @@
 SINGLETON_PTR_INIT(IPFSLoader);
 
 IPFSLoader::IPFSLoader() {
-    FileManager::GetInstance().RegisterLoader("ipfs:", this);
+    FileManager::GetInstance().RegisterLoader("ipfs", this);
 }
 
 std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {

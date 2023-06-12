@@ -7,7 +7,7 @@
 SINGLETON_PTR_INIT(MNNParser);
 
 MNNParser::MNNParser() {
-    FileManager::GetInstance().RegisterParser(".mnn", this);
+    FileManager::GetInstance().RegisterParser("mnn", this);
 }
 
 std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data) {

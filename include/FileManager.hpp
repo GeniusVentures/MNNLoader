@@ -23,77 +23,35 @@ private:
     map<std::string, FileSaver *> savers;
 
 public:
-    void RegisterLoader(const std::string& prefix, FileLoader *handlerLoader) {
-        loaders[prefix] = handlerLoader;
-    }
+    /// @brief Register a synchronous loader class to handle a specific prefix
+    /// @param prefix = "https", "file", etc from https://xxxxx
+    /// @param handlerLoader Handler class object that can load the data
+    void RegisterLoader(const std::string& prefix, FileLoader *handlerLoader);
+    /// @brief Register a synchronous Parser class to handle a specific extension suffix
+    /// @param suffix = ".mnn", ".jpg", etc from file://file.jpg
+    /// @param handlerParser Handler class object that can parse the data
+    void RegisterParser(const std::string& suffix, FileParser *handlerParser);
+    /// @brief Register a synchronous saver class to handle a specific prefix
+    /// @param prefix = "mnn", "file", etc from mnn://xxxxx
+    /// @param handlerSaver Handler class object that can save the data
+    void RegisterSaver(const std::string& prefix, FileSaver *handlerSaver);
 
-    void RegisterParser(const std::string& suffix, FileParser *handlerParser) {
-        parsers[suffix] = handlerParser;
-    }
-
-    void RegisterSaver(const std::string& prefix, FileSaver *handlerSaver) {
-        savers[prefix] = handlerSaver;
-    }
-
-    shared_ptr<void> LoadFile(const std::string& filePath, bool parse = false) {
-        const std::filesystem::path path(filePath);
-        const std::string prefix = path.parent_path().string();
-        const std::string filename = path.filename().string();
-        const std::string suffix = path.extension().string();
-        auto loaderIter = loaders.find(prefix);
-
-        if (loaderIter == loaders.end()) {
-            throw std::range_error("No loader registered for prefix " + prefix);
-        }
-
-        auto loader = loaderIter->second;
-        // double check pointer is to a FileLoader class
-        assert(dynamic_cast<FileLoader *>(loader));
-
-        shared_ptr<void> data = loader->LoadFile(filename);
-        if (parse) {
-            data = ParseData(suffix, data);
-        }
-
-        return data;
-    }
+    /// @brief Load a file given a filePath and optional parse the data
+    /// @param url the full path and filename to load
+    /// @param parse bool on weather to parse the file or not
+    /// @return shared pointer to void * of the data loaded
+    shared_ptr<void> LoadFile(const std::string& url, bool parse = false);
 
     /// @brief Parse Data from a previously loaded file
-    /// @param filePath URL prefix filename and extension, extension is used to locate parser handler
+    /// @param suffix the extension/suffix to know how to parse the data
     /// @param data
-    /// @return
-    shared_ptr<void> ParseData(const std::string& suffix, shared_ptr<void> data) {
-        auto parserIter = parsers.find(suffix);
-        if (parserIter == parsers.end()) {
-            throw std::range_error("No parser registered for suffix " + suffix);
-        }
-
-        auto parser = dynamic_cast<FileParser *>(parserIter->second);
-        data = parser->ParseData(data);
-        return data;
-    }
+    /// @return shared pointer to void * of the data parsed
+    shared_ptr<void> ParseData(const std::string& suffix, shared_ptr<void> data);
 
     /// @brief Save Data to a file via some system, throws exception on error
-    /// @param filePath URL prefix filename and extension
-    /// @param data
-    void SaveFile(const std::string& filePath, std::shared_ptr<void> data) {
-        std::filesystem::path path(filePath);
-        std::string prefix = path.parent_path().string();
-        std::string filename = path.filename().string();
-
-        auto saverIter = savers.find(prefix);
-
-        if (saverIter == savers.end()) {
-            throw std::range_error("No saver registered for prefix " + prefix);
-        }
-
-        auto saver = saverIter->second;
-        // double check pointer is to a FileSaver class
-        assert(dynamic_cast<FileSaver *>(saver));
-
-        saver->SaveFile(filename, data);
-    }
-
+    /// @param url URL prefix filename and extension
+    /// @param data shared pointer to void * of the data to save
+    void SaveFile(const std::string& url, std::shared_ptr<void> data);
 
 };
 
