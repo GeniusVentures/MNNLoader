@@ -3,11 +3,16 @@
 
 #include <memory>
 #include "FileParser.hpp"
-
-class MNNParser : public FileParser {
-    SINGLETON_PTR(MNNParser);
-public:
-    virtual shared_ptr<void> ParseData(shared_ptr<void> data) override;
-};
+#include "MNNCommon.hpp"
+namespace sgns
+{
+    class MNNParser: public FileParser
+    {
+            SINGLETON_PTR (MNNParser);
+        public:
+            virtual shared_ptr<void> ParseData(shared_ptr<void> data)
+                    override;
+    };
+} // End namespace sgns
 
 #endif  // MNNPARSER_HPP

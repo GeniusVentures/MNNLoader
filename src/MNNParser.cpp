@@ -1,20 +1,121 @@
 // MNNParser.cpp
 
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
 #include "FileManager.hpp"
 #include "MNNParser.hpp"
+namespace sgns
+{
+    SINGLETON_PTR_INIT(MNNParser);
 
-SINGLETON_PTR_INIT(MNNParser);
+    MNNParser::MNNParser()
+    {
+        FileManager::GetInstance().RegisterParser(".mnn", this);
+    }
 
-MNNParser::MNNParser() {
-    FileManager::GetInstance().RegisterParser(".mnn", this);
-}
-
-std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data) {
-    const char *dummyValue = "Inside the MNNParser::ParseData Function";
-    std::cout << (char *)data.get() << " -> ";
-    // for this test, we don't need to delete the shared_ptr as the data is static, so pass null lambda delete function
-    return {(void *)dummyValue, [](void *) {}};
-
-    // TODO: Implement the logic to parse the file data.
-}
+    std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data)
+    {
+        std::shared_ptr<MNN::Interpreter> mnn_interpreter =
+                std::static_pointer_cast<MNN::Interpreter>(data);
+        if (mnn_interpreter == nullptr)
+        {
+            throw std::range_error("Can not parsing data from nullptr");
+        }
+        MNN::Session *mnn_session = nullptr; /* The holder of inference data */
+        MNN::Tensor *input_tensor = nullptr;
+        MNN::ScheduleConfig schedule_config;
+        int input_batch;
+        int input_channel;
+        int input_height;
+        int input_width;
+        MNN::Tensor::DimensionType m_dimension_type;
+        int m_num_output;
+        // Paring data of MNN file
+        schedule_config.numThread = 1;
+        MNN::BackendConfig backend_config;
+        backend_config.precision = MNN::BackendConfig::Precision_High;
+        schedule_config.backendConfig = &backend_config;
+        // Create session for reading model
+        mnn_session = mnn_interpreter->createSession(schedule_config);
+        // Tensor input and input dims
+        input_tensor = mnn_interpreter->getSessionInput(mnn_session,
+                nullptr);
+        input_batch = input_tensor->batch();
+        input_channel = input_tensor->channel();
+        input_height = input_tensor->height();
+        input_width = input_tensor->width();
+        m_dimension_type = input_tensor->getDimensionType();
+        // Adapt interpreter base on dims
+        switch (m_dimension_type)
+        {
+            // caffe net type
+            case MNN::Tensor::CAFFE:
+                mnn_interpreter->resizeTensor(input_tensor, {
+                        input_channel, input_height, input_width });
+                mnn_interpreter->resizeSession(mnn_session);
+                break;
+                // Tensorflow net type
+            case MNN::Tensor::TENSORFLOW:
+                mnn_interpreter->resizeTensor(input_tensor, {
+                        input_batch, input_height, input_width,
+                        input_channel });
+                mnn_interpreter->releaseSession(mnn_session);
+                break;
+                //C4HW4 as data format
+            case MNN::Tensor::CAFFE_C4:
+                break;
+                // Any new type MNN support, we can adapt it later
+            default:
+                break;
+        }
+        m_num_output =
+                mnn_interpreter->getSessionOutputAll(mnn_session).size();
+        // Parsing data to string
+        std::ostringstream output;
+        if (mnn_interpreter)
+        {
+            output << "==================INPUT-DIMS================"
+                    << std::endl;
+            if (input_tensor)
+            {
+                input_tensor->printShape();
+            }
+            switch (m_dimension_type)
+            {
+                case MNN::Tensor::CAFFE:
+                    output
+                            << "Dimension Type: (CAFE/PyTorch/ONNX) uses NCHW as data format"
+                            << std::endl;
+                    break;
+                case MNN::Tensor::TENSORFLOW:
+                    output
+                            << "Dimension Type: (TENSORFLOW) uses NHWC as data format"
+                            << std::endl;
+                    break;
+                case MNN::Tensor::CAFFE_C4:
+                    output
+                            << "Dimension Type: (CAFE_C4) uses NC4HW4 as data format"
+                            << std::endl;
+                    break;
+                default:
+                    output << "Dimension Type: UNKNOWN" << std::endl;
+                    break;
+            }
+            output << "==================OUTPUT-DIMS================"
+                    << std::endl;
+            auto output_map = mnn_interpreter->getSessionOutputAll(
+                    mnn_session);
+            for (auto it = output_map.cbegin(); it != output_map.cend(); it++)
+            {
+                output << "Output : " << it->first << std::endl;
+                it->second->printShape();
+            }
+            output << "============================================="
+                    << std::endl;
+        }
+        std::cout << output.str() << std::endl;
+        return mnn_interpreter;
+    }
+} // End namespace sgns

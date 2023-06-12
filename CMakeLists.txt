@@ -5,6 +5,7 @@ project(FileLoader C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Print debug current flag
 message(STATUS "C flags: ${CMAKE_C_FLAGS}")
@@ -15,7 +16,7 @@ message(STATUS "C Release flags: ${CMAKE_C_FLAGS_RELEASE}")
 message(STATUS "CXX Release flags: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 
-# ----- This is some option flag we can be define
+# ----- This is some option flag we can be defined
 option(TESTING "Build tests" OFF)
 
 if (TESTING)
@@ -24,7 +25,7 @@ endif ()
 
 # ---------------------------
 # Set default variable
-# FileLoader define version
+# FileLoader defines the version
 set(VERSION_STRING 0.0.1)
 set(SOVERSION_STRING 0.0.1)
 
@@ -33,7 +34,7 @@ set(FILELOADER_ROOT_DIR ${CMAKE_SOURCE_DIR})
 # set default build dir
 
 if (NOT DEFINED BUILD_FILELOADER_DIR)
-    set(BUILD_FILELOADER_DIR ${FILELOADER_ROOT_DIR}/.build/FILELOADER)
+    set(BUILD_FILELOADER_DIR ${FILELOADER_ROOT_DIR}/.build/FileLoader)
 endif ()
 message(STATUS "BUILD_FILELOADER_DIR: ${BUILD_FILELOADER_DIR}")
 # Set source file dir
@@ -56,7 +57,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include
 )
 
-set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
+#set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
 # ----------------------BUILD EXTERNAL PROJECT------------------
 # Builds MNN
 message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")
@@ -98,12 +99,13 @@ file(GLOB PROJECT_LIB_LIST "${MNN_LIBRARY_DIR}/*")
 # ------------------------------------------
 # Build Binary
 add_fileloader_library(${VERSION_STRING} ${SOVERSION_STRING})
-if (NEED_BUILD_MNN)
-	# in case we need to build MNN library. Just waiting
+if (DEFINED NEED_BUILD_MNN)
+	# in case we need to build an MNN library. Just waiting
+	message(STATUS "Add dependencies on MNN")
 	add_dependencies(${FileLoader_LIB} MNN)
 endif()
 # -------------------------------------------
-# Combine binary for execute example
+# Combine binary to execute the example
 
 link_directories(${BUILD_FILELOADER_DIR}/lib)
 add_fileloader_executable("${TESTAPP}")
