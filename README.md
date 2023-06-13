@@ -6,7 +6,7 @@ Current file format support
 
 ## Design
 
-Signleton pattern is apply for all Loader/Parser
+Singleton pattern is apply for all Loader/Parser
 
 ```mermaid
 ---
@@ -68,7 +68,7 @@ classDiagram
 
 ## Build with Linux
 
-This is build project alone.
+This is build a project alone.
 
 ```sh
 $ mkdir .build
@@ -124,3 +124,6 @@ Output : dis_pred_stride_8
 ParseFile: SaveFile: Saving File... -> Inside the IPFSSaver::SaveFile Function
 
 ```
+
+## Future thinking
+- Use [flatbuffer](https://github.com/google/flatbuffers) library to replace the raw buffer 

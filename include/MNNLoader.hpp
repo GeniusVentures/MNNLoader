@@ -32,9 +32,6 @@ namespace sgns
              */
             std::shared_ptr<void> LoadFile(std::string filename) override;
         protected:
-            std::shared_ptr<MNN::Interpreter> m_mnn_interpreter; /* The holder of the model data */
-            const char *m_log_id = nullptr;
-            const char *m_mnn_file_path = nullptr;
 
     };
 

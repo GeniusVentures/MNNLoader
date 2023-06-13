@@ -12,16 +12,22 @@ namespace sgns
 
     MNNParser::MNNParser()
     {
-        FileManager::GetInstance().RegisterParser(".mnn", this);
+        FileManager::GetInstance().RegisterParser("mnn", this);
     }
-
     std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data)
     {
-        std::shared_ptr<MNN::Interpreter> mnn_interpreter =
-                std::static_pointer_cast<MNN::Interpreter>(data);
+        if(data == nullptr)
+        {
+            throw std::range_error("Can not parsing null data");
+        }
+        std::shared_ptr<string> fileContent =
+                std::static_pointer_cast<string>(data);
+        std::shared_ptr<MNN::Interpreter> mnn_interpreter(
+                MNN::Interpreter::createFromBuffer(fileContent.get()->c_str(),
+                        fileContent.get()->size()));
         if (mnn_interpreter == nullptr)
         {
-            throw std::range_error("Can not parsing data from nullptr");
+            throw std::range_error("Can not parsing data from input");
         }
         MNN::Session *mnn_session = nullptr; /* The holder of inference data */
         MNN::Tensor *input_tensor = nullptr;
@@ -40,8 +46,7 @@ namespace sgns
         // Create session for reading model
         mnn_session = mnn_interpreter->createSession(schedule_config);
         // Tensor input and input dims
-        input_tensor = mnn_interpreter->getSessionInput(mnn_session,
-                nullptr);
+        input_tensor = mnn_interpreter->getSessionInput(mnn_session, nullptr);
         input_batch = input_tensor->batch();
         input_channel = input_tensor->channel();
         input_height = input_tensor->height();
@@ -52,15 +57,14 @@ namespace sgns
         {
             // caffe net type
             case MNN::Tensor::CAFFE:
-                mnn_interpreter->resizeTensor(input_tensor, {
-                        input_channel, input_height, input_width });
+                mnn_interpreter->resizeTensor(input_tensor, { input_channel,
+                        input_height, input_width });
                 mnn_interpreter->resizeSession(mnn_session);
                 break;
                 // Tensorflow net type
             case MNN::Tensor::TENSORFLOW:
-                mnn_interpreter->resizeTensor(input_tensor, {
-                        input_batch, input_height, input_width,
-                        input_channel });
+                mnn_interpreter->resizeTensor(input_tensor, { input_batch,
+                        input_height, input_width, input_channel });
                 mnn_interpreter->releaseSession(mnn_session);
                 break;
                 //C4HW4 as data format
@@ -116,6 +120,7 @@ namespace sgns
                     << std::endl;
         }
         std::cout << output.str() << std::endl;
-        return mnn_interpreter;
+        return fileContent;
     }
 } // End namespace sgns
+
