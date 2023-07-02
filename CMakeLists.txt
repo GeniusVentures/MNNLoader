@@ -56,7 +56,12 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include
 )
 
-set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
+if (NOT DEFINED MNN_ROOT_DIR)
+    set (MNN_ROOT_DIR "MNN")
+endif()
+
+set (MNN_INCLUDE_DIR "${MNN_ROOT_DIR}/include")
+set (MNN_LIB_DIR "${MNN_ROOT_DIR_}/build")
 # ----------------------BUILD EXTERNAL PROJECT------------------
 # Builds MNN
 message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")

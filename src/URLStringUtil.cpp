@@ -3,6 +3,7 @@
 //
 
 #include "URLStringUtil.h"
+#include <stdexcept>
 
 extern void getURLComponents(std::string url, std::string &prefix, std::string& base, std::string& extension)
 {

@@ -1,6 +1,7 @@
 
 #include "FileManager.hpp"
 #include "URLStringUtil.h"
+#include <cassert>
 
 void FileManager::RegisterLoader(const std::string& prefix, FileLoader *handlerLoader) {
     loaders[prefix] = handlerLoader;
