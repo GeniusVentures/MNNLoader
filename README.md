@@ -5,7 +5,7 @@ Current file format support
 - **TODO**: Add more format file
 
 ## Design
-<img src="https://docs.google.com/drawings/d/1beUlsmHrCmgJWrnFkszFC-h5vuRM0bymrAkOp14bKVg/pub?w=1446&amp;h=1036">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRwOrh66iXLfMRpXgLl7MGrqu8EQ2qPcEYGS3PPqbcGmxkgyoE3STljXSylcsrCEFZzgomTqRsskcui/pub?w=960&h=720">
 
 ## Depend on the library
 
