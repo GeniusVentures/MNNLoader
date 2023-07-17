@@ -2,9 +2,9 @@
 #define MNNPARSER_HPP
 
 #include <memory>
-#include "FileParser.hpp"
+#include "MediaParser.hpp"
 
-class MNNParser : public FileParser {
+class MNNParser : public MediaParser {
     SINGLETON_PTR(MNNParser);
 public:
     virtual shared_ptr<void> ParseData(shared_ptr<void> data) override;
