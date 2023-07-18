@@ -21,6 +21,9 @@ namespace sgns::io {
         /// @brief Register a synchronous Parser class to handle a specific extension suffix
         /// @param handlerParser Handler class object that can parse the data
         void registerParser(const MediaType& type, MediaParser *parser);
+
+	// register Media Filter
+	void registerFilter(const FilterType& type, MediaFilter *filter);
     
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load
