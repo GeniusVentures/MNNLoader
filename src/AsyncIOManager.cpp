@@ -1,10 +1,11 @@
 
 #include "AsyncIOManager.hpp"
+#include <boost/bind.hpp>
 
 
 namespace sgns::io {
 
-    AsyncIOManager::AsyncIOManager(const AsyncIOChannel& channel)
+    AsyncIOManager::AsyncIOManager(std::shared_ptr<AsyncIOChannel> channel)
 	    : async_channel_(channel) {
 
     }
@@ -12,7 +13,7 @@ namespace sgns::io {
     /*
      * Get the file from the device and write to local file  
      */
-    std::outcome<void> IOManager::getFile(const std::string& srcPath, const std::string& fpath) {
+    bool AsyncIOManager::getFile(const std::string& srcPath, const std::string& fpath) {
 	std::shared_ptr<IODevice> srcDevice = nullptr;
         
 	size_t schemaPos = srcPath.find("://");
@@ -29,7 +30,7 @@ namespace sgns::io {
 
 	// Open the input device
         // flags if any
-        auto srcStream = srcDevice->open(srcPath, StreamMode::READ_ONLY);
+        auto srcStream = srcDevice->open(srcPath, StreamDirection::READ_ONLY, Streamflags::NONE);
         if (srcStream == nullptr) {
             throw std::range_error("Src device open failed");
         }
@@ -38,7 +39,7 @@ namespace sgns::io {
             throw std::range_error("Device does not support async read");
 	}
 
-	auto handler = boost::bind(&async_channel_.onGetComplete, 
+	auto handler = boost::bind(async_channel_->onGetComplete, 
 		                   this,
                                    fpath,
 		                   boost::asio::placeholders::bytes_transferred, 
@@ -46,18 +47,18 @@ namespace sgns::io {
 
 	uint32_t buffSize = srcStream.getReadChunkSize();
         std::vector<char> buf(buffSize);
-        srcStream.readAsync(buf, bufSize, handler);
+        srcStream.readAsync(buf, buffSize, handler);
 
-	return outcome::success();
+	return true;
     }
     /*
      * Put the local file to another device
      */
-    std::outcome<void> IOManager::putFile(const std::string& fpath, const std::string& dstPath) {
+    bool AsyncIOManager::putFile(const std::string& fpath, const std::string& dstPath) {
         std::shared_ptr<IODevice> dstDevice = nullptr;	
 
 	// destination device
-        schemaPos = dstPath.find("://");
+        auto schemaPos = dstPath.find("://");
         if (schemaPos == std::string::npos) {
             throw std::range_error("Dest Path is not correct");
         }
@@ -68,8 +69,8 @@ namespace sgns::io {
         }
         dstDevice = it->second();
 
-	auto flags = StreamMode::WRITE_ONLY | StreamMode::APPEND;
-	auto dstStream = dstDevice->open(dstPath, flags);
+	auto flags = StreamFlags::STREAM_APPEND;
+	auto dstStream = dstDevice->open(dstPath, StreamDirection::WRITE_ONLY, flags);
         if (dstStream == nullptr) {
             throw std::range_error("Dest device open failed");
         }
@@ -78,7 +79,7 @@ namespace sgns::io {
             throw std::range_error("Device does not support async write");
 	}
 
-        auto handler = boost::bind(&async_channel_.onPutComplete,
+        auto handler = boost::bind(async_channel_->onPutComplete,
                                    this,
                                    fpath,
                                    boost::asio::placeholders::bytes_transferred,
@@ -89,17 +90,17 @@ namespace sgns::io {
 	if(!srcFile) {
             // error
 	}
-	srFile.seekg(0, std::ios::end);
-	std::streampos fileSize = strFile.tellg();
-	srcFile.seekg(0, std::ios::beg);
+	srcFile.seekg(0, std::ios::end);
+	std::streampos fileSize = srcFile.tellg();
+	srcFile.seekg(0, sd::ios::beg);
 	std::vector<char> buffer(fileSize);
-	if (infile.read(buffer.data(), fileSize)) {
+	if (srcFile.read(buffer.data(), fileSize)) {
 	    
 	}
 
-        srcStream.writeAsync(buffer(data), fileSize, handler);
+        dstStream->writeAsync(buffer(data), fileSize, handler);
 
-	return outcome::success();
+	return true;
     }
 
 }

@@ -2,6 +2,7 @@
 #define SGNS_IODEVICE_HPP
 
 #include <string>
+#include "IOStream.hpp"
 
 namespace sgns::io {
 
@@ -11,9 +12,9 @@ namespace sgns::io {
         virtual ~IODevice() {}
 
 	// open for input/output/bidirectional
-	virtual IOStream& open(const std::string& path, 
-			       const StreamDirection& dir,
-			       const StreamFlags& flags) = 0;
+	virtual std::shared_ptr<IOStream> open(const std::string& path, 
+			       const IOStream::StreamDirection& dir,
+			       const IOStream::StreamFlags& flags) = 0;
 	virtual void close() = 0; 
 
     private:

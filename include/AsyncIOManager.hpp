@@ -2,22 +2,28 @@
 #define SGNS_ASYNC_IOMANAGER_HPP
 
 #include <string>
-#include "include/AsyncIOChannel.hpp"
+#include "IOManager.hpp"
+#include "IOStream.hpp"
+#include "AsyncIOChannel.hpp"
 
 namespace sgns::io {
 
     class AsyncIOManager: public IOManager {
 
     public:
-	AsyncIOManager(const AsyncIOChannel& channel);
+	using string = std::string;
+	using StreamDirection = IOStream::StreamDirection;
+	using StreamFlags = IOStream::StreamFlags;
+
+	AsyncIOManager(std::shared_ptr<AsyncIOChannel> channel);
         virtual ~AsyncIOManager() {}
 
-	std::outcome<void> getFile(const std::string&, const std::string&);
-	std::outcome<void> putFile(const std::string& fpath, const std::string& dstPath);
+	bool getFile(const std::string&, const std::string&);
+	bool putFile(const std::string& fpath, const std::string& dstPath);
 
 
     private:
-	AsyncIOChannel async_channel_;
+	std::shared_ptr<AsyncIOChannel> async_channel_;
     };
     
 }

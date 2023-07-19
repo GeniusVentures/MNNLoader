@@ -13,19 +13,23 @@ namespace sgns::io {
 	};
 
 	enum class StreamFlags {
+	    NONE = 0,	
             STREAM_APPEND = 1,
 	    STREAM_BINARY = 2
-	}
+	};
 
-	IOStream(const IOStreamDirection& dir, const StreamFlags& flags);
-        virtual ~IOStream = default;
+	IOStream(const StreamDirection& dir, const StreamFlags& flags);
+        virtual ~IOStream() = 0;
 
         virtual void read(const char*, size_t bytes) = 0;
         virtual size_t write(const char*, size_t bytes) = 0;	
+	virtual inline bool isAsyncSupported() {
+            return false;
+	}
 
     private:
-	StreamMode  mode_;
-	StreamFlags flags_;
+	StreamDirection  dir_;
+	StreamFlags      flags_;
 
     };
 

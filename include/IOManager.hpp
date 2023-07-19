@@ -4,15 +4,18 @@
 #include <string>
 #include <map>
 #include <filesystem>
-#include "Singleton.hpp"
+#include "IODevice.hpp"
+#include "MediaParser.hpp"
+#include "MediaFilter.hpp"
 
 
 namespace sgns::io {
 
     class IOManager {
-        virtual ~IOManager() default = 0;
 
     public:
+	using string = std::string;
+        virtual ~IOManager() = 0;
         /// @brief Register a IO Device to handle a schema
         /// @param url schema "https", "ipfs", "file", etc from https://xxxxx
         /// @param device that handles particular schema streams 
@@ -20,10 +23,10 @@ namespace sgns::io {
 
         /// @brief Register a synchronous Parser class to handle a specific extension suffix
         /// @param handlerParser Handler class object that can parse the data
-        void registerParser(const MediaType& type, MediaParser *parser);
+        void registerParser(const MediaParser::MediaType& type, MediaParser *parser);
 
 	// register Media Filter
-	void registerFilter(const FilterType& type, MediaFilter *filter);
+	void registerFilter(const MediaFilter::FilterType& type, MediaFilter *filter);
     
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load
@@ -43,9 +46,9 @@ namespace sgns::io {
         shared_ptr<void> ParseData(const std::string& suffix, shared_ptr<void> data);
     
 
-    private:
-	std::map<string&, IODevice *> io_devices_;
-	std::map<MediaType&, MediaParser *> media_parsers_;
+    protected:
+	std::map<string, IODevice *> io_devices_;
+	std::map<MediaType, MediaParser *> media_parsers_;
     };
 
 }

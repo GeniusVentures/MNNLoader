@@ -4,16 +4,20 @@
 #include <string>
 #include <memory>
 
-class MediaParser {
-public:
-    enum MediaType = {
-         MEDIA_JSON = "json",
-	 MEDIA_JPG  = "jpg",
-	 MEDIA_MP3  = "mp3"
+namespace sgns::io {
+
+    class MediaParser {
+    public:
+        enum class MediaType {
+          MEDIA_JSON = 1,
+    	  MEDIA_JPG  = 2,
+    	  MEDIA_MP3  = 3
+        };
+    
+        virtual ~MediaParser() {}
+        virtual std::shared_ptr<void> ParseData(std::shared_ptr<void> data) = 0;
     };
 
-    virtual ~MediaParser() {}
-    virtual std::shared_ptr<void> ParseData(std::shared_ptr<void> data) = 0;
-};
+}
 
 #endif
