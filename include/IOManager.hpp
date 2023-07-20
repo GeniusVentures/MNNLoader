@@ -8,14 +8,13 @@
 #include "MediaParser.hpp"
 #include "MediaFilter.hpp"
 
-
 namespace sgns::io {
 
     class IOManager {
 
     public:
 	using string = std::string;
-        virtual ~IOManager() = 0;
+        virtual ~IOManager() {};
         /// @brief Register a IO Device to handle a schema
         /// @param url schema "https", "ipfs", "file", etc from https://xxxxx
         /// @param device that handles particular schema streams 
@@ -53,4 +52,4 @@ namespace sgns::io {
 
 }
 
-#endif // SGNS_ASYNC_IOMANAGER_HPP 
+#endif // SGNS_IOMANAGER_HPP 

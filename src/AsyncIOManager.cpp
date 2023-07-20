@@ -1,5 +1,6 @@
 
 #include "AsyncIOManager.hpp"
+#include <fstream>
 #include <boost/bind.hpp>
 
 
@@ -30,7 +31,7 @@ namespace sgns::io {
 
 	// Open the input device
         // flags if any
-        auto srcStream = srcDevice->open(srcPath, StreamDirection::READ_ONLY, Streamflags::NONE);
+        auto srcStream = srcDevice->open(srcPath, StreamDirection::READ_ONLY, StreamFlags::NONE);
         if (srcStream == nullptr) {
             throw std::range_error("Src device open failed");
         }
@@ -39,15 +40,15 @@ namespace sgns::io {
             throw std::range_error("Device does not support async read");
 	}
 
-	auto handler = boost::bind(async_channel_->onGetComplete, 
-		                   this,
+	auto handler = boost::bind(&AsyncIOChannel::onGetComplete, 
+		                   async_channel_,
                                    fpath,
 		                   boost::asio::placeholders::bytes_transferred, 
 		                   boost::asio::placeholders::error); 
 
-	uint32_t buffSize = srcStream.getReadChunkSize();
+	uint32_t buffSize = 1024;
         std::vector<char> buf(buffSize);
-        srcStream.readAsync(buf, buffSize, handler);
+        srcStream->readAsync(buf.data(), buffSize, handler);
 
 	return true;
     }
@@ -63,7 +64,7 @@ namespace sgns::io {
             throw std::range_error("Dest Path is not correct");
         }
         auto dstSchema = dstPath.substr(0, schemaPos);
-        it = io_devices_.find(dstSchema);
+        auto it = io_devices_.find(dstSchema);
         if (it == io_devices_.end()) {
             throw std::range_error("No Device registered for the dst schema");
         }
@@ -79,8 +80,8 @@ namespace sgns::io {
             throw std::range_error("Device does not support async write");
 	}
 
-        auto handler = boost::bind(async_channel_->onPutComplete,
-                                   this,
+        auto handler = boost::bind(&AsyncIOChannel::onPutComplete,
+                                   async_channel_,
                                    fpath,
                                    boost::asio::placeholders::bytes_transferred,
                                    boost::asio::placeholders::error);
@@ -92,13 +93,13 @@ namespace sgns::io {
 	}
 	srcFile.seekg(0, std::ios::end);
 	std::streampos fileSize = srcFile.tellg();
-	srcFile.seekg(0, sd::ios::beg);
+	srcFile.seekg(0, std::ios::beg);
 	std::vector<char> buffer(fileSize);
 	if (srcFile.read(buffer.data(), fileSize)) {
 	    
 	}
 
-        dstStream->writeAsync(buffer(data), fileSize, handler);
+        dstStream->writeAsync(buffer.data(), fileSize, handler);
 
 	return true;
     }
