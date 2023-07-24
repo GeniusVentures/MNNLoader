@@ -27,7 +27,7 @@ namespace sgns::io {
         if (it == io_devices_.end()) {
             throw std::range_error("No Device registered for the src schema");
         }
-        srcDevice = it->second();
+        srcDevice = std::shared_ptr<IODevice>(it->second);
 
 	// Open the input device
         // flags if any
@@ -68,7 +68,7 @@ namespace sgns::io {
         if (it == io_devices_.end()) {
             throw std::range_error("No Device registered for the dst schema");
         }
-        dstDevice = it->second();
+        dstDevice = std::shared_ptr<IODevice>(it->second);
 
 	auto flags = StreamFlags::STREAM_APPEND;
 	auto dstStream = dstDevice->open(dstPath, StreamDirection::WRITE_ONLY, flags);

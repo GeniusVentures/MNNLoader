@@ -2,7 +2,11 @@
 #define SGNS_FILEDEVICE_HPP
 
 #include <string>
+#include "IODevice.hpp"
 #include "IOStream.hpp"
+
+using FileSource = boost::iostreams::file_source;
+using FileSink   = boost::iostreams::file_sink;
 
 namespace sgns::io {
     
@@ -11,19 +15,25 @@ namespace sgns::io {
     class FileDevice: public IODevice {
     public:
 	FileDevice();
-	virtual ~FileDevice() = 0;
+	virtual ~FileDevice() {}
 
         // open the device
-	IOStream& open(const string& path, const StreamDirection& dir, const StreamMode& mode) override;
+	std::shared_ptr<IOStream> open(const std::string& path, 
+		       const IOStream::StreamDirection& dir, 
+		       const IOStream::StreamFlags& flags) override;
 	void close() override; 
 
     private:
-	// ipfs lite cpp handler
+	std::shared_ptr<IOStream> getInStream_(const FileSource& source);
+	std::shared_ptr<IOStream> getOutStream_(const FileSink& sink);
+
+	std::shared_ptr<FileSource> src_;
+	std::shared_ptr<FileSink>   dst_;
 
     };
 
 }
 
-#endif // SGNS_IPFSDEVICE_HPP
+#endif // SGNS_FILEDEVICE_HPP
 
 

@@ -25,18 +25,21 @@ namespace sgns::io {
 	    STREAM_BINARY = 2
 	};
 
-	IOStream(const StreamDirection& dir, const StreamFlags& flags);
-        virtual ~IOStream() = 0;
+	IOStream() {};
+        virtual ~IOStream() {};
 
-        virtual void read(const char*, size_t bytes) = 0;
+        virtual size_t read(const char*, size_t bytes) = 0;
         virtual size_t write(const char*, size_t bytes) = 0;	
+	virtual bool isBinary() {
+	    return true;
+	}
 
 	// Async Support
 	virtual inline bool isAsyncSupported() {
             return false;
 	}
-	virtual void readAsync(const char*, size_t bytes, OnGetCompleteCallback handler) = 0;
-	virtual size_t writeAsync(const char*, size_t bytes, OnWriteCompleteCallback handler) = 0;
+	virtual void readAsync(char*, size_t bytes, OnGetCompleteCallback handler) = 0;
+	virtual size_t writeAsync(char*, size_t bytes, OnWriteCompleteCallback handler) = 0;
 
     private:
 	StreamDirection  dir_;

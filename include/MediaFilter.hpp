@@ -13,15 +13,15 @@ namespace sgns::io {
 
     class MediaFilter {
     public:
-        using StreamSize = std::streamsize;
+        //using StreamSize = std::streamsize;
 
 	enum FilterType {
           FILTER_GZIP = 1,
 	};
 
         virtual ~MediaFilter() {}
-        virtual StreamSize read(char* s, StreamSize n) = 0;
-        virtual StreamSize write(const char* s, StreamSize n) = 0;
+        //virtual StreamSize read(char* s, StreamSize n) = 0;
+        //virtual StreamSize write(const char* s, StreamSize n) = 0;
 
     private:
 
@@ -30,4 +30,3 @@ namespace sgns::io {
 }
 
 #endif // SGNS_MEDIAFILTER_HPP
-~                               

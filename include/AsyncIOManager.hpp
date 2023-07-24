@@ -6,6 +6,10 @@
 #include "IOStream.hpp"
 #include "AsyncIOChannel.hpp"
 
+using namespace sgns;
+using namespace io;
+
+
 namespace sgns::io {
 
     class AsyncIOManager: public IOManager {

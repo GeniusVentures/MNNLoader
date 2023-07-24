@@ -16,6 +16,8 @@ namespace sgns::io {
 			       const IOStream::StreamDirection& dir,
 			       const IOStream::StreamFlags& flags) = 0;
 	virtual void close() = 0; 
+	// default async is not supported
+	virtual inline bool isAsyncSupported() { return false; }
 
     private:
 	// maintain all the opened streams

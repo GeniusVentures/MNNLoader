@@ -1,9 +1,14 @@
 #include <iostream>
 #include <string>
 //#include "MNNLoader.hpp"
-#include "FileManager.hpp"
-#include "URLStringUtil.h"
+//#include "FileManager.hpp"
+//#include "URLStringUtil.h"
 
+int main(int argc, char **argv)
+{
+    return 0;
+}
+#if 0
 /**
  * This program is example to loading MNN model file
  */
@@ -69,3 +74,4 @@ int main(int argc, char **argv)
   return 0;
 }
 
+#endif
