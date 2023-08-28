@@ -28,12 +28,12 @@ namespace sgns::io {
 			           const boost::system::error_code& error) = 0;
 
 			            
-	inline AsioContext& getContext() {
+	inline std::shared_ptr<AsioContext> getContext() {
 	    return context_;
 	}
 
     private:
-	AsioContext context_;
+	std::shared_ptr<AsioContext> context_;
 
     };
 }

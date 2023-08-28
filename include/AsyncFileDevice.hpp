@@ -3,7 +3,7 @@
 
 #include <string>
 #include <boost/asio.hpp>
-#include "IODevice.hpp"
+#include "AsyncIODevice.hpp"
 #include "IOStream.hpp"
 
 using namespace boost::asio;
@@ -12,7 +12,7 @@ namespace sgns::io {
     
     // Device for Streaming Local files
     // file:// schema
-    class AsyncFileDevice: public IODevice {
+    class AsyncFileDevice: public AsyncIODevice {
     public:
 	using AsioContext = boost::asio::io_context;
 
@@ -20,11 +20,11 @@ namespace sgns::io {
 	virtual ~AsyncFileDevice() {}
 
         // open the device
-	std::shared_ptr<IOStream> open(const std::string& path, 
+	std::shared_ptr<IOStream> open(AsioContext,
+		       const std::string& path, 
 		       const IOStream::StreamDirection& dir, 
 		       const IOStream::StreamFlags& flags) override;
 	void close() override; 
-	inline bool isAsyncSupported() { return true; } ;
 
     private:
         std::shared_ptr<posix::stream_descriptor> stream_file_;

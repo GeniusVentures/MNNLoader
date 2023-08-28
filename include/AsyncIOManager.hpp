@@ -5,6 +5,7 @@
 #include "IOManager.hpp"
 #include "IOStream.hpp"
 #include "AsyncIOChannel.hpp"
+#include "AsyncIODevice.hpp"
 
 using namespace sgns;
 using namespace io;
@@ -22,12 +23,14 @@ namespace sgns::io {
 	AsyncIOManager(std::shared_ptr<AsyncIOChannel> channel);
         virtual ~AsyncIOManager() {}
 
+	void registerDevice(const string& schema, AsyncIODevice *device);
 	bool getFile(const std::string&, const std::string&);
 	bool putFile(const std::string& fpath, const std::string& dstPath);
 
 
     private:
-	std::shared_ptr<AsyncIOChannel> async_channel_;
+	std::map<string, AsyncIODevice *> async_io_devices_;
+	std::shared_ptr<AsyncIOChannel>   async_channel_;
     };
     
 }

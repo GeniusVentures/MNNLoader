@@ -11,11 +11,16 @@ namespace sgns::io {
 
     }
 
+    void AsyncIOManager::registerDevice(const string& schema,
+                                        AsyncIODevice *device) {
+        async_io_devices_[schema] = device;
+    }
+
     /*
      * Get the file from the device and write to local file  
      */
     bool AsyncIOManager::getFile(const std::string& srcPath, const std::string& fpath) {
-	std::shared_ptr<IODevice> srcDevice = nullptr;
+	std::shared_ptr<AsyncIODevice> srcDevice = nullptr;
         
 	size_t schemaPos = srcPath.find("://");
         if (schemaPos == std::string::npos) {
@@ -23,15 +28,15 @@ namespace sgns::io {
         }
         // source device
         auto srcSchema = srcPath.substr(0, schemaPos);
-        auto it = io_devices_.find(srcSchema);
-        if (it == io_devices_.end()) {
+        auto it = async_io_devices_.find(srcSchema);
+        if (it == async_io_devices_.end()) {
             throw std::range_error("No Device registered for the src schema");
         }
-        srcDevice = std::shared_ptr<IODevice>(it->second);
+        srcDevice = std::shared_ptr<AsyncIODevice>(it->second);
 
 	// Open the input device
         // flags if any
-        auto srcStream = srcDevice->open(srcPath, StreamDirection::READ_ONLY, StreamFlags::NONE);
+        auto srcStream = srcDevice->open(async_channel_->getContext(),srcPath, StreamDirection::READ_ONLY, StreamFlags::NONE);
         if (srcStream == nullptr) {
             throw std::range_error("Src device open failed");
         }
@@ -56,7 +61,7 @@ namespace sgns::io {
      * Put the local file to another device
      */
     bool AsyncIOManager::putFile(const std::string& fpath, const std::string& dstPath) {
-        std::shared_ptr<IODevice> dstDevice = nullptr;	
+        std::shared_ptr<AsyncIODevice> dstDevice = nullptr;	
 
 	// destination device
         auto schemaPos = dstPath.find("://");
@@ -64,11 +69,11 @@ namespace sgns::io {
             throw std::range_error("Dest Path is not correct");
         }
         auto dstSchema = dstPath.substr(0, schemaPos);
-        auto it = io_devices_.find(dstSchema);
-        if (it == io_devices_.end()) {
+        auto it = async_io_devices_.find(dstSchema);
+        if (it == async_io_devices_.end()) {
             throw std::range_error("No Device registered for the dst schema");
         }
-        dstDevice = std::shared_ptr<IODevice>(it->second);
+        dstDevice = std::shared_ptr<AsyncIODevice>(it->second);
 
 	auto flags = StreamFlags::STREAM_APPEND;
 	auto dstStream = dstDevice->open(dstPath, StreamDirection::WRITE_ONLY, flags);

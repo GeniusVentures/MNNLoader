@@ -1,19 +1,15 @@
 #include <sstream>
-//#include "MNNLoader.hpp"
 
-#if 0
-namespace sgns
+namespace sgns::io
 {
 
-    MNNLoader::MNNLoader(const std::string &mnn_file_name,
-            unsigned int num_thread) :
-            m_log_id(mnn_file_name.data()), m_mnn_file_path(
-                    mnn_file_name.data()), m_num_threads(num_thread)
+    MNNStream::MNNStream(unsigned int num_thread) :
+             m_num_threads(num_thread)
     {
-        initialize();
-    } // End constructor MNNLoader
 
-    MNNLoader::~MNNLoader()
+    } // End constructor MNNstream
+
+    MNNStream::~MNNStream()
     {
         // Release model
         if (m_mnn_interpreter)
@@ -25,27 +21,43 @@ namespace sgns
         {
             m_mnn_interpreter->releaseSession(m_mnn_session);
         }
-    } // End ~MNNLoader
+    } // End ~MNNStream
 
-    void MNNLoader::initialize()
+    /*
+     * Read from the disk file
+     */
+    size_t MNNStream::read(const char* path, size_t bytes)
     {
-        // Initialize the interpreter
         m_mnn_interpreter = std::shared_ptr<MNN::Interpreter>(
-                MNN::Interpreter::createFromFile(m_mnn_file_path));
+                MNN::Interpreter::createFromFile(path));
         if (m_mnn_interpreter == nullptr)
         {
-            return;
+            return 0;
         }
+	return load_(m_mnn_interpreter);
+    }	    
 
+    size_t MNNStream::write(const char *buf, size_t bytes) {
+        m_mnn_interpreter = std::shared_ptr<MNN::Interpreter>(
+                MNN::Interpreter::createFromBuffer(buf, bytes));
+        if (m_mnn_interpreter == nullptr)
+        {
+            return 0;
+        }`
+	return load_(m_mnn_interpreter);
+    }
+
+    size_t MNNStream::load_(std::shared_ptr<MNN::Interpreter> interpreter)
+    {
+        // Initialize the interpreter
         // Schedule config
         m_schedule_config.numThread = (int) m_num_threads;
         MNN::BackendConfig backend_config;
-        backend_config.precision = MNN::BackendConfig::Precision_High;
-        m_schedule_config.backendConfig = &backend_config;
+        backend_config.precision = MNN::BackendConfig::Precision_Highackend_config;
         // Create session for reading model
-        m_mnn_session = m_mnn_interpreter->createSession(m_schedule_config);
+        m_mnn_session = interpreter->createSession(m_schedule_config);
         // Tensor input and input dims
-        m_input_tensor = m_mnn_interpreter->getSessionInput(m_mnn_session,
+        m_input_tensor = interpreter->getSessionInput(m_mnn_session,
                 nullptr);
         m_input_batch = m_input_tensor->batch();
         m_input_channel = m_input_tensor->channel();
@@ -57,16 +69,16 @@ namespace sgns
         {
             // caffe net type
             case MNN::Tensor::CAFFE:
-                m_mnn_interpreter->resizeTensor(m_input_tensor, {
+                interpreter->resizeTensor(m_input_tensor, {
                         m_input_channel, m_input_height, m_input_width });
-                m_mnn_interpreter->resizeSession(m_mnn_session);
+                interpreter->resizeSession(m_mnn_session);
                 break;
                 // Tensorflow net type
             case MNN::Tensor::TENSORFLOW:
-                m_mnn_interpreter->resizeTensor(m_input_tensor, {
+                interpreter->resizeTensor(m_input_tensor, {
                         m_input_batch, m_input_height, m_input_width,
                         m_input_channel });
-                m_mnn_interpreter->releaseSession(m_mnn_session);
+                interpreter->releaseSession(m_mnn_session);
                 break;
                 //C4HW4 as data format
             case MNN::Tensor::CAFFE_C4:
@@ -76,15 +88,16 @@ namespace sgns
                 break;
         }
         m_num_output =
-                m_mnn_interpreter->getSessionOutputAll(m_mnn_session).size();
-    } // End initialize()
+                interpreter->getSessionOutputAll(m_mnn_session).size();
 
-    std::string MNNLoader::get_info()
+	return m_num_output;
+    } // End load
+
+    std::string MNNStream::get_info()
     {
         std::ostringstream output;
         if (m_mnn_interpreter)
         {
-            output << "Log ID: " << m_log_id << std::endl;
             output << "==================INPUT-DIMS================"
                     << std::endl;
             if (m_input_tensor)
@@ -130,26 +143,4 @@ namespace sgns
 } // End sgns namespace
  
 
-// MNNParser.cpp
 
-// #include <iostream>
-// #include "FileManager.hpp"
-// #include "MNNParser.hpp"
-
-SINGLETON_PTR_INIT(MNNParser);
-
-MNNParser::MNNParser() {
-    FileManager::GetInstance().RegisterParser("mnn", this);
-}
-
-std::shared_ptr<void> MNNParser::ParseData(std::shared_ptr<void> data) {
-    const char *dummyValue = "Inside the MNNParser::ParseData Function";
-    std::cout << (char *)data.get() << " -> ";
-    // for this test, we don't need to delete the shared_ptr as the data is static, so pass null lambda delete function
-    return {(void *)dummyValue, [](void *) {}};
-
-    // TODO: Implement the logic to parse the file data.
-}
-
-
-#endif
