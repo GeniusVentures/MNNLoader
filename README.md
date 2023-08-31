@@ -14,7 +14,14 @@ Current file format support
 
 ## Build with Linux
 ```sh
-<TODO> Update this part
+git clone https://github.com/GeniusVentures/AsyncIOManager
+cd AsyncIOManager
+git checkout dev_ipfs_refactoring
+mkdir .build
+cd .build
+# <MNN_repository_root_directory> variable should point to the root directory of the MNN repository as its name implies
+cmake -DMNN_ROOT_DIR=<MNN_repository_root_directory> ..
+cmake --build .
 ```
 
 ## Build with Windows
