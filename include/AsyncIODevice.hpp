@@ -13,7 +13,7 @@ namespace sgns::io {
         virtual ~AsyncIODevice() {}
 
 	// open for input/output/bidirectional
-	virtual std::shared_ptr<IOStream> open(boost::asio::io_context io_context,
+	virtual std::shared_ptr<IOStream> open(boost::asio::io_context& io_context,
 			       const std::string& path, 
 			       const IOStream::StreamDirection& dir,
 			       const IOStream::StreamFlags& flags) = 0;

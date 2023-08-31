@@ -1,10 +1,10 @@
 #include <sstream>
+#include "../include/MNNStream.hpp"
 
 namespace sgns::io
 {
 
-    MNNStream::MNNStream(unsigned int num_thread) :
-             m_num_threads(num_thread)
+    MNNStream::MNNStream(unsigned int num_thread) : m_num_threads(num_thread)
     {
 
     } // End constructor MNNstream
@@ -43,7 +43,7 @@ namespace sgns::io
         if (m_mnn_interpreter == nullptr)
         {
             return 0;
-        }`
+        }
 	return load_(m_mnn_interpreter);
     }
 
@@ -53,7 +53,7 @@ namespace sgns::io
         // Schedule config
         m_schedule_config.numThread = (int) m_num_threads;
         MNN::BackendConfig backend_config;
-        backend_config.precision = MNN::BackendConfig::Precision_Highackend_config;
+        backend_config.precision = MNN::BackendConfig::Precision_High;
         // Create session for reading model
         m_mnn_session = interpreter->createSession(m_schedule_config);
         // Tensor input and input dims

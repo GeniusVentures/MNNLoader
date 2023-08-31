@@ -12,7 +12,7 @@ namespace sgns::io {
 
     }
 
-    std::shared_ptr<IOStream> AsyncFileDevice::open(AsioContext io_context,
+    std::shared_ptr<IOStream> AsyncFileDevice::open(AsioContext& io_context,
 		                                    const string& path,
 		                                    const IOStream::StreamDirection& dir,
 		                                    const IOStream::StreamFlags& flags) {

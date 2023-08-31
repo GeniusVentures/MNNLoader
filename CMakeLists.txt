@@ -57,14 +57,22 @@ include_directories(
 )
 
 if (NOT DEFINED MNN_ROOT_DIR)
+	message(WARNING "####MNN_ROOT_DIR is not defined. So ./MNN relative path will be used")
     set (MNN_ROOT_DIR "MNN")
 endif()
 
 set (MNN_INCLUDE_DIR "${MNN_ROOT_DIR}/include")
-set (MNN_LIB_DIR "${MNN_ROOT_DIR_}/build")
+set (MNN_LIB_DIR "${MNN_ROOT_DIR}/lib")
+
+# Print MNN specific variables for debug
+message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")
+message(STATUS "MNN_LIB_DIR: ${MNN_LIB_DIR}")
+
+
 # ----------------------BUILD EXTERNAL PROJECT------------------
 # Builds MNN
 message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")
+
 if (NOT DEFINED MNN_INCLUDE_DIR)
 	message(STATUS "Start building MNN library")
 	ExternalProject_Add(MNN
@@ -84,9 +92,8 @@ if (NOT DEFINED MNN_INCLUDE_DIR)
 	set(MNN_LIBRARY_DIR ${_FINDPACKAGE_MNN_LIBRARY_DIR})
 	set(NEED_BUILD_MNN TRUE)	
 endif()
+
 include_directories(${MNN_INCLUDE_DIR})
-message(STATUS "MNN_INCLUDE_DIR: ${MNN_INCLUDE_DIR}")
-message(STATUS "MNN_LIBRARY_DIR: ${MNN_LIBRARY_DIR}")
 
 # -------------- Include common function ----------------------------
 include (cmake/common.cmake)
@@ -111,6 +118,7 @@ endif()
 # Combine binary for execute example
 
 link_directories(${BUILD_FILELOADER_DIR}/lib)
+link_directories(${MNN_LIB_DIR})
 add_fileloader_executable("${TESTAPP}")
 
 # install example binary to bin

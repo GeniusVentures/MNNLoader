@@ -1,4 +1,4 @@
-function(add_fileloader_library version soversion)
+   function(add_fileloader_library version soversion)
    # 1. Glob header files
    file(GLOB FILELOADER_HEADER "${CMAKE_SOURCE_DIR}/include/*.hpp")
 
@@ -16,7 +16,7 @@ function(add_fileloader_library version soversion)
    ## 3. library
    # TODO: Add flag for build SHARED or STATIC library. Currently just default is static (GNUS is not using shared libraries)
    add_library(${FileLoader_LIB} OBJECT ${FILELOADER_SRCS})
-   target_link_libraries(${FileLoader_LIB} ${MNN_LIBS})
+   target_link_libraries(${FileLoader_LIB})
 
    message(STATUS "Installing FileLoader Headers ...")
    file(INSTALL ${FILELOADER_HEADER} DESTINATION ${BUILD_FILELOADER_DIR}/include)
@@ -27,5 +27,6 @@ endfunction()
 
 function(add_fileloader_executable executable_name)
     add_executable(${executable_name} ${executable_name}.cpp)
-    target_link_libraries(${executable_name} ${FileLoader_LIB} ${MNN_LIBS})
+    target_link_libraries(${executable_name} ${FileLoader_LIB})
+    target_link_libraries(${executable_name} MNN)
 endfunction()

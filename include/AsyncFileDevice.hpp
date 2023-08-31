@@ -19,8 +19,8 @@ namespace sgns::io {
 	AsyncFileDevice();
 	virtual ~AsyncFileDevice() {}
 
-        // open the device
-	std::shared_ptr<IOStream> open(AsioContext,
+    // open the device
+	std::shared_ptr<IOStream> open(AsioContext& io_context,
 		       const std::string& path, 
 		       const IOStream::StreamDirection& dir, 
 		       const IOStream::StreamFlags& flags) override;

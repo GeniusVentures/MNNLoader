@@ -11,6 +11,8 @@
 #include <MNN/Interpreter.hpp>
 #include <MNN/Tensor.hpp>
 
+#include "FileStream.hpp"
+
 namespace sgns::io
 {
 
@@ -34,8 +36,8 @@ namespace sgns::io
             size_t write(const char *buf, size_t bytes) override;
 
 	    // Async operations
-            void readAsync(char*, size_t bytes, OnGetCompleteCallback handler);
-            size_t writeAsync(char*, size_t bytes, OnWriteCompleteCallback handler);
+            // void readAsync(char*, size_t bytes, OnGetCompleteCallback handler);
+            // size_t writeAsync(char*, size_t bytes, OnWriteCompleteCallback handler);
 
             /**
              * Get information on the MNN file
@@ -63,7 +65,7 @@ namespace sgns::io
             MNNStream& operator=(const MNNStream&) = delete;
             MNNStream& operator=(MNNStream&&) = delete;
 
-	    size_t load_(std::shared_ptr<MNN::Interpreter> interpreter)
+	    size_t load_(std::shared_ptr<MNN::Interpreter> interpreter);
 
     };
 

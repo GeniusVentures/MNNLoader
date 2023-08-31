@@ -36,7 +36,8 @@ namespace sgns::io {
 
 	// Open the input device
         // flags if any
-        auto srcStream = srcDevice->open(async_channel_->getContext(),srcPath, StreamDirection::READ_ONLY, StreamFlags::NONE);
+        auto srcStream = srcDevice->open(*(async_channel_->getContext().get()), srcPath, StreamDirection::READ_ONLY, StreamFlags::NONE);
+
         if (srcStream == nullptr) {
             throw std::range_error("Src device open failed");
         }
@@ -76,7 +77,8 @@ namespace sgns::io {
         dstDevice = std::shared_ptr<AsyncIODevice>(it->second);
 
 	auto flags = StreamFlags::STREAM_APPEND;
-	auto dstStream = dstDevice->open(dstPath, StreamDirection::WRITE_ONLY, flags);
+
+	auto dstStream = dstDevice->open(*(async_channel_.get()->getContext().get()), dstPath, StreamDirection::WRITE_ONLY, flags);
         if (dstStream == nullptr) {
             throw std::range_error("Dest device open failed");
         }

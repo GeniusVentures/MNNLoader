@@ -19,4 +19,8 @@ namespace sgns::io {
 
     }
 
+    void MNNDevice::close() {
+
+    }
+
 }

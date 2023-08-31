@@ -16,6 +16,7 @@ namespace sgns::io {
 
     public:
 
+	FileStream() = default;
 	FileStream(const FileSource&);
 	FileStream(const FileSink&);
 	FileStream(std::shared_ptr<boost::asio::posix::stream_descriptor>);
