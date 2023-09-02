@@ -44,3 +44,8 @@ Debug/
 .cproject
 .project
 .settings/
+
+
+# Clion IDE
+.idea*
+cmake-build*
