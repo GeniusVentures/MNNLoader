@@ -10,6 +10,10 @@
 #include "FileLoader.hpp"
 #include "FileParser.hpp"
 #include "FileSaver.hpp"
+#include <future>
+#include<boost/asio.hpp>
+#include <boost/bind.hpp>
+
 
 /// \brief FileManager class handles all the registration of the file loaders, parsers and savers and proxies the basic
 ///         functionality to the registered handlers
@@ -41,6 +45,12 @@ class FileManager
         /// @param handlerSaver Handler class object that can save the data
         void RegisterSaver(const std::string &prefix,
                 FileSaver *handlerSaver);
+
+        /// @brief Async Load a file given a filePath and optional parse the data
+        /// @param url the full path and filename to load
+        /// @param parse bool on weather to parse the file or not
+        /// @return shared pointer to void * of the data loaded
+        shared_ptr<void> LoadASync(const std::string& url, bool parse = false);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load

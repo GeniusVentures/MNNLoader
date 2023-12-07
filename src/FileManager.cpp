@@ -19,6 +19,35 @@ void FileManager::RegisterSaver(const std::string &prefix,
     savers[prefix] = handlerSaver;
 }
 
+void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>& buffer) {
+
+
+}
+
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse)
+{
+    std::string prefix;
+    std::string filePath;
+    std::string suffix;
+
+    getURLComponents(url, prefix, filePath, suffix);
+#if 0
+    std::cout << "DEBUG: URL: " << url << " -prefix: " << prefix << " -filePath: " << filePath << " -suffix: " << suffix << std::endl;
+#endif
+
+    auto loaderIter = loaders.find(prefix);
+
+    if (loaderIter == loaders.end())
+    {
+        throw std::range_error("No loader registered for prefix " + prefix);
+    }
+    auto loader = loaderIter->second;
+    // double check pointer is to a FileLoader class
+    assert(dynamic_cast<FileLoader*>(loader));
+    shared_ptr<void> data = loader->LoadASync(filePath,parse);
+    return data;
+}
+
 shared_ptr<void> FileManager::LoadFile(const std::string &url, bool parse)
 {
     std::string prefix;

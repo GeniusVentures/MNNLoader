@@ -23,6 +23,48 @@ if (TESTING)
     find_package(GTest CONFIG REQUIRED)
 endif ()
 
+
+# BOOST VERSION TO USE
+set(BOOST_MAJOR_VERSION "1" CACHE STRING "Boost Major Version")
+set(BOOST_MINOR_VERSION "80" CACHE STRING "Boost Minor Version")
+set(BOOST_PATCH_VERSION "0" CACHE STRING "Boost Patch Version")
+# convenience settings
+set(BOOST_VERSION "${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}")
+set(BOOST_VERSION_3U "${BOOST_MAJOR_VERSION}_${BOOST_MINOR_VERSION}_${BOOST_PATCH_VERSION}")
+set(BOOST_VERSION_2U "${BOOST_MAJOR_VERSION}_${BOOST_MINOR_VERSION}")
+# --------------------------------------------------------
+# Set config of Boost project
+set(_BOOST_ROOT "${THIRDPARTY_BUILD_DIR}/boost/build/${CMAKE_SYSTEM_NAME}${ABI_SUBFOLDER_NAME}")
+set(Boost_LIB_DIR "${_BOOST_ROOT}/lib")
+set(Boost_INCLUDE_DIR "${_BOOST_ROOT}/include/boost-${BOOST_VERSION_2U}")
+set(Boost_DIR "${Boost_LIB_DIR}/cmake/Boost-${BOOST_VERSION}")
+set(boost_headers_DIR "${Boost_LIB_DIR}/cmake/boost_headers-${BOOST_VERSION}")
+set(boost_random_DIR "${Boost_LIB_DIR}/cmake/boost_random-${BOOST_VERSION}")
+set(boost_system_DIR "${Boost_LIB_DIR}/cmake/boost_system-${BOOST_VERSION}")
+set(boost_filesystem_DIR "${Boost_LIB_DIR}/cmake/boost_filesystem-${BOOST_VERSION}")
+set(boost_program_options_DIR "${Boost_LIB_DIR}/cmake/boost_program_options-${BOOST_VERSION}")
+set(boost_date_time_DIR "${Boost_LIB_DIR}/cmake/boost_date_time-${BOOST_VERSION}")
+set(boost_regex_DIR "${Boost_LIB_DIR}/cmake/boost_regex-${BOOST_VERSION}")
+set(boost_atomic_DIR "${Boost_LIB_DIR}/cmake/boost_atomic-${BOOST_VERSION}")
+set(boost_chrono_DIR "${Boost_LIB_DIR}/cmake/boost_chrono-${BOOST_VERSION}")
+set(boost_log_DIR "${Boost_LIB_DIR}/cmake/boost_log-${BOOST_VERSION}")
+set(boost_log_setup_DIR "${Boost_LIB_DIR}/cmake/boost_log_setup-${BOOST_VERSION}")
+set(boost_thread_DIR "${Boost_LIB_DIR}/cmake/boost_thread-${BOOST_VERSION}")
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_NO_SYSTEM_PATHS ON)
+option(Boost_USE_STATIC_RUNTIME "Use static runtimes" ON)
+
+option (SGNS_STACKTRACE_BACKTRACE "Use BOOST_STACKTRACE_USE_BACKTRACE in stacktraces, for POSIX" OFF)
+if (SGNS_STACKTRACE_BACKTRACE)
+	add_definitions(-DSGNS_STACKTRACE_BACKTRACE=1)
+	if (BACKTRACE_INCLUDE)
+		add_definitions(-DBOOST_STACKTRACE_BACKTRACE_INCLUDE_FILE=${BACKTRACE_INCLUDE})
+	endif()
+endif ()
+# header only libraries must not be added here
+find_package(Boost REQUIRED COMPONENTS date_time filesystem random regex system thread log log_setup program_options)
+include_directories(${Boost_INCLUDE_DIRS})
 # ---------------------------
 # Set default variable
 # FileLoader defines the version

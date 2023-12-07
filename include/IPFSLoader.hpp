@@ -14,6 +14,7 @@ public:
     /// @param filename URL prefix encoded filename, i.e. https://filename.html, ipfs://filename.mnn
     /// @return a void pointer to the data associated with loading the file into memory
     virtual std::shared_ptr<void> LoadFile(std::string filename) override;
+    virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse) override;
 
 };
 

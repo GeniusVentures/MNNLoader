@@ -15,4 +15,11 @@ std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {
     return {(void *)dummyValue, [](void *) {} };
     /* TODO: scorpioluck20 - Need to implement this. How we load file base on format file?*/
 }
+std::shared_ptr<void> IPFSLoader::LoadASync(std::string filename, bool parse)
+{
+    const char* dummyValue = "Inside the IPFSLoader::LoadFile Function";
+    // for this test, we don't need to delete the shared_ptr as the data is static, so pass null lambda delete function
+    return { (void*)dummyValue, [](void*) {} };
+    /* TODO: scorpioluck20 - Need to implement this. How we load file base on format file?*/
+}
 

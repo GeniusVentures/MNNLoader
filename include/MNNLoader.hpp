@@ -24,13 +24,14 @@ namespace sgns
         SINGLETON_PTR (MNNLoader);
         public:
 
-            /**
+            /**ok
              * Load Data on the MNN file
              * @param filename - MNN file part
              * @return Interpreter of MNN file
              *
              */
             std::shared_ptr<void> LoadFile(std::string filename) override;
+            std::shared_ptr<void> LoadASync(std::string filename,bool parse) override;
         protected:
 
     };
