@@ -5,6 +5,11 @@
 
 #include "FileLoader.hpp"
 #include "Singleton.hpp"
+#include "ipfs_lite/ipfs/impl/ipfs_block_service.hpp"
+#include "libp2p/multi/multihash.hpp"
+#include "ipfs_lite/ipfs/impl/datastore_rocksdb.hpp"
+#include "common/hexutil.hpp"
+#include "common/blob.hpp"
 
 /// @brief class to handle "ipfs://" prefix in a filename to load from ipfs
 class IPFSLoader : public FileLoader {

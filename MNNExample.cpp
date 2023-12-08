@@ -7,6 +7,7 @@
 #include "URLStringUtil.h"
 #include <vector>
 
+
 /**
  * This program is example to loading MNN model file
  */
@@ -84,9 +85,7 @@ int main(int argc, char **argv)
     {
 
         //boost::asio::io_context ioc;
-
         //auto work = make_work_guard(ioc);
-
         //boost::asio::stream_file file(ioc, file_names[i], boost::asio::stream_file::flags::read_only);
         //std::vector<char> buffer(file.size());
         //boost::asio::async_read(file, 
@@ -97,8 +96,12 @@ int main(int argc, char **argv)
         //    });
         //work.reset();
         //ioc.run();
+
+        //std::cout << "LoadFile: " << file_names[i] << std::endl;
+        //auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
         std::cout << "LoadFile: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
+        auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
+
         //std::cout << "LoadFile with Parse: " << file_names[i] << std::endl;
         //data = FileManager::GetInstance().LoadFile(file_names[i], true);
         //std::cout << "ParseFile: " << std::endl;

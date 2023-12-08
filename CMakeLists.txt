@@ -41,11 +41,24 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 # --------------------------------------------------------
+# Set config of Microsoft.GSL
+set(GSL_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/Microsoft.GSL/include")
+include_directories(${GSL_INCLUDE_DIR})
+
+# --------------------------------------------------------
 # Set config of fmt
 set(fmt_DIR "${THIRDPARTY_BUILD_DIR}/fmt/lib/cmake/fmt")
 set(fmt_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/fmt/include")
 find_package(fmt CONFIG REQUIRED)
 include_directories(${fmt_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of spdlog v1.4.2
+set(spdlog_DIR "${THIRDPARTY_BUILD_DIR}/spdlog/lib/cmake/spdlog")
+set(spdlog_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/spdlog/include")
+find_package(spdlog CONFIG REQUIRED)
+include_directories(${spdlog_INCLUDE_DIR})
+add_compile_definitions("SPDLOG_FMT_EXTERNAL")
 
 # --------------------------------------------------------
 # Set config of rocksdb
