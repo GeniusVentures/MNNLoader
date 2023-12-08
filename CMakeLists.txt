@@ -23,6 +23,64 @@ if (TESTING)
     find_package(GTest CONFIG REQUIRED)
 endif ()
 
+# TODO: Check grpc install on Windows
+set(Protobuf_DIR  "${THIRDPARTY_BUILD_DIR}/grpc/cmake")
+set(Protobuf_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/grpc/include/google/protobuf")
+
+# --------------------------------------------------------
+# Set config of openssl project
+set(OPENSSL_DIR "${THIRDPARTY_BUILD_DIR}/openssl/build/${CMAKE_SYSTEM_NAME}${ABI_SUBFOLDER_NAME}" CACHE PATH "Path to OpenSSL install folder")
+set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "OpenSSL use static libs")
+set(OPENSSL_MSVC_STATIC_RT ON CACHE BOOL "OpenSSL use static RT")
+set(OPENSSL_ROOT_DIR "${OPENSSL_DIR}" CACHE PATH "Path to OpenSSL install root folder")
+set(OPENSSL_INCLUDE_DIR "${OPENSSL_DIR}/include" CACHE PATH "Path to OpenSSL include folder")
+set(OPENSSL_LIBRARIES "${OPENSSL_DIR}/lib" CACHE PATH "Path to OpenSSL lib folder")
+set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_LIBRARIES}/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX} CACHE PATH "Path to OpenSSL crypto lib")
+set(OPENSSL_SSL_LIBRARY ${OPENSSL_LIBRARIES}/libssl${CMAKE_STATIC_LIBRARY_SUFFIX} CACHE PATH "Path to OpenSSL ssl lib")
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of fmt
+set(fmt_DIR "${THIRDPARTY_BUILD_DIR}/fmt/lib/cmake/fmt")
+set(fmt_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/fmt/include")
+find_package(fmt CONFIG REQUIRED)
+include_directories(${fmt_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of rocksdb
+set(RocksDB_DIR "${THIRDPARTY_BUILD_DIR}/rocksdb/lib/cmake/rocksdb")
+set(RocksDB_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/rocksdb/include")
+find_package(RocksDB CONFIG REQUIRED)
+include_directories(${RocksDB_INCLUDE_DIR})
+# --------------------------------------------------------
+
+# --------------------------------------------------------
+# Set config of soralog
+set(soralog_DIR "${THIRDPARTY_BUILD_DIR}/soralog/lib/cmake/soralog")
+set(soralog_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/soralog/include")
+find_package(soralog CONFIG REQUIRED)
+include_directories(${soralog_INCLUDE_DIR})
+
+# Set config of yaml-cpp
+set(yaml-cpp_DIR "${THIRDPARTY_BUILD_DIR}/yaml-cpp/lib/cmake/yaml-cpp")
+set(yaml-cpp_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/yaml-cpp/include")
+find_package(yaml-cpp CONFIG REQUIRED)
+include_directories(${yaml-cpp_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of  tsl_hat_trie
+set(tsl_hat_trie_DIR "${THIRDPARTY_BUILD_DIR}/tsl_hat_trie/lib/cmake/tsl_hat_trie")
+set(tsl_hat_trie_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/tsl_hat_trie/include")
+find_package(tsl_hat_trie CONFIG REQUIRED)
+include_directories(${tsl_hat_trie_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of Boost.DI
+set(Boost.DI_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/Boost.DI/include")
+set(Boost.DI_DIR "${THIRDPARTY_BUILD_DIR}/Boost.DI/lib/cmake/Boost.DI")
+find_package(Boost.DI CONFIG REQUIRED)
+include_directories(${Boost.DI_INCLUDE_DIR})
 
 # BOOST VERSION TO USE
 set(BOOST_MAJOR_VERSION "1" CACHE STRING "Boost Major Version")
@@ -65,6 +123,77 @@ endif ()
 # header only libraries must not be added here
 find_package(Boost REQUIRED COMPONENTS date_time filesystem random regex system thread log log_setup program_options)
 include_directories(${Boost_INCLUDE_DIRS})
+
+# --------------------------------------------------------
+# Set config of SQLiteModernCpp project
+set(SQLiteModernCpp_ROOT_DIR "${THIRDPARTY_BUILD_DIR}/SQLiteModernCpp")
+set(SQLiteModernCpp_DIR "${SQLiteModernCpp_ROOT_DIR}/lib/cmake/SQLiteModernCpp")
+set(SQLiteModernCpp_LIB_DIR "${SQLiteModernCpp_ROOT_DIR}/lib")
+set(SQLiteModernCpp_INCLUDE_DIR "${SQLiteModernCpp_ROOT_DIR}/include")
+
+# --------------------------------------------------------
+# Set config of SQLiteModernCpp project
+set(sqlite3_ROOT_DIR "${THIRDPARTY_BUILD_DIR}/sqlite3")
+set(sqlite3_DIR "${sqlite3_ROOT_DIR}/lib/cmake/sqlite3")
+set(sqlite3_LIB_DIR "${sqlite3_ROOT_DIR}/lib")
+set(sqlite3_INCLUDE_DIR "${sqlite3_ROOT_DIR}/include")
+
+# --------------------------------------------------------
+# Set config of cares
+set(c-ares_DIR "${THIRDPARTY_BUILD_DIR}/cares/lib/cmake/c-ares" CACHE PATH "Path to c-ares install folder")
+set(c-ares_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/cares/include" CACHE PATH "Path to c-ares include folder")
+
+# --------------------------------------------------------
+# Set config of libp2p
+set(libp2p_DIR "${THIRDPARTY_BUILD_DIR}/libp2p/lib/cmake/libp2p")
+set(libp2p_LIBRARY_DIR "${THIRDPARTY_BUILD_DIR}/libp2p/lib")
+set(libp2p_INCLUDE_DIR    "${THIRDPARTY_BUILD_DIR}/libp2p/include")
+find_package(libp2p CONFIG REQUIRED)
+include_directories(${libp2p_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Find and include cares if libp2p have not included it
+if (NOT TARGET c-ares::cares_static)
+  find_package(c-ares CONFIG REQUIRED)
+endif()
+include_directories(${c-ares_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of ipfs-lite-cpp
+set(ipfs-lite-cpp_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-lite-cpp/cmake/ipfs-lite-cpp")
+set(ipfs-lite-cpp_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-lite-cpp/include")
+set(ipfs-lite-cpp_LIB_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-lite-cpp/lib")
+set(CBOR_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-lite-cpp/include/deps/tinycbor/src")
+find_package(ipfs-lite-cpp CONFIG REQUIRED)
+include_directories(${ipfs-lite-cpp_INCLUDE_DIR} ${CBOR_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of ipfs-pubsub
+set(ipfs-pubsub_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-pubsub/include")
+set(ipfs-pubsub_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-pubsub/lib/cmake/ipfs-pubsub")
+find_package(ipfs-pubsub CONFIG REQUIRED)
+include_directories(${ipfs-pubsub_INCLUDE_DIR})
+
+# --------------------------------------------------------
+# Set config of ipfs-bitswap-cpp
+set(ipfs-bitswap-cpp_INCLUDE_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-bitswap-cpp/include")
+set(ipfs-bitswap-cpp_DIR "${THIRDPARTY_BUILD_DIR}/ipfs-bitswap-cpp/lib/cmake/ipfs-bitswap-cpp")
+find_package(ipfs-bitswap-cpp CONFIG REQUIRED)
+include_directories(${ipfs-bitswap-cpp_INCLUDE_DIR})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ---------------------------
 # Set default variable
 # FileLoader defines the version
