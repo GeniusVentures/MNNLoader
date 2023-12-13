@@ -1,0 +1,5 @@
+#add_subdirectory(application)
+FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
+add_executable(MNNExample MNNExample.cpp)
+include_directories(${CMAKE_BINARY_DIR}/FileLoader/include)
+target_link_libraries(MNNExample fileloader)
