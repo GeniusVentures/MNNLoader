@@ -17,5 +17,6 @@ public:
     virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse) override;
 
 };
+
 #endif
 
