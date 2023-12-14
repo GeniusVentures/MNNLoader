@@ -11,6 +11,7 @@ namespace sgns
     SINGLETON_PTR_INIT(MNNLoader);
     MNNLoader::MNNLoader()
     {
+        std::cout << "addmnn" << std::endl;
         FileManager::GetInstance().RegisterLoader("file", this);
     }
 

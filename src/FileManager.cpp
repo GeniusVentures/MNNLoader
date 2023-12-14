@@ -1,9 +1,10 @@
 #include "FileManager.hpp"
 #include "URLStringUtil.h"
 
+
 void FileManager::RegisterLoader(const std::string &prefix,
         FileLoader *handlerLoader)
-{
+{   
     loaders[prefix] = handlerLoader;
 }
 
@@ -58,14 +59,11 @@ shared_ptr<void> FileManager::LoadFile(const std::string &url, bool parse)
 #if 0
     std::cout << "DEBUG: URL: " << url << " -prefix: " << prefix << " -filePath: " << filePath << " -suffix: " << suffix << std::endl;
 #endif
-
     auto loaderIter = loaders.find(prefix);
-
     if (loaderIter == loaders.end())
     {
         throw std::range_error("No loader registered for prefix " + prefix);
     }
-
     auto loader = loaderIter->second;
     // double check pointer is to a FileLoader class
     assert(dynamic_cast<FileLoader*>(loader));

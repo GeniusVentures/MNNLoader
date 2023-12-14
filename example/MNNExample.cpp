@@ -2,8 +2,10 @@
 //#define BOOST_ASIO_DISABLE_EPOLL 0 //Maybe linux?
 #include <iostream>
 #include <string>
-#include "MNNLoader.hpp"
+#include <Singleton.hpp>
 #include "FileManager.hpp"
+#include <MNNLoader.hpp>
+#include <IPFSLoader.hpp>
 #include "URLStringUtil.h"
 #include <vector>
 
@@ -74,6 +76,8 @@ int main(int argc, char **argv)
     //cout << "urlPrefix: " << url_prefix << endl;
     //cout << "filePath: " << file_path << endl;
     //cout << "extension: " << extension << endl;
+    std::cout << "hmm" << std::endl;
+
 
     // test plugins
     if (file_name.empty())
@@ -99,8 +103,8 @@ int main(int argc, char **argv)
 
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
         //auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
-        //std::cout << "LoadFile: " << file_names[i] << std::endl;
-        //auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
+        std::cout << "LoadFile: " << file_names[i] << std::endl;
+        auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
 
         //std::cout << "LoadFile with Parse: " << file_names[i] << std::endl;
         //data = FileManager::GetInstance().LoadFile(file_names[i], true);

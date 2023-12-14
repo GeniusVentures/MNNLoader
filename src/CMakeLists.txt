@@ -16,6 +16,7 @@ target_link_libraries(fileloader ${MNN_LIBRARY_DIR}/MNN.lib OpenSSL::SSL OpenSSL
 	p2p::p2p_gossip
 	ipfs-lite-cpp::cbor
 	ipfs-lite-cpp::graphsync
+	ipfs-lite-cpp::ipld_node
 	spdlog::spdlog
     Boost::date_time
     Boost::regex

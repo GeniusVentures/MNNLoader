@@ -13,6 +13,8 @@
 #include <boost/asio.hpp>
 #include <libp2p/host/host.hpp>
 #include <ipfs_lite/ipfs/graphsync/graphsync.hpp>
+#include "common/logger.hpp"
+#include <libp2p/log/configurator.hpp>
 
 /// @brief class to handle "ipfs://" prefix in a filename to load from ipfs
 class IPFSLoader : public FileLoader {
@@ -25,6 +27,7 @@ public:
     virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse) override;
 
 };
+
 namespace sgns::ipfs_lite::ipfs::graphsync::test {
 
     /// runs event loop for max_milliseconds or until SIGINT or SIGTERM
@@ -223,8 +226,8 @@ namespace sgns::ipfs_lite::ipfs::graphsync::test {
         bool started_ = false;
     };
 
-    size_t Node::requests_sent = 0;
-    size_t Node::responses_received = 0;
+    //size_t Node::requests_sent = 0;
+    //size_t Node::responses_received = 0;
 
     // Context for more complex cases
     struct NodeParams {
