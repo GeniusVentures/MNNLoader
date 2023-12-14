@@ -21,6 +21,7 @@ target_link_libraries(fileloader ${MNN_LIBRARY_DIR}/MNN.lib OpenSSL::SSL OpenSSL
     Boost::regex
 	crypt32)
 #target_link_libraries( ${Boost_LIBRARIES})
-file(INSTALL ${FILELOADER_HEADER} DESTINATION ${CMAKE_BINARY_DIR}/FileLoader/include)
-include_directories(${CMAKE_BINARY_DIR}/FileLoader/include )
+#file(INSTALL ${FILELOADER_HEADER} DESTINATION ${CMAKE_BINARY_DIR}/FileLoader/include)
+#include_directories(${CMAKE_BINARY_DIR}/FileLoader/include )
+include_directories(../include )
 #link_directories(${CMAKE_BINARY_DIR}/FileLoader/lib)
