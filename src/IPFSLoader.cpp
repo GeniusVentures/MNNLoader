@@ -1,15 +1,8 @@
 // IPFSLoader.cpp
 
-#include "FileManager.hpp"
-#include "IPFSLoader.hpp"
-#include <boost/di/extension/scopes/shared.hpp>
-//#include <boost/asio/ssl/context.hpp>
-#include <libp2p/injector/host_injector.hpp>
-#include <libp2p/protocol/common/asio/asio_scheduler.hpp>
-#include <ipfs_lite/ipfs/graphsync/impl/graphsync_impl.hpp>
-#include <ipfs_lite/ipld/impl/ipld_node_impl.hpp>
-#include <codec/cbor/cbor.hpp>
-#include <boost/optional/optional_io.hpp>
+#include <FileManager.hpp>
+#include <IPFSLoader.hpp>
+#include <IPFSCommon.hpp>
 
 const std::string logger_config(R"(
 # ----------------
@@ -28,8 +21,8 @@ groups:
 
 SINGLETON_PTR_INIT(IPFSLoader);
 static size_t run_time_msec = 0;
-size_t sgns::ipfs_lite::ipfs::graphsync::test::Node::requests_sent = 0;
-size_t sgns::ipfs_lite::ipfs::graphsync::test::Node::responses_received = 0;
+size_t ipfsloader::common::Node::requests_sent = 0;
+size_t ipfsloader::common::Node::responses_received = 0;
 IPFSLoader::IPFSLoader() {
     FileManager::GetInstance().RegisterLoader("ipfs", this);
 }
@@ -75,8 +68,8 @@ std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {
     std::vector<std::string> strings({ "xxx", "yyy", "zzz" });
     size_t unexpected = 0;
 
-    auto server_data = std::make_shared<sgns::ipfs_lite::ipfs::graphsync::test::TestDataService>();
-    auto client_data = std::make_shared<sgns::ipfs_lite::ipfs::graphsync::test::TestDataService>();
+    auto server_data = std::make_shared<ipfsloader::common::TestDataService>();
+    auto client_data = std::make_shared<ipfsloader::common::TestDataService>();
     auto server_cb = [&unexpected](sgns::CID, sgns::common::Buffer) { std::cout << "server data" << std::endl; };
     auto client_cb = [&client_data, &unexpected](sgns::CID cid, sgns::common::Buffer data) {
         std::cout << "data:" << data << std::endl;
@@ -88,8 +81,8 @@ std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {
         client_data->addExpected(s);
     }
 
-    sgns::ipfs_lite::ipfs::graphsync::test::Node server(io, server_data, server_cb, 0);
-    sgns::ipfs_lite::ipfs::graphsync::test::Node client(io, client_data, client_cb, 3);
+    ipfsloader::common::Node server(io, server_data, server_cb, 0);
+    ipfsloader::common::Node client(io, client_data, client_cb, 3);
 
     std::shared_ptr<sgns::ipfs_lite::ipfs::IpfsBlockService> block_service;
     sgns::CID test{
@@ -116,7 +109,7 @@ std::shared_ptr<void> IPFSLoader::LoadFile(std::string filename) {
             use_address = false;
         }
         });
-    sgns::ipfs_lite::ipfs::graphsync::test::runEventLoop(io, run_time_msec);
+    ipfsloader::common::runEventLoop(io, run_time_msec);
     client.stop();
     server.stop();
 
@@ -139,70 +132,3 @@ std::shared_ptr<void> IPFSLoader::LoadASync(std::string filename, bool parse)
 
 
 
-namespace sgns::ipfs_lite::ipfs::graphsync::test {
-    void runEventLoop(const std::shared_ptr<boost::asio::io_context>& io,
-        size_t max_milliseconds) {
-        boost::asio::signal_set signals(*io, SIGINT, SIGTERM);
-
-        // io->run() can exit if we're not waiting for anything
-        signals.async_wait(
-            [&io](const boost::system::error_code&, int) { io->stop(); });
-
-        if (max_milliseconds > 0) {
-            io->run_for(std::chrono::milliseconds(max_milliseconds));
-        }
-        else {
-            io->run();
-        }
-    }
-
-    std::pair<std::shared_ptr<Graphsync>, std::shared_ptr<libp2p::Host>>
-        createNodeObjects(std::shared_ptr<boost::asio::io_context> io) {
-
-        // [boost::di::override] allows for creating multiple hosts for testing
-        // purposes
-        auto injector =
-            libp2p::injector::makeHostInjector<boost::di::extension::shared_config>(
-                boost::di::bind<boost::asio::io_context>.to(
-                    io)[boost::di::override]);
-
-        std::pair<std::shared_ptr<Graphsync>, std::shared_ptr<libp2p::Host>>
-            objects;
-        objects.second = injector.template create<std::shared_ptr<libp2p::Host>>();
-        auto scheduler = std::make_shared<libp2p::protocol::AsioScheduler>(
-            io, libp2p::protocol::SchedulerConfig{});
-        objects.first =
-            std::make_shared<GraphsyncImpl>(objects.second, std::move(scheduler));
-        return objects;
-    }
-
-    bool TestDataService::onDataBlock(CID cid, common::Buffer data) {
-        bool expected = false;
-        auto it = expected_.find(cid);
-        if (it != expected_.end() && it->second == data) {
-            expected = (received_.count(cid) == 0);
-        }
-        received_[cid] = std::move(data);
-        return expected;
-    }
-
-    void TestDataService::insertNode(TestDataService::Storage& dst,
-        const std::string& data_str) {
-        using NodeImpl = sgns::ipfs_lite::ipld::IPLDNodeImpl;
-        auto node = NodeImpl::createFromString(data_str);
-        dst[node->getCID()] = node->getRawBytes();
-    }
-
-    outcome::result<size_t> TestDataService::select(
-        const CID& cid,
-        gsl::span<const uint8_t> selector,
-        std::function<bool(const CID& cid, const common::Buffer& data)> handler)
-        const {
-        auto it = data_.find(cid);
-        if (it != data_.end()) {
-            handler(it->first, it->second);
-            return 1;
-        }
-        return 0;
-    }
-}  // namespace sgns::ipfs_lite::ipfs::graphsync::test
