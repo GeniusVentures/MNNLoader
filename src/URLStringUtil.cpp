@@ -23,4 +23,15 @@ extern void getURLComponents(std::string url, std::string &prefix, std::string& 
     }
 }
 
+extern void parseHTTPUrl(std::string url, std::string& host, std::string& path)
+{
+    // Find the first occurrence of "/" in the URL.
+    size_t index = url.find("/");
+    // If "/" is not found, then the URL has no prefix.
+    if (index == std::string::npos) {
+        throw std::invalid_argument("url");
+    }
+    host = url.substr(0, index);
+    path = url.substr(index, url.length());
+}
 

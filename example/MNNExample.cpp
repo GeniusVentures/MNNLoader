@@ -2,12 +2,14 @@
 //#define BOOST_ASIO_DISABLE_EPOLL 0 //Maybe linux?
 #include <iostream>
 #include <string>
-#include <Singleton.hpp>
-#include "FileManager.hpp"
-#include <MNNLoader.hpp>
-#include <IPFSLoader.hpp>
-#include "URLStringUtil.h"
 #include <vector>
+#include "Singleton.hpp"
+#include "FileManager.hpp"
+#include "MNNLoader.hpp"
+#include "IPFSLoader.hpp"
+#include "HTTPLoader.hpp"
+#include "URLStringUtil.h"
+
 
 
 /**
@@ -55,14 +57,19 @@ int main(int argc, char **argv)
     std::string url_prefix;
     std::string file_path;
     std::string extension;
+    std::string http_host;
+    std::string http_path;
 
-   // getURLComponents(
-    //        "https://www.example.com/what is this and who cares about the extension anyway?dum='.jpg'",
-    //        url_prefix, file_path, extension);
-    // Print the results.
-   // cout << "urlPrefix: " << url_prefix << endl;
-   // cout << "filePath: " << file_path << endl;
+    getURLComponents(
+            "https://www.example.com/test.jpg",
+            url_prefix, file_path, extension);
+     //Print the results.
+    //cout << "urlPrefix: " << url_prefix << endl;
+    //cout << "filePath: " << file_path << endl;
     //cout << "extension: " << extension << endl;
+    //parseHTTPUrl(file_path, http_host, http_path);
+    //std::cout << "http host:" << http_host << std::endl;
+    //std::cout << "http path:" << http_path << std::endl;
 
    // getURLComponents("file://./test.mnn", url_prefix, file_path, extension);
     // Print the results.
@@ -101,10 +108,10 @@ int main(int argc, char **argv)
         //work.reset();
         //ioc.run();
 
+        std::cout << "LoadASync: " << file_names[i] << std::endl;
+        auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
-        //auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
-        std::cout << "LoadFile: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
+        //auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
 
         //std::cout << "LoadFile with Parse: " << file_names[i] << std::endl;
         //data = FileManager::GetInstance().LoadFile(file_names[i], true);
