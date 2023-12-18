@@ -35,16 +35,16 @@ namespace ipfsloader::common {
     }
 
     // MerkleDAG bridge interface for test purposes
-    class TestDataService : public MerkleDagBridge {
+    class DataService : public MerkleDagBridge {
     public:
         using Storage = std::map<CID, sgns::common::Buffer>;
 
-        TestDataService& addData(const std::string& s) {
+        DataService& addData(const std::string& s) {
             insertNode(data_, s);
             return *this;
         }
 
-        TestDataService& addExpected(const std::string& s) {
+        DataService& addExpected(const std::string& s) {
             insertNode(expected_, s);
             return *this;
         }
@@ -226,7 +226,7 @@ namespace ipfsloader::common {
         boost::optional<libp2p::multi::Multiaddress> listen_to;
 
         // MerkleDAG stub for node
-        std::shared_ptr<TestDataService> data_service;
+        std::shared_ptr<DataService> data_service;
 
         // Strings to make blocks and CIDs from them
         std::vector<std::string> strings;

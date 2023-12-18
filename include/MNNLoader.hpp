@@ -31,7 +31,7 @@ namespace sgns
              *
              */
             std::shared_ptr<void> LoadFile(std::string filename) override;
-            std::shared_ptr<void> LoadASync(std::string filename,bool parse) override;
+            std::shared_ptr<void> LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc) override;
         protected:
 
     };

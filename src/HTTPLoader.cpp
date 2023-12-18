@@ -7,7 +7,6 @@
 #include "FileManager.hpp"
 #include "HTTPLoader.hpp"
 #include "boost/asio/ssl.hpp"
-//#include "httplib.h"
 #include "URLStringUtil.h"
 
 
@@ -47,7 +46,7 @@ namespace sgns
         }
     }
 
-    void handle_head(const boost::system::error_code& error, std::shared_ptr<std::string> headers, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path) {
+    void handle_head(std::shared_ptr<boost::asio::io_context> ioc, const boost::system::error_code& error, std::shared_ptr<std::string> headers, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path) {
         if (!error) {
             // Find the Content-Length header to determine the file size
             std::size_t content_length_pos = headers->find("Content-Length:");
@@ -67,7 +66,8 @@ namespace sgns
                 // Issue a GET request to retrieve the file content
                 std::string get_request = "GET " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
                 std::cout << "REQUEST--------------------" << get_request << std::endl;
-                boost::asio::async_write(socket, boost::asio::buffer(get_request), [buffer, &socket, host, path](const boost::system::error_code& write_error, std::size_t) {
+                boost::asio::async_write(socket, boost::asio::buffer(get_request), [ioc, buffer, &socket, host, path](const boost::system::error_code& write_error, std::size_t) {
+                    std::cout << "getreq" << std::endl;
                     if (!write_error) {
                         // Start the asynchronous download
                         boost::asio::async_read(socket, boost::asio::buffer(*buffer), [buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
@@ -88,16 +88,18 @@ namespace sgns
         }
     }
 
-    void start_async_download(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path, std::shared_ptr<std::string> headers) {
+    void start_async_download(std::shared_ptr<boost::asio::io_context> ioc, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path, std::shared_ptr<std::string> headers) {
         // Create an HTTP HEAD request to retrieve headers and determine the file size
+        std::cout << "start async" << std::endl;
         std::string request = "HEAD " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: keep - alive\r\n\r\n";
 
         // Start the asynchronous write of the HTTP request
-        boost::asio::async_write(socket, boost::asio::buffer(request), [headers, &socket, host, path](const boost::system::error_code& write_error, std::size_t) {
+        boost::asio::async_write(socket, boost::asio::buffer(request), [ioc, headers, &socket, host, path](const boost::system::error_code& write_error, std::size_t) {
+            std::cout << "headreq" << std::endl;
             if (!write_error) {
                 // Start the asynchronous read of the response headers
-                boost::asio::async_read_until(socket, boost::asio::dynamic_buffer(*headers), "\r\n\r\n", [headers, &socket, host, path](const boost::system::error_code& read_error, std::size_t) {
-                    handle_head(read_error, headers, socket, host, path);
+                boost::asio::async_read_until(socket, boost::asio::dynamic_buffer(*headers), "\r\n\r\n", [ioc, headers, &socket, host, path](const boost::system::error_code& read_error, std::size_t) {
+                    handle_head(ioc, read_error, headers, socket, host, path);
                     });
             }
             else {
@@ -107,11 +109,11 @@ namespace sgns
     }
 
 
-    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse)
+    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
     {
         //Create ASIO Context
-        boost::asio::io_context ioc;
-        auto work = make_work_guard(ioc);
+        //boost::asio::io_context ioc;
+        //auto work = make_work_guard(ioc);
 
             //Parse hostname and path
         std::string http_host;
@@ -119,36 +121,44 @@ namespace sgns
         parseHTTPUrl(filename,http_host,http_path);
 
             //Get DNS result for hostname
-        boost::asio::ip::tcp::resolver resolver(ioc);
+        boost::asio::ip::tcp::resolver resolver(*ioc);
         boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(http_host, "https");
         //for (const auto& endpoint : results) {
         //    std::cout << "Resolved endpoint: " << endpoint.endpoint() << std::endl;
         //}
         boost::asio::ip::tcp::endpoint endpoint = *results.begin();
             //Create SSL Context
-        boost::asio::ssl::context ssl_context = create_ssl_context();
-        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket(ioc, ssl_context);
+        //boost::asio::ssl::context ssl_context = create_ssl_context();
+
+        auto ssl_context = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
+        ssl_context->set_default_verify_paths();
+        //boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket(*ioc, ssl_context);
+        auto socket = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(*ioc, *ssl_context);
 
             //Connect socket
-        socket.lowest_layer().connect(endpoint);
+        socket->lowest_layer().connect(endpoint);
 
-        socket.async_handshake(boost::asio::ssl::stream_base::client, [&](const boost::system::error_code& handshake_error) {
+        socket->async_handshake(boost::asio::ssl::stream_base::client, [ioc, socket, ssl_context, http_host, http_path](const boost::system::error_code& handshake_error) {
+            std::cout << "handshake" << std::endl;
             if (!handshake_error) {
                 // Create a shared pointer to a string buffer for the response headers
                 auto headers = std::make_shared<std::string>();
-
+               
                 // Start the asynchronous download for a specific path
-                start_async_download(socket, http_host, http_path, headers);
-
+                start_async_download(ioc, *socket, http_host, http_path, headers);
+                std::cout << "inhere" << std::endl;
                 // Run the IO service to start asynchronous operations
-                ioc.run();
+                //work.reset();
+                //ioc.run();
             }
             else {
                 std::cerr << "Handshake error: " << handshake_error.message() << std::endl;
             }
             });
-        work.reset();
-        ioc.run();
+
+        //work.reset();
+        //ioc.run();
+        std::cout << "return?" << std::endl;
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }

@@ -46,24 +46,27 @@ namespace sgns
         }
         return true;
     }
-    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse)
+    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,std::shared_ptr<boost::asio::io_context> ioc)
     {
         //Create ASIO Context
-        boost::asio::io_context ioc;
-        auto work = make_work_guard(ioc);
+        //boost::asio::io_context ioc;
+        //auto work = make_work_guard(ioc);
         //Define Streamed Files
-        boost::asio::stream_file file(ioc, filename, boost::asio::stream_file::flags::read_only);
+        //boost::asio::stream_file file(*ioc, filename, boost::asio::stream_file::flags::read_only);
+        auto file = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::read_only);
         //Make a Buffer
-        std::vector<char> buffer(file.size());
+        //std::vector<char> buffer(file.size());
+        std::size_t file_size = file->size();
+        auto buffer = std::make_shared<std::vector<char>>(file_size);
         //Async Read.
-        boost::asio::async_read(file,
-            boost::asio::buffer(buffer),
-            boost::asio::transfer_exactly(buffer.size()),
-            [&](const boost::system::error_code& error, std::size_t bytes_transferred) {
-                callback(error, bytes_transferred, buffer);
+        boost::asio::async_read(*file,
+            boost::asio::buffer(*buffer),
+            boost::asio::transfer_exactly(buffer->size()),
+            [file, ioc, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                callback(error, bytes_transferred, *buffer);
             });
-        work.reset();
-        ioc.run();
+        //work.reset();
+        //ioc.run();
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }

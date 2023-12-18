@@ -91,25 +91,13 @@ int main(int argc, char **argv)
     {
         file_name = FILE_PATH_NAME;
     }
+    auto ioc = std::make_shared<boost::asio::io_context>();
+    //boost::asio::io_context::strand strand(ioc);
 
     for (int i = 0; i < file_names.size(); i++)
     {
-
-        //boost::asio::io_context ioc;
-        //auto work = make_work_guard(ioc);
-        //boost::asio::stream_file file(ioc, file_names[i], boost::asio::stream_file::flags::read_only);
-        //std::vector<char> buffer(file.size());
-        //boost::asio::async_read(file, 
-        //    boost::asio::buffer(buffer),
-        //    boost::asio::transfer_exactly(buffer.size()),
-        //    [&](const boost::system::error_code& error, std::size_t bytes_transferred) {
-        //        loadhandler(error, bytes_transferred, buffer);
-        //    });
-        //work.reset();
-        //ioc.run();
-
         std::cout << "LoadASync: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadASync(file_names[i],true);
+        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,ioc);
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
         //auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
 
@@ -123,6 +111,7 @@ int main(int argc, char **argv)
         //boost::asio::post(ioc, postload);
     }
     
+    ioc->run();
 
     return 0;
 }

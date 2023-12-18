@@ -46,7 +46,7 @@ namespace ipfsloader::common {
         return objects;
     }
 
-    bool TestDataService::onDataBlock(CID cid, sgns::common::Buffer data) {
+    bool DataService::onDataBlock(CID cid, sgns::common::Buffer data) {
         bool expected = false;
         auto it = expected_.find(cid);
         if (it != expected_.end() && it->second == data) {
@@ -56,14 +56,14 @@ namespace ipfsloader::common {
         return expected;
     }
 
-    void TestDataService::insertNode(TestDataService::Storage& dst,
+    void DataService::insertNode(DataService::Storage& dst,
         const std::string& data_str) {
         using NodeImpl = sgns::ipfs_lite::ipld::IPLDNodeImpl;
         auto node = NodeImpl::createFromString(data_str);
         dst[node->getCID()] = node->getRawBytes();
     }
 
-    outcome::result<size_t> TestDataService::select(
+    outcome::result<size_t> DataService::select(
         const CID& cid,
         gsl::span<const uint8_t> selector,
         std::function<bool(const CID& cid, const sgns::common::Buffer& data)> handler)
