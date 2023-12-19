@@ -45,7 +45,7 @@ namespace sgns
             std::cerr << "Error in async_read: " << error.message() << ":" << bytes_transferred << std::endl;
         }
     }
-    //void handle_head(std::shared_ptr<boost::asio::io_context> ioc, const boost::system::error_code& error, std::shared_ptr<std::string> headers, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path) {
+
     void handle_head(const boost::system::error_code& error, std::shared_ptr<std::string> headers, std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket, std::shared_ptr<boost::asio::ssl::context> ssl_context, const std::string& host, const std::string& path) {
         if (!error) {
             // Find the Content-Length header to determine the file size
@@ -86,7 +86,6 @@ namespace sgns
         }
     }
 
-    //void start_async_download(std::shared_ptr<boost::asio::io_context> ioc, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, const std::string& host, const std::string& path, std::shared_ptr<std::string> headers) {
     void start_async_download(std::shared_ptr<boost::asio::io_context> ioc ,std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket, std::shared_ptr<boost::asio::ssl::context> ssl_context, const std::string& host, const std::string& path, std::shared_ptr<std::string> headers) {
         // Create an HTTP HEAD request to retrieve headers and determine the file size
         std::string request = "HEAD " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: keep - alive\r\n\r\n";
@@ -108,10 +107,6 @@ namespace sgns
 
     std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
     {
-        //Create ASIO Context
-        //boost::asio::io_context ioc;
-        //auto work = make_work_guard(ioc);
-
             //Parse hostname and path
         std::string http_host;
         std::string http_path;
@@ -120,9 +115,6 @@ namespace sgns
             //Get DNS result for hostname
         boost::asio::ip::tcp::resolver resolver(*ioc);
         boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(http_host, "https");
-        //for (const auto& endpoint : results) {
-        //    std::cout << "Resolved endpoint: " << endpoint.endpoint() << std::endl;
-        //}
         boost::asio::ip::tcp::endpoint endpoint = *results.begin();
             //Create SSL Context
         //boost::asio::ssl::context ssl_context = create_ssl_context();
@@ -143,17 +135,13 @@ namespace sgns
                
                 // Start the asynchronous download for a specific path
                 start_async_download(ioc, socket, ssl_context, http_host, http_path, headers);
-                // Run the IO service to start asynchronous operations
-                //work.reset();
-                //ioc.run();
+
             }
             else {
                 std::cerr << "Handshake error: " << handshake_error.message() << std::endl;
             }
             });
 
-        //work.reset();
-        //ioc.run();
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }
