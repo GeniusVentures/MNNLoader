@@ -8,6 +8,7 @@
 #include "MNNLoader.hpp"
 #include "IPFSLoader.hpp"
 #include "HTTPLoader.hpp"
+#include "SFTPLoader.hpp"
 #include "URLStringUtil.h"
 
 
