@@ -12,5 +12,6 @@
 /// @return prefix, i.e. "https"
 extern void getURLComponents(std::string url, std::string &prefix, std::string& base, std::string& extension);
 extern void parseHTTPUrl(std::string url, std::string& host, std::string& path);
+extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, std::string& user, std::string& pass);
 
 #endif // URLSTRINGUTIL_H
