@@ -15,7 +15,7 @@ namespace sgns
     SINGLETON_PTR_INIT(HTTPLoader);
     HTTPLoader::HTTPLoader()
     {
-        FileManager::GetInstance().RegisterLoader("http", this);
+        //FileManager::GetInstance().RegisterLoader("http", this);
         FileManager::GetInstance().RegisterLoader("https", this);
     }
 

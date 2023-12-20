@@ -60,53 +60,53 @@ namespace sgns
         std::cout << "path " << sftp_path << std::endl;
         std::cout << "user " << sftp_user << std::endl;
         std::cout << "pass " << sftp_pass << std::endl;
-        // Initialize libssh2
-        libssh2_init(0);
+        //// Initialize libssh2
+        //libssh2_init(0);
 
-        // Create an SSH session
-        LIBSSH2_SESSION* session = libssh2_session_init();
+        //// Create an SSH session
+        //LIBSSH2_SESSION* session = libssh2_session_init();
 
-        // Connect to the SFTP server
-        libssh2_socket_t sock;
-        sock = boost::asio::ip::tcp::socket(*ioc).native_handle();
-        libssh2_session_startup(session, sock);
-        libssh2_session_set_blocking(session, 0);
+        //// Connect to the SFTP server
+        //libssh2_socket_t sock;
+        //sock = boost::asio::ip::tcp::socket(*ioc).native_handle();
+        //libssh2_session_startup(session, sock);
+        //libssh2_session_set_blocking(session, 0);
 
-        // Authenticate with username and password
-        libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+        //// Authenticate with username and password
+        //libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
 
-        // Combine sftpHost and sftpPath to form the full path
-        std::string fullPath = sftp_host + sftp_path;
+        //// Combine sftpHost and sftpPath to form the full path
+        //std::string fullPath = sftp_host + sftp_path;
 
-        // Open an SFTP channel
+        //// Open an SFTP channel
 
-        LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
-        LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(sftp, fullPath.c_str(), LIBSSH2_FXF_READ, 0);
+        //LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
+        //LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(sftp, fullPath.c_str(), LIBSSH2_FXF_READ, 0);
 
-        // Get the size of the file (use libssh2_sftp_stat for more robust handling)
-        LIBSSH2_SFTP_ATTRIBUTES sftpAttrs;
-        libssh2_sftp_stat(sftp, fullPath.c_str(), &sftpAttrs);
-        std::size_t file_size = sftpAttrs.filesize;
+        //// Get the size of the file (use libssh2_sftp_stat for more robust handling)
+        //LIBSSH2_SFTP_ATTRIBUTES sftpAttrs;
+        //libssh2_sftp_stat(sftp, fullPath.c_str(), &sftpAttrs);
+        //std::size_t file_size = sftpAttrs.filesize;
 
-        //StreamDescriptor streamer(*ioc, sock);
-        //boost::asio::windows::stream_handle(*ioc, sock);
-        //boost::asio::posix::stream_descriptor(*ioc, sock);
-        // Create an asio::stream_file for the SFTP file
-        boost::asio::stream_file file_stream(*ioc);
-        file_stream.open(fullPath, boost::asio::stream_file::flags::read_only);
-        // Create a shared buffer for each SFTP operation
-        auto buffer = std::make_shared<std::vector<char>>(file_size);
+        ////StreamDescriptor streamer(*ioc, sock);
+        ////boost::asio::windows::stream_handle(*ioc, sock);
+        ////boost::asio::posix::stream_descriptor(*ioc, sock);
+        //// Create an asio::stream_file for the SFTP file
+        //boost::asio::stream_file file_stream(*ioc);
+        //file_stream.open(fullPath, boost::asio::stream_file::flags::read_only);
+        //// Create a shared buffer for each SFTP operation
+        //auto buffer = std::make_shared<std::vector<char>>(file_size);
 
 
-        // Start the asynchronous SFTP operation
-        boost::asio::async_read(file_stream, boost::asio::buffer(*buffer), [ioc, sftp, sftpHandle, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-            //handle_sftp_read(error, bytes_transferred, buffer);
+        //// Start the asynchronous SFTP operation
+        //boost::asio::async_read(file_stream, boost::asio::buffer(*buffer), [ioc, sftp, sftpHandle, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+        //    //handle_sftp_read(error, bytes_transferred, buffer);
 
-            // Cleanup libssh2 resources
-            libssh2_sftp_close_handle(sftpHandle);
-            libssh2_sftp_shutdown(sftp);
-            libssh2_exit();
-            });
+        //    // Cleanup libssh2 resources
+        //    libssh2_sftp_close_handle(sftpHandle);
+        //    libssh2_sftp_shutdown(sftp);
+        //    libssh2_exit();
+        //    });
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }

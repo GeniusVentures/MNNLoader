@@ -9,6 +9,7 @@
 #include "IPFSLoader.hpp"
 #include "HTTPLoader.hpp"
 #include "SFTPLoader.hpp"
+#include "WSLoader.hpp"
 #include "URLStringUtil.h"
 
 

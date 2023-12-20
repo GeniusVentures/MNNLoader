@@ -1,5 +1,5 @@
 /**
- * Header file for the MNNLoader
+ * Header file for the WSLoader
  */
 
 #ifndef INCLUDE_HTTPLOADER_HPP_
