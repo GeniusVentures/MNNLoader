@@ -57,7 +57,7 @@ namespace sgns
         // Resolve the host and port
         boost::asio::ip::tcp::resolver resolver(*ioc);
         //auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(*ioc);
-        auto const results = resolver.resolve(ws_host, "80");
+        auto const results = resolver.resolve(ws_host, "8080");
         std::cout << "Resolved Endpoints:" << std::endl;
         for (const auto& endpoint : results) {
             std::cout << endpoint.endpoint() << std::endl;
@@ -68,14 +68,14 @@ namespace sgns
         
         if (!errorcode) {
             // Perform the WebSocket asynchronous handshake
-            ws->async_handshake(ws_host, ws_path, [ws](const boost::system::error_code& handshakeError) {
+            ws->async_handshake(ws_host, ws_path, [ioc, results, ws](const boost::system::error_code& handshakeError) {
                 if (!handshakeError) {
                     std::cout << "WebSocket Handshake" << std::endl;
                     // Create a shared buffer for each WebSocket operation
-                    auto buffer = std::make_shared<std::vector<char>>(1024);
-
+                    
+                    auto buffer = std::make_shared<std::vector<char>>(1123908);
                     // Start the asynchronous WebSocket operation (e.g., reading from the WebSocket)
-                    ws->async_read(boost::asio::dynamic_buffer(*buffer), [ws, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                    ws->async_read(boost::asio::dynamic_buffer(*buffer), [ioc, results, ws, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
                         std::cout << "WebSocket Read" << std::endl;
                         handle_websocket_read(error, bytes_transferred, buffer);
 
@@ -90,33 +90,6 @@ namespace sgns
         else {
             std::cerr << "Connect error: " << errorcode.message() << std::endl;
         }
-
-        // Connect to the WebSocket server
-        //boost::asio::async_connect(ws.next_layer(), results, [ioc, resolver, &results, &ws, ws_host, ws_path](const boost::system::error_code& ec, const boost::asio::ip::tcp::endpoint&) {
-        //    if (!ec) {
-        //        // Perform the WebSocket handshake
-        //        ws.async_handshake(ws_host,ws_path, [ioc, &ws](const boost::system::error_code& ec) {
-        //            if (!ec) {
-        //                // Create a shared buffer for each WebSocket operation
-        //                auto buffer = std::make_shared<std::vector<char>>(1024);
-
-        //                // Start the asynchronous WebSocket operation (e.g., reading from the WebSocket)
-        //                ws.async_read(boost::asio::dynamic_buffer(*buffer), [ioc, &ws, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-        //                    std::cout << "Websocket Read" << std::endl;
-        //                    handle_websocket_read(error, bytes_transferred, buffer);
-
-        //                    // Continue reading or perform cleanup
-        //                    });
-        //            }
-        //            else {
-        //                std::cerr << "WebSocket handshake error: " << ec.message() << std::endl;
-        //            }
-        //            });
-        //    }
-        //    else {
-        //        std::cerr << "Connect error: " << ec.message() << std::endl;
-        //    }
-        //    });
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }
