@@ -26,7 +26,7 @@ const server = new WebSocket.Server({
 
         cb(true, 200, 'OK');
 		
-		server.emit('resource', requestedResource);
+		//server.emit('resource', requestedResource);
     }
 });
 
@@ -93,7 +93,10 @@ server.on('connection', (socket) => {
                         console.error('Error getting file:', err);
                         return;
                     }
-                    socket.send(data);
+					//const response = `${data}WSEOF`;
+					const delimiterBuffer = Buffer.from('WSEOF');
+					const response = Buffer.concat([data, delimiterBuffer]);
+                    socket.send(response);
                 });
             }			
 		}else {

@@ -33,10 +33,10 @@ namespace sgns
             // Handle the read data in 'buffer'
             std::cout << "Received WS data: ";
             //std::cout.write(buffer->data(), bytes_transferred);
-            std::cout << bytes_transferred;
+            std::cout << buffer->size();
             std::cout << std::endl;
             std::ofstream file("wsoutput.txt", std::ios::binary);
-            file.write(buffer->data(), bytes_transferred);
+            file.write(buffer->data(), buffer->size());
             file.close();
         }
         else {
@@ -70,55 +70,24 @@ namespace sgns
         if (!errorcode) {
             // Perform the WebSocket asynchronous handshake
             ws->async_handshake(ws_host, ws_path, [ioc, results, ws](const boost::system::error_code& handshakeError) {
-                if (!handshakeError) {
-                    //std::cout << "WebSocket Handshake" << std::endl;
-                    //Request File Size
-                    std::string request = "GET_FILE_SIZE";
+                if (!handshakeError) {          
+                    std::string request = "GET_FILE";
                     ws->async_write(boost::asio::buffer(request), [ioc, ws, results](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
                         if (!write_error) {
-                            //std::cout << "Wrote file size success" << std::endl;
-                            //Buffer to hold file size
-                            auto size_buffer = std::make_shared<std::vector<char>>(1024);
-                            auto response_buffer = std::make_shared<boost::asio::streambuf>();
-
-                            // Start the asynchronous WebSocket operation
-                            //boost::asio::async_read(*ws, boost::asio::buffer(*size_buffer), [ioc, size_buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
-                            boost::asio::async_read_until(*ws, *response_buffer, '\n', [ioc, response_buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                            auto buffer = std::make_shared<boost::asio::streambuf>();
+                            boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                                 if (!read_error)
                                 {
-                                    //Make a buffer of the file size
-                                    std::istream response_stream(response_buffer.get());
-                                    std::string file_size_str;
-                                    std::getline(response_stream, file_size_str);
-                                    // Convert file size string to an integer
-                                    std::size_t file_size = std::stoull(file_size_str);
-                                    auto buffer = std::make_shared<std::vector<char>>(file_size);
-                                    //Request File
-                                    std::string request = "GET_FILE";
-                                    ws->async_write(boost::asio::buffer(request), [ioc, buffer, ws, results](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
-                                        if (!write_error) {
-                                            boost::asio::async_read(*ws, boost::asio::buffer(*buffer), [ioc, buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
-                                                if (!read_error)
-                                                {
-                                                    handle_websocket_read(read_error, bytes_transferred, buffer);
-                                                }
-                                                else {
-                                                    std::cerr << "File request read error: " << read_error.message() << std::endl;
-                                                }
-                                                });
-                                        }
-                                        else {
-                                            std::cerr << "File request write error: " << write_error.message() << std::endl;
-                                        }
-                                        });
+                                    auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data())-5);
+                                    handle_websocket_read(read_error, bytes_transferred, outbuf);
                                 }
                                 else {
-                                    std::cerr << "Size request read error: " << read_error.message() << std::endl;
+                                    std::cerr << "File request read error: " << read_error.message() << std::endl;
                                 }
                                 });
                         }
                         else {
-                            std::cerr << "File size request write error: " << write_error.message() << std::endl;
+                            std::cerr << "File request write error: " << write_error.message() << std::endl;
                         }
                         });
                 }
