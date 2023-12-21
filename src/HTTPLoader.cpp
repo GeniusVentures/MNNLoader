@@ -40,6 +40,9 @@ namespace sgns
             //std::cout.write(buffer->data(), bytes_transferred);
             std::cout << bytes_transferred;
             std::cout << std::endl;
+            std::ofstream file("httpoutput.txt", std::ios::binary);
+            file.write(buffer->data(), bytes_transferred);
+            file.close();
         }
         else {
             std::cerr << "Error in async_read: " << error.message() << ":" << bytes_transferred << std::endl;

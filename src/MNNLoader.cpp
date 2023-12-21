@@ -37,8 +37,12 @@ namespace sgns
     {
         if (!ec) {
             std::cout << "Received data: ";
+            //std::cout.write(buffer.data(), n);
             std::cout << std::endl;
             std::cout << "Handler Out Size:" << n << std::endl;
+            std::ofstream file("mnnoutput.txt", std::ios::binary);
+            file.write(buffer.data(), n);
+            file.close();
         }
         else {
             std::cerr << "Error in async_read: " << ec.message() << std::endl;

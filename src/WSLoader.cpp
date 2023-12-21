@@ -35,6 +35,9 @@ namespace sgns
             //std::cout.write(buffer->data(), bytes_transferred);
             std::cout << bytes_transferred;
             std::cout << std::endl;
+            std::ofstream file("wsoutput.txt", std::ios::binary);
+            file.write(buffer->data(), bytes_transferred);
+            file.close();
         }
         else {
             std::cerr << "Error in async_read: " << error.message() << ":" << bytes_transferred << std::endl;
@@ -51,12 +54,10 @@ namespace sgns
         std::cout << "path " << ws_path << std::endl;
 
         //Create Socket
-        //boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws(*ioc);
         auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>(*ioc);
 
         // Resolve the host and port
         boost::asio::ip::tcp::resolver resolver(*ioc);
-        //auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(*ioc);
         auto const results = resolver.resolve(ws_host, "8080");
         std::cout << "Resolved Endpoints:" << std::endl;
         for (const auto& endpoint : results) {
@@ -74,12 +75,9 @@ namespace sgns
                     // Create a shared buffer for each WebSocket operation
                     
                     auto buffer = std::make_shared<std::vector<char>>(1123908);
-                    // Start the asynchronous WebSocket operation (e.g., reading from the WebSocket)
-                    ws->async_read(boost::asio::dynamic_buffer(*buffer), [ioc, results, ws, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-                        std::cout << "WebSocket Read" << std::endl;
-                        handle_websocket_read(error, bytes_transferred, buffer);
-
-                        // Continue reading or perform cleanup
+                    // Start the asynchronous WebSocket operation
+                    boost::asio::async_read(*ws, boost::asio::buffer(*buffer), [ioc, buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                        handle_websocket_read(read_error, bytes_transferred, buffer);
                         });
                 }
                 else {
