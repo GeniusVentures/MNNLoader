@@ -36,7 +36,7 @@ namespace sgns
     bool callback(boost::system::error_code ec, std::size_t n, std::vector<char>& buffer)
     {
         if (!ec) {
-            std::cout << "Received data: ";
+            std::cout << "Received Local data: ";
             //std::cout.write(buffer.data(), n);
             std::cout << std::endl;
             std::cout << "Handler Out Size:" << n << std::endl;

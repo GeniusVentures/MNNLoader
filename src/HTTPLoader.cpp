@@ -36,7 +36,7 @@ namespace sgns
     void handle_read(const boost::system::error_code& error, std::size_t bytes_transferred, std::shared_ptr<std::vector<char>> buffer) {
         if (!error) {
             // Handle the read data in 'buffer'
-            std::cout << "Received data: ";
+            std::cout << "Received HTTPS data: ";
             //std::cout.write(buffer->data(), bytes_transferred);
             std::cout << bytes_transferred;
             std::cout << std::endl;
