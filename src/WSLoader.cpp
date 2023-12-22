@@ -7,6 +7,7 @@
 #include "FileManager.hpp"
 #include "WSLoader.hpp"
 #include "boost/asio/ssl.hpp"
+#include "boost/beast/websocket/ssl.hpp"
 #include "boost/beast.hpp"
 #include "URLStringUtil.h"
 
@@ -49,56 +50,74 @@ namespace sgns
         //Parse hostname and path
         std::string ws_host;
         std::string ws_path;
-        parseHTTPUrl(filename, ws_host, ws_path);
-        //std::cout << "host " << ws_host << std::endl;
-        //std::cout << "path " << ws_path << std::endl;
+        std::string ws_port;
+        parseHTTPUrl(filename, ws_host, ws_path, ws_port);
+        std::cout << "host " << ws_host << std::endl;
+        std::cout << "path " << ws_path << std::endl;
+        std::cout << "port " << ws_port << std::endl;
+        //Resolve Address
+        boost::asio::ip::tcp::resolver resolver(*ioc);
+        auto const results = resolver.resolve(ws_host, ws_port);
+
+        //Create SSL Context, using context::tls to accept the highest version client/server can deal with
+        auto ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tls);
+
+        //Disclude certain older insecure options
+        ctx->set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3);
+
+        //Default trusted authority definitions
+        ctx->set_default_verify_paths();
+
+        //Consider setting verify callback to check whether domain name matches cert
+        // ctx->set_verify_callback(...);
 
         //Create Socket
-        auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>>(*ioc);
+        auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
 
-        // Resolve the host and port
-        boost::asio::ip::tcp::resolver resolver(*ioc);
-        auto const results = resolver.resolve(ws_host, "8080");
-        //std::cout << "Resolved Endpoints:" << std::endl;
-        //for (const auto& endpoint : results) {
-        //    std::cout << endpoint.endpoint() << std::endl;
-        //}
-
-        boost::system::error_code errorcode;
-        boost::asio::connect(ws->next_layer(), results, errorcode);
-        
-        if (!errorcode) {
-            // Perform the WebSocket asynchronous handshake
-            ws->async_handshake(ws_host, ws_path, [ioc, results, ws](const boost::system::error_code& handshakeError) {
-                if (!handshakeError) {          
-                    std::string request = "GET_FILE";
-                    ws->async_write(boost::asio::buffer(request), [ioc, ws, results](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
-                        if (!write_error) {
-                            auto buffer = std::make_shared<boost::asio::streambuf>();
-                            boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, buffer, ws, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
-                                if (!read_error)
-                                {
-                                    auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data())-5);
-                                    handle_websocket_read(read_error, bytes_transferred, outbuf);
-                                }
-                                else {
-                                    std::cerr << "File request read error: " << read_error.message() << std::endl;
-                                }
-                                });
-                        }
-                        else {
-                            std::cerr << "File request write error: " << write_error.message() << std::endl;
-                        }
-                        });
-                }
-                else {
-                    std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
-                }
-                });
-        }
-        else {
-            std::cerr << "Connect error: " << errorcode.message() << std::endl;
-        }
+        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, results, ws, ctx, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
+            if (!error) {
+                // Perform the SSL asynchronous handshake
+                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, results, ws, ctx, ws_host, ws_path](const boost::system::error_code& handshakeError) {
+                    if (!handshakeError) {
+                        // Perform the WebSocket asynchronous handshake
+                        ws->async_handshake(ws_host, ws_path, [ioc, ws, ctx, results](const boost::system::error_code& handshakeError) {
+                            if (!handshakeError) {
+                                //Request the file
+                                std::string request = "GET_FILE";
+                                ws->async_write(boost::asio::buffer(request), [ioc, ws, ctx, results](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
+                                    if (!write_error) {
+                                        //Read until WSEOF
+                                        auto buffer = std::make_shared<boost::asio::streambuf>();
+                                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, ctx, buffer, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                                            if (!read_error)
+                                            {
+                                                auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
+                                                handle_websocket_read(read_error, bytes_transferred, outbuf);
+                                            }
+                                            else {
+                                                std::cerr << "File request read error: " << read_error.message() << std::endl;
+                                            }
+                                            });
+                                    }
+                                    else {
+                                        std::cerr << "File request write error: " << write_error.message() << std::endl;
+                                    }
+                                    });
+                            }
+                            else {
+                                std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
+                            }
+                            });
+                    }
+                    else {
+                        std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
+                    }
+                    });
+            }
+            else {
+                std::cerr << "Connect error: " << error.message() << std::endl;
+            }
+            });
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }

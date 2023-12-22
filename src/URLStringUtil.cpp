@@ -23,7 +23,7 @@ extern void getURLComponents(std::string url, std::string &prefix, std::string& 
     }
 }
 
-extern void parseHTTPUrl(std::string url, std::string& host, std::string& path)
+extern void parseHTTPUrl(std::string url, std::string& host, std::string& path, std::string& port)
 {
     // Find the first occurrence of "/" in the URL.
     size_t index = url.find("/");
@@ -33,6 +33,16 @@ extern void parseHTTPUrl(std::string url, std::string& host, std::string& path)
     }
     host = url.substr(0, index);
     path = url.substr(index, url.length());
+    //Look for : in the host to see if a port exists
+    index = url.find(":");
+    if (index == std::string::npos) {
+        //Default to 443
+        port = "443";
+    }
+    else {
+        port = host.substr(index+1,host.length());
+        host = host.substr(0, index);
+    }
 }
 
 extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, std::string& user, std::string& pass)

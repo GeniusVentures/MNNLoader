@@ -75,7 +75,8 @@ namespace sgns
             //Parse hostname and path
         std::string http_host;
         std::string http_path;
-        parseHTTPUrl(filename,http_host,http_path);
+        std::string http_port;
+        parseHTTPUrl(filename,http_host,http_path, http_port);
 
             //Get DNS result for hostname
         boost::asio::ip::tcp::resolver resolver(*ioc);
