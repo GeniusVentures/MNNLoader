@@ -6,8 +6,8 @@ const https = require('https');
 
 const activeSockets = [];
 const serverOptions = {
-    key: fs.readFileSync('Q:/gnus/thirdparty/AsyncIOManager/test/websocketserver/certs/key.pem'),
-    cert: fs.readFileSync('Q:/gnus/thirdparty/AsyncIOManager/test/websocketserver/certs/cert.pem')
+    key: fs.readFileSync('./certs/key.pem'),
+    cert: fs.readFileSync('./certs/cert.pem')
 };
 
 /* const serverOptions_nonsec = {
