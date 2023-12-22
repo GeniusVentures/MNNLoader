@@ -2,19 +2,19 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const http = require('http');
+//const http = require('http');
 
 const activeSockets = [];
 const serverOptions = {
-    key: fs.readFileSync('./certs/key.pem'),
-    cert: fs.readFileSync('./certs/cert.pem')
+    key: fs.readFileSync('Q:/gnus/thirdparty/AsyncIOManager/test/websocketserver/certs/key.pem'),
+    cert: fs.readFileSync('Q:/gnus/thirdparty/AsyncIOManager/test/websocketserver/certs/cert.pem')
 };
 
-const serverOptions_nonsec = {
-};
+/* const serverOptions_nonsec = {
+}; */
 
 // Non-secure WebSocket server
-const nonSecureServer = new WebSocket.Server({
+/* const nonSecureServer = new WebSocket.Server({
     noServer: true,
     verifyClient: (info, cb) => {
         console.log('WebSocket handshake received:');
@@ -38,7 +38,7 @@ const nonSecureServer = new WebSocket.Server({
 
         cb(true, 200, 'OK');
     }
-});
+}); */
 
 // Secure WebSocket server
 const secureServer = new WebSocket.Server({
@@ -85,7 +85,7 @@ httpsServer.listen(8090, () => {
 });
 
 
-const httpServer = http.createServer(serverOptions_nonsec, (req, res) => {
+/* const httpServer = http.createServer(serverOptions_nonsec, (req, res) => {
     // Your regular HTTP server logic
     res.writeHead(200);
     res.end('Hello, this is a secure server!');
@@ -101,10 +101,10 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 httpServer.listen(8080, () => {
     console.log('Server listening on port 8080');
-});
+}); */
 
 
-nonSecureServer.on('connection', (socket) => {
+/* nonSecureServer.on('connection', (socket) => {
     // Non-secure WebSocket connection logic
     console.log('Client connected');
 
@@ -154,7 +154,7 @@ nonSecureServer.on('connection', (socket) => {
             // Handle other types of messages as needed
         }
 	});
-});
+}); */
 
 secureServer.on('connection', (socket) => {
     // Secure WebSocket connection logic
