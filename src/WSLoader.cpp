@@ -18,7 +18,7 @@ namespace sgns
     WSLoader::WSLoader()
     {
         FileManager::GetInstance().RegisterLoader("wss", this);
-        FileManager::GetInstance().RegisterLoader("ws", this);
+        //FileManager::GetInstance().RegisterLoader("ws", this);
     }
 
     std::shared_ptr<void> WSLoader::LoadFile(std::string filename)
@@ -43,6 +43,38 @@ namespace sgns
         else {
             std::cerr << "Error in async_read: " << error.message() << ":" << bytes_transferred << std::endl;
         }
+    }
+
+    void StreamWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws, const std::string& host, const std::string& path) {
+        // Perform the WebSocket asynchronous handshake
+        ws->async_handshake(host, path, [ws](const boost::system::error_code& handshakeError) {
+            if (!handshakeError) {
+                //Request the file
+                std::string request = "GET_FILE";
+                ws->async_write(boost::asio::buffer(request), [ws](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
+                    if (!write_error) {
+                        //Read until WSEOF
+                        auto buffer = std::make_shared<boost::asio::streambuf>();
+                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ws, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                            if (!read_error)
+                            {
+                                auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
+                                handle_websocket_read(read_error, bytes_transferred, outbuf);
+                            }
+                            else {
+                                std::cerr << "File request read error: " << read_error.message() << std::endl;
+                            }
+                            });
+                    }
+                    else {
+                        std::cerr << "File request write error: " << write_error.message() << std::endl;
+                    }
+                    });
+            }
+            else {
+                std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
+            }
+            });
     }
 
     std::shared_ptr<void> WSLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
@@ -74,43 +106,17 @@ namespace sgns
         //Create Socket
         auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
 
-        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, results, ws, ctx, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
+        //Connect to server
+        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ws, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
             if (!error) {
                 // Perform the SSL asynchronous handshake
-                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, results, ws, ctx, ws_host, ws_path](const boost::system::error_code& handshakeError) {
+                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ws, ws_host, ws_path](const boost::system::error_code& handshakeError) {
                     if (!handshakeError) {
                         // Perform the WebSocket asynchronous handshake
-                        ws->async_handshake(ws_host, ws_path, [ioc, ws, ctx, results](const boost::system::error_code& handshakeError) {
-                            if (!handshakeError) {
-                                //Request the file
-                                std::string request = "GET_FILE";
-                                ws->async_write(boost::asio::buffer(request), [ioc, ws, ctx, results](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
-                                    if (!write_error) {
-                                        //Read until WSEOF
-                                        auto buffer = std::make_shared<boost::asio::streambuf>();
-                                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, ctx, buffer, results](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
-                                            if (!read_error)
-                                            {
-                                                auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
-                                                handle_websocket_read(read_error, bytes_transferred, outbuf);
-                                            }
-                                            else {
-                                                std::cerr << "File request read error: " << read_error.message() << std::endl;
-                                            }
-                                            });
-                                    }
-                                    else {
-                                        std::cerr << "File request write error: " << write_error.message() << std::endl;
-                                    }
-                                    });
-                            }
-                            else {
-                                std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
-                            }
-                            });
+                        StreamWS(ws,ws_host,ws_path);
                     }
                     else {
-                        std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
+                        std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;
                     }
                     });
             }
