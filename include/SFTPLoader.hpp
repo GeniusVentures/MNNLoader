@@ -23,7 +23,7 @@ namespace sgns
     {
         SINGLETON_PTR(SFTPTLoader);
     public:
-
+        using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer)>;
         /**ok
          * Load Data on the MNN file
          * @param filename - MNN file part
@@ -31,7 +31,7 @@ namespace sgns
          *
          */
         std::shared_ptr<void> LoadFile(std::string filename) override;
-        std::shared_ptr<void> LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc) override;
+        std::shared_ptr<void> LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback) override;
     protected:
 
     };

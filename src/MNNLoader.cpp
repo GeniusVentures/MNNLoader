@@ -33,40 +33,20 @@ namespace sgns
                 dataContent);
         return result;
     }
-    bool callback(boost::system::error_code ec, std::size_t n, std::vector<char>& buffer)
+
+    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
-        if (!ec) {
-            std::cout << "Received Local data: ";
-            //std::cout.write(buffer.data(), n);
-            std::cout << std::endl;
-            std::cout << "Handler Out Size:" << n << std::endl;
-            std::ofstream file("mnnoutput.txt", std::ios::binary);
-            file.write(buffer.data(), n);
-            file.close();
-        }
-        else {
-            std::cerr << "Error in async_read: " << ec.message() << std::endl;
-        }
-        return true;
-    }
-    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,std::shared_ptr<boost::asio::io_context> ioc)
-    {
-        //Create ASIO Context
-        //boost::asio::io_context ioc;
-        //auto work = make_work_guard(ioc);
-        //Define Streamed Files
-        //boost::asio::stream_file file(*ioc, filename, boost::asio::stream_file::flags::read_only);
+        //Make a stream_file which should work multi-platform
         auto file = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::read_only);
         //Make a Buffer
-        //std::vector<char> buffer(file.size());
         std::size_t file_size = file->size();
         auto buffer = std::make_shared<std::vector<char>>(file_size);
         //Async Read.
         boost::asio::async_read(*file,
             boost::asio::buffer(*buffer),
             boost::asio::transfer_exactly(buffer->size()),
-            [file, ioc, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-                callback(error, bytes_transferred, *buffer);
+            [file, ioc, handle_read, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                handle_read(ioc, buffer);
             });
         //work.reset();
         //ioc.run();

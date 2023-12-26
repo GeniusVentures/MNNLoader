@@ -25,7 +25,8 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 
 }
 
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
+
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback)
 {
     std::string prefix;
     std::string filePath;
@@ -42,10 +43,17 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std:
     {
         throw std::range_error("No loader registered for prefix " + prefix);
     }
+    IncrementOutstandingOperations();
+    auto handle_read = [this](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer) {
+        std::cout << "Callback!" << std::endl;
+        // Handle completion
+        DecrementOutstandingOperations(ioc);
+    };
+
     auto loader = loaderIter->second;
     // double check pointer is to a FileLoader class
     assert(dynamic_cast<FileLoader*>(loader));
-    shared_ptr<void> data = loader->LoadASync(filePath,parse,ioc);
+    shared_ptr<void> data = loader->LoadASync(filePath,parse,ioc,handle_read);
     return data;
 }
 
@@ -113,3 +121,28 @@ void FileManager::SaveFile(const std::string &url, std::shared_ptr<void> data)
     saver->SaveFile(filePath, data);
 }
 
+/// @brief Function to decrement operation count
+void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc)
+{
+    // Decrement the counter
+    outstandingOperations_--;
+
+    // If all operations are complete, perform additional cleanup
+    if (outstandingOperations_ == 0) {
+        // Clean up io_context
+        ioc->stop();
+    }
+}
+
+/// @brief Function to increment operation count
+void FileManager::IncrementOutstandingOperations() 
+{
+    // Increment the counter
+    outstandingOperations_++;
+}
+
+std::shared_ptr<int> FileManager::GetOutstandingOperationsPointer() 
+{
+    // Return a shared pointer to the outstandingOperations counter
+    return std::make_shared<int>(outstandingOperations_);
+}

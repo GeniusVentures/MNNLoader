@@ -45,21 +45,24 @@ namespace sgns
         }
     }
 
-    void StreamWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws, const std::string& host, const std::string& path) {
+    void StreamWS(std::shared_ptr<boost::asio::io_context> ioc,
+        std::shared_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws,
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer)> handle_read,
+        const std::string& host, const std::string& path) {
         // Perform the WebSocket asynchronous handshake
-        ws->async_handshake(host, path, [ws](const boost::system::error_code& handshakeError) {
+        ws->async_handshake(host, path, [ioc, ws, handle_read](const boost::system::error_code& handshakeError) {
             if (!handshakeError) {
                 //Request the file
                 std::string request = "GET_FILE";
-                ws->async_write(boost::asio::buffer(request), [ws](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
+                ws->async_write(boost::asio::buffer(request), [ioc, ws, handle_read](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
                     if (!write_error) {
                         //Read until WSEOF
                         auto buffer = std::make_shared<boost::asio::streambuf>();
-                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ws, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, handle_read, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                             if (!read_error)
                             {
                                 auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
-                                handle_websocket_read(read_error, bytes_transferred, outbuf);
+                                handle_read(ioc, outbuf);
                             }
                             else {
                                 std::cerr << "File request read error: " << read_error.message() << std::endl;
@@ -77,7 +80,7 @@ namespace sgns
             });
     }
 
-    std::shared_ptr<void> WSLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
+    std::shared_ptr<void> WSLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
         //Parse hostname and path
         std::string ws_host;
@@ -107,13 +110,13 @@ namespace sgns
         auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
 
         //Connect to server
-        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ws, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
+        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, ws, handle_read, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
             if (!error) {
                 // Perform the SSL asynchronous handshake
-                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ws, ws_host, ws_path](const boost::system::error_code& handshakeError) {
+                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, ws, handle_read, ws_host, ws_path](const boost::system::error_code& handshakeError) {
                     if (!handshakeError) {
                         // Perform the WebSocket asynchronous handshake
-                        StreamWS(ws,ws_host,ws_path);
+                        StreamWS(ioc,ws,handle_read,ws_host,ws_path);
                     }
                     else {
                         std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;

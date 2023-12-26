@@ -48,7 +48,7 @@ namespace sgns
         }
     }
 
-    std::shared_ptr<void> SFTPTLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc)
+    std::shared_ptr<void> SFTPTLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
             //Parse hostname and path
         std::string sftp_host;

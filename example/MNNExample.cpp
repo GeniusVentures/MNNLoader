@@ -94,12 +94,17 @@ int main(int argc, char **argv)
         file_name = FILE_PATH_NAME;
     }
     auto ioc = std::make_shared<boost::asio::io_context>();
-    //boost::asio::io_context::strand strand(ioc);
-
+    //auto outstandingOperations = std::make_shared<int>(1);
+    //FileManager::GetInstance() manager;
+    auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>) {
+        // Do nothing
+    };
     for (int i = 0; i < file_names.size(); i++)
     {
         std::cout << "LoadASync: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,ioc);
+        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,ioc,dummyCallback);
+        //FileManager::GetInstance().IncrementOutstandingOperations();
+
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
         //auto data = FileManager::GetInstance().LoadFile(file_names[i], false);
 
