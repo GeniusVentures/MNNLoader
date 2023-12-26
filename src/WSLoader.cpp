@@ -29,40 +29,25 @@ namespace sgns
         /* TODO: scorpioluck20 - Need to implement this. How we load file base on format file?*/
     }
 
-    void handle_websocket_read(const boost::system::error_code& error, std::size_t bytes_transferred, std::shared_ptr<std::vector<char>> buffer) {
-        if (!error) {
-            // Handle the read data in 'buffer'
-            std::cout << "Received WS data: ";
-            //std::cout.write(buffer->data(), bytes_transferred);
-            std::cout << buffer->size();
-            std::cout << std::endl;
-            std::ofstream file("wsoutput.txt", std::ios::binary);
-            file.write(buffer->data(), buffer->size());
-            file.close();
-        }
-        else {
-            std::cerr << "Error in async_read: " << error.message() << ":" << bytes_transferred << std::endl;
-        }
-    }
-
     void StreamWS(std::shared_ptr<boost::asio::io_context> ioc,
         std::shared_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws,
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer)> handle_read,
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read,
+        bool parse,
         const std::string& host, const std::string& path) {
         // Perform the WebSocket asynchronous handshake
-        ws->async_handshake(host, path, [ioc, ws, handle_read](const boost::system::error_code& handshakeError) {
+        ws->async_handshake(host, path, [ioc, ws, handle_read, parse](const boost::system::error_code& handshakeError) {
             if (!handshakeError) {
                 //Request the file
                 std::string request = "GET_FILE";
-                ws->async_write(boost::asio::buffer(request), [ioc, ws, handle_read](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
+                ws->async_write(boost::asio::buffer(request), [ioc, ws, handle_read, parse](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
                     if (!write_error) {
                         //Read until WSEOF
                         auto buffer = std::make_shared<boost::asio::streambuf>();
-                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, handle_read, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, handle_read, parse, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                             if (!read_error)
                             {
                                 auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
-                                handle_read(ioc, outbuf);
+                                handle_read(ioc, outbuf,parse);
                             }
                             else {
                                 std::cerr << "File request read error: " << read_error.message() << std::endl;
@@ -110,13 +95,13 @@ namespace sgns
         auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
 
         //Connect to server
-        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, ws, handle_read, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
+        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, ws, handle_read, parse, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
             if (!error) {
                 // Perform the SSL asynchronous handshake
-                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, ws, handle_read, ws_host, ws_path](const boost::system::error_code& handshakeError) {
+                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, ws, handle_read, parse, ws_host, ws_path](const boost::system::error_code& handshakeError) {
                     if (!handshakeError) {
                         // Perform the WebSocket asynchronous handshake
-                        StreamWS(ioc,ws,handle_read,ws_host,ws_path);
+                        StreamWS(ioc,ws,handle_read,parse,ws_host,ws_path);
                     }
                     else {
                         std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;

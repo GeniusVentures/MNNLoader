@@ -12,6 +12,8 @@ namespace sgns
         public:
             virtual shared_ptr<void> ParseData(shared_ptr<void> data)
                     override;
+            virtual shared_ptr<void> ParseASync(std::shared_ptr<std::vector<char>> data)
+                override;
     };
 } // End namespace sgns
 

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     auto ioc = std::make_shared<boost::asio::io_context>();
     //auto outstandingOperations = std::make_shared<int>(1);
     //FileManager::GetInstance() manager;
-    auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>) {
+    auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>, bool parse) {
         // Do nothing
     };
     for (int i = 0; i < file_names.size(); i++)

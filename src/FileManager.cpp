@@ -43,9 +43,18 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std:
     {
         throw std::range_error("No loader registered for prefix " + prefix);
     }
+    //Increment Operations
     IncrementOutstandingOperations();
-    auto handle_read = [this](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer) {
+
+    //Create a handler
+    auto handle_read = [this](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse) {
         std::cout << "Callback!" << std::endl;
+        if (parse)
+        {
+            auto parserIter = parsers.find("mnn");
+            auto parser = dynamic_cast<FileParser*>(parserIter->second);
+            shared_ptr<void> data = parser->ParseASync(buffer);
+        }
         // Handle completion
         DecrementOutstandingOperations(ioc);
     };
