@@ -51,6 +51,8 @@ if ( Protobuf_FOUND )
 endif()
 include(${PROJECT_ROOT}/cmake/functions.cmake)
 
+
+
 # --------------------------------------------------------
 # Set config of openssl project
 set(OPENSSL_DIR "${_THIRDPARTY_BUILD_DIR}/openssl/build/${CMAKE_SYSTEM_NAME}${ABI_SUBFOLDER_NAME}" CACHE PATH "Path to OpenSSL install folder")
@@ -272,6 +274,34 @@ set(MNN_LIBRARY_DIR "${_THIRDPARTY_BUILD_DIR}/MNN/lib")
 #find_library(MNN NAMES MNN.lib PATHS ${MNN_LIBRARY_DIR})
 include_directories(${MNN_INCLUDE_DIR})
 
+# ----------------------BUILD EXTERNAL PROJECT------------------
+# Builds LIBSSH
+if (NOT TARGET libssh2)
+    message(STATUS "Start building LIBSSH2 library")
+    ExternalProject_Add(
+        libssh2
+        PREFIX libssh2
+        SOURCE_DIR "${_THIRDPARTY_DIR}/libssh2"
+        CMAKE_CACHE_ARGS
+            -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/libssh2
+            -DBUILD_STATIC_LIBS:BOOL=ON
+            -DBUILD_SHARED_LIBS:BOOL=OFF
+            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+            -DCMAKE_C_FLAGS_DEBUG:STRING=${CMAKE_C_FLAGS_DEBUG}
+            -DCMAKE_CXX_FLAGS_DEBUG:STRING=${CMAKE_CXX_FLAGS_DEBUG}
+            -DCMAKE_C_FLAGS_RELEASE:STRING=${CMAKE_C_FLAGS_RELEASE}
+            -DCMAKE_CXX_FLAGS_RELEASE:STRING=${CMAKE_CXX_FLAGS_RELEASE}
+            ${_CMAKE_COMMON_BUILD_PARAMS}
+    )
+	message("COMMON BUILD PARAMS _--------------------------------------- ${_CMAKE_COMMON_BUILD_PARAMS}")
+    ExternalProject_Get_Property(libssh2 INSTALL_DIR)
+    # Include libssh2 headers
+    include_directories(SYSTEM ${INSTALL_DIR}/include)
+
+    set(LIBSSH2_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libssh2/lib)
+    set(LIBSSH2_LIBRARIES ${LIBSSH2_LIBRARY_DIR}/libssh2.lib) 
+	
+endif()
 
 # --------------------------------------------------------
 include_directories(

@@ -46,7 +46,13 @@ namespace sgns
             boost::asio::buffer(*buffer),
             boost::asio::transfer_exactly(buffer->size()),
             [file, ioc, handle_read, parse, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-                handle_read(ioc, buffer, parse);
+                if (!error)
+                {
+                    handle_read(ioc, buffer, parse);
+                }
+                else {
+                    std::cerr << "File read error: " << error.message() << std::endl;
+                }
             });
         //work.reset();
         //ioc.run();

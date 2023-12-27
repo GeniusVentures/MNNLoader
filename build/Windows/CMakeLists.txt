@@ -68,6 +68,13 @@ set(EXTRA_CXX_FLAGS)
 # Set custom subfolder for ABI
 set(ABI_SUBFOLDER_NAME "") 
 
+include(ExternalProject)
+include_directories(
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include
+)
+
+
 # --------------------------------------------------------
 # Include common build paramaeters
 include(../CommonBuildParameters.cmake)
