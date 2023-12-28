@@ -12,6 +12,7 @@
 #include "URLStringUtil.h"
 #include "libssh2.h"
 #include "libssh2_sftp.h"
+#include <thread>
 
 #ifdef _WIN32
     // Windows platform
@@ -37,6 +38,80 @@ namespace sgns
         /* TODO: scorpioluck20 - Need to implement this. How we load file base on format file?*/
     }
 
+    void asyncSFTPRead(
+        std::shared_ptr<boost::asio::io_context> ioc,
+        LIBSSH2_SESSION* session,
+        std::string sftp_path,
+        std::string sftp_user,
+        std::string sftp_pass,
+        std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read,
+        bool parse) {
+
+        // Connect to the SFTP server
+        libssh2_socket_t sock;
+        sock = tcpSocket->native_handle();
+        libssh2_session_handshake(session, sock);
+        libssh2_session_set_blocking(session, 1);
+
+        // Authenticate with username and password
+        int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+
+        // Combine . and sftpPath to form the full path
+        std::string fullPath = "." + sftp_path;
+
+        // Open an SFTP channel
+        LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
+        LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(sftp, fullPath.c_str(), LIBSSH2_FXF_READ, 0);
+
+        if (!sftpHandle) {
+            int sftp_error_code = libssh2_sftp_last_error(sftp);
+            std::cerr << "Error opening SFTP file handle: " << sftp_error_code << std::endl;
+        }
+        // Get the size of the file
+        LIBSSH2_SFTP_ATTRIBUTES sftpAttrs;
+        libssh2_sftp_stat(sftp, fullPath.c_str(), &sftpAttrs);
+        std::size_t file_size = sftpAttrs.filesize;
+
+        //Create a buffer based on file size
+        auto buffer = std::make_shared<std::vector<char>>(file_size);
+
+            //Start reading
+        int rc;
+        size_t totalBytesRead = 0;
+        bool complete = false;
+        while (!complete) {
+            rc = libssh2_sftp_read(sftpHandle, buffer->data() + totalBytesRead, buffer->size() - totalBytesRead);
+            if (rc > 0)
+            {
+                // Increment the total bytes read
+                totalBytesRead += rc;
+                //std::cout << "reading" << std::endl;
+                // Check if the buffer is full
+                if (totalBytesRead >= buffer->size()) {
+                    // Process the buffer
+                    std::cout << "SFTP Finish" << std::endl;
+                    ioc->post([ioc, buffer, parse, handle_read]() {
+                        handle_read(ioc, buffer, parse);
+                        });
+                    complete = true;
+
+                    // Reset totalBytesRead for the next iteration
+                        //totalBytesRead = 0;
+                }
+            }
+            else {
+                std::cout << "Not complete but err" << std::endl;
+            }
+        }
+            //Cleanup
+        libssh2_sftp_close_handle(sftpHandle);
+        libssh2_sftp_shutdown(sftp);
+        libssh2_session_disconnect(session, "Normal Shutdown");
+        libssh2_session_free(session);
+        libssh2_exit();
+
+    }
 
     std::shared_ptr<void> SFTPLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
@@ -63,72 +138,14 @@ namespace sgns
 
         auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
 
+
         boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
             if (!connect_error)
             {
-                // Connect to the SFTP server
-                libssh2_socket_t sock;
-                sock = tcpSocket->native_handle();
-                libssh2_session_handshake(session, sock);
-                libssh2_session_set_blocking(session, 1);
-
-                // Authenticate with username and password
-                int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
-
-                // Combine . and sftpPath to form the full path
-                std::string fullPath = "." + sftp_path;
-
-                // Open an SFTP channel
-                LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
-                LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(sftp, fullPath.c_str(), LIBSSH2_FXF_READ, 0);
-                if (!sftpHandle) {
-                    int sftp_error_code = libssh2_sftp_last_error(sftp);
-                    std::cerr << "Error opening SFTP file handle: " << sftp_error_code << std::endl;
-                }
-                // Get the size of the file
-                LIBSSH2_SFTP_ATTRIBUTES sftpAttrs;
-                libssh2_sftp_stat(sftp, fullPath.c_str(), &sftpAttrs);
-                std::size_t file_size = sftpAttrs.filesize;
-
-                auto buffer = std::make_shared<std::vector<char>>(file_size);
-                auto asyncSFTPRead = [ioc, handle_read, sftp, buffer, sftpHandle, parse]() {
-                    // Synchronous SFTP read inside of async thread
-                    int rc;
-                    size_t totalBytesRead = 0;
-                    while ((rc = libssh2_sftp_read(sftpHandle, buffer->data() + totalBytesRead, buffer->size() - totalBytesRead)) > 0) {
-                        // Process 'rc' bytes from the buffer asynchronously
-                        //std::cout << "Read " << rc << " bytes from SFTP" << std::endl;
-                        totalBytesRead += rc;
-                        if (totalBytesRead >= buffer->size()) {
-                            // Post to the IO context if needed
-                            ioc->post([ioc, handle_read, buffer, parse]() {
-                                //std::ofstream file("sftpoutput.txt", std::ios::binary);
-                                //file.write(buffer->data(), buffer->size());
-                                //file.close();
-                                // Process the data or trigger further asynchronous operations from the IO context
-                                std::cout << "SFTP Finish" << std::endl;
-                                handle_read(ioc, buffer, parse);
-                                });
-                            totalBytesRead = 0;
-                        }
-                    }
-
-                    // Handle the end of file or error
-                    if (rc < 0) {
-                        // Log the end of file or error
-                        std::cout << "SFTP read completed with result: " << rc << std::endl;
-                        if (rc != LIBSSH2_FX_EOF) {
-                            // Handle error
-                            std::cerr << "SFTP read error: " << rc << std::endl;
-                        }
-                    }
-
-                    // Cleanup resources
-                    libssh2_sftp_close_handle(sftpHandle);
-                    libssh2_sftp_shutdown(sftp);
-                };
-                std::future<void> sftpReadFuture = std::async(std::launch::async, asyncSFTPRead);
-                sftpReadFuture.get();
+                //Create a new thread to process this synchronous sftp read.
+                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, handle_read, parse]() {
+                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, tcpSocket, handle_read, parse);
+                    }).detach();
             }
             else {
                 std::cerr << "Error connecting to server: " << connect_error.message() << std::endl;
