@@ -44,6 +44,7 @@ namespace sgns
         std::string sftp_path,
         std::string sftp_user,
         std::string sftp_pass,
+        std::string sftp_keyfile,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read,
         bool parse) {
@@ -55,7 +56,12 @@ namespace sgns
         libssh2_session_set_blocking(session, 1);
 
         // Authenticate with username and password
-        int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+        if (!sftp_keyfile.empty()) {
+            libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_keyfile.c_str(), nullptr);
+        }
+        else {
+            int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+        }
 
         // Combine . and sftpPath to form the full path
         std::string fullPath = "." + sftp_path;
@@ -120,11 +126,14 @@ namespace sgns
         std::string sftp_path;
         std::string sftp_user;
         std::string sftp_pass;
-        parseSFTPUrl(filename, sftp_host, sftp_path, sftp_user, sftp_pass);
+        std::string sftp_keyfile;
+        parseSFTPUrl(filename, sftp_host, sftp_path, sftp_user, sftp_pass, sftp_keyfile);
         std::cout << "host " << sftp_host << std::endl;
         std::cout << "path " << sftp_path << std::endl;
         std::cout << "user " << sftp_user << std::endl;
         std::cout << "pass " << sftp_pass << std::endl;
+        std::cout << "keyfile " << sftp_keyfile << std::endl;
+
         // Initialize libssh2
         libssh2_init(0);
         
@@ -139,12 +148,12 @@ namespace sgns
         auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
 
 
-        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
+        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_keyfile, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
             if (!connect_error)
             {
                 //Create a new thread to process this synchronous sftp read.
-                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, handle_read, parse]() {
-                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, tcpSocket, handle_read, parse);
+                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_keyfile, handle_read, parse]() {
+                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_keyfile, tcpSocket, handle_read, parse);
                     }).detach();
             }
             else {
