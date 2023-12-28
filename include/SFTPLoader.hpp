@@ -19,9 +19,9 @@ namespace sgns
      * If you want to use this class, we can inheritance from this class
      * and implement logic based on model info
      */
-    class SFTPTLoader : public FileLoader
+    class SFTPLoader : public FileLoader
     {
-        SINGLETON_PTR(SFTPTLoader);
+        SINGLETON_PTR(SFTPLoader);
     public:
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)>;
         /**ok

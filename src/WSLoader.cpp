@@ -47,6 +47,7 @@ namespace sgns
                             if (!read_error)
                             {
                                 auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
+                                std::cout << "WSS Finish" << std::endl;
                                 handle_read(ioc, outbuf,parse);
                             }
                             else {

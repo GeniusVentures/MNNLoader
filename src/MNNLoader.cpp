@@ -48,6 +48,7 @@ namespace sgns
             [file, ioc, handle_read, parse, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if (!error)
                 {
+                    std::cout << "LOCAL Finish" << std::endl;
                     handle_read(ioc, buffer, parse);
                 }
                 else {

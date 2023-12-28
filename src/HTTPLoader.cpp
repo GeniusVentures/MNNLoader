@@ -54,6 +54,7 @@ namespace sgns
                         auto binaryData = std::make_shared<std::vector<char>>(buffer->begin() + headerEnd + 4, buffer->end());
 
                         //Send this to handler to be processed.
+                        std::cout << "HTTPS Finish" << std::endl;
                         handle_read(ioc, binaryData, parse);
                     }
                     else {
