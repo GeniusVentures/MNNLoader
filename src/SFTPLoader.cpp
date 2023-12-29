@@ -48,8 +48,8 @@ namespace sgns
         std::string sftp_privkeyfile,
         std::string sftp_privkeypass,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read,
-        bool parse) {
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        bool parse, bool save) {
 
         // Connect to the SFTP server
         libssh2_socket_t sock;
@@ -106,8 +106,8 @@ namespace sgns
                 if (totalBytesRead >= buffer->size()) {
                     // Process the buffer
                     std::cout << "SFTP Finish" << std::endl;
-                    ioc->post([ioc, buffer, parse, handle_read]() {
-                        handle_read(ioc, buffer, parse);
+                    ioc->post([ioc, buffer, parse, save, handle_read]() {
+                        handle_read(ioc, buffer, parse, save);
                         });
                     complete = true;
 
@@ -128,7 +128,7 @@ namespace sgns
 
     }
 
-    std::shared_ptr<void> SFTPLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
+    std::shared_ptr<void> SFTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
             //Parse hostname and path
         std::string sftp_host;
@@ -161,12 +161,12 @@ namespace sgns
         auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
 
 
-        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
+        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, ioc, handle_read, parse, save](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
             if (!connect_error)
             {
                 //Create a new thread to process this synchronous sftp read.
-                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, handle_read, parse]() {
-                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, tcpSocket, handle_read, parse);
+                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, handle_read, parse, save]() {
+                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, tcpSocket, handle_read, parse,save);
                     }).detach();
             }
             else {

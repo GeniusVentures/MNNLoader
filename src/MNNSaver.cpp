@@ -5,6 +5,10 @@
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "FileManager.hpp"
 #include "MNNSaver.hpp"
 namespace sgns
@@ -14,6 +18,7 @@ namespace sgns
     MNNSaver::MNNSaver()
     {
         FileManager::GetInstance().RegisterSaver("file", this);
+        FileManager::GetInstance().RegisterSaver("mnn", this);
     }
 
     void MNNSaver::SaveFile(std::string filename, std::shared_ptr<void> data)
@@ -32,6 +37,33 @@ namespace sgns
         outputFile.write(fileContent.get()->c_str(),
                 fileContent.get()->size());
         outputFile.close();
+    }
+
+    //void handle_write()
+    //{
+    //    std::cout << "handle write" << std::endl;
+    //}
+
+
+    void MNNSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, 
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write,
+        std::string filename, std::shared_ptr<std::vector<char>> data)
+    {
+        if (data == nullptr)
+        {
+            throw range_error("Can not save with null data");
+        }
+        if (filename.empty()) {
+            filename = boost::lexical_cast<string>((boost::uuids::random_generator())()) + ".mnn";
+        }
+
+        std::ofstream file(filename, std::ios::binary);
+
+        auto file_stream = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::write_only);
+        async_write(*file_stream, boost::asio::buffer(data->data(), data->size()), boost::asio::transfer_exactly(data->size()), [ioc, handle_write, file_stream, data](const boost::system::error_code& error, std::size_t bytes_transferred)
+        {
+                handle_write(ioc);
+        });
     }
 
 } // End namespace sgns

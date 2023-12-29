@@ -5,11 +5,11 @@
 #include <vector>
 #include "Singleton.hpp"
 #include "FileManager.hpp"
-#include "MNNLoader.hpp"
-#include "IPFSLoader.hpp"
-#include "HTTPLoader.hpp"
-#include "SFTPLoader.hpp"
-#include "WSLoader.hpp"
+//#include "MNNLoader.hpp"
+//#include "IPFSLoader.hpp"
+//#include "HTTPLoader.hpp"
+//#include "SFTPLoader.hpp"
+//#include "WSLoader.hpp"
 #include "URLStringUtil.h"
 
 
@@ -99,13 +99,13 @@ int main(int argc, char **argv)
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard(executor);
     //auto outstandingOperations = std::make_shared<int>(1);
     //FileManager::GetInstance() manager;
-    auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>, bool parse) {
+    auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>, bool parse, bool save) {
         // Do nothing
     };
     for (int i = 0; i < file_names.size(); i++)
     {
         std::cout << "LoadASync: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,ioc,dummyCallback);
+        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,true,ioc,dummyCallback);
         //FileManager::GetInstance().IncrementOutstandingOperations();
 
         //std::cout << "LoadFile: " << file_names[i] << std::endl;

@@ -34,7 +34,7 @@ class FileManager
     public:
         /// @brief Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
         /// @param io_context that we are using to async files. Data from the async load.
-        using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)>;
+        using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)>;
         /// @brief Decrement operations counter so io_context thread can be shut down when all are complete.
         /// @param The io_context that we have been reading on
         void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc);
@@ -61,7 +61,7 @@ class FileManager
         /// @param url the full path and filename to load
         /// @param parse bool on weather to parse the file or not
         /// @return shared pointer to void * of the data loaded
-        shared_ptr<void> LoadASync(const std::string& url, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback);
+        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load

@@ -1,6 +1,10 @@
 #include "FileManager.hpp"
 #include "URLStringUtil.h"
-
+#include "MNNLoader.hpp"
+#include "IPFSLoader.hpp"
+#include "HTTPLoader.hpp"
+#include "SFTPLoader.hpp"
+#include "WSLoader.hpp"
 
 void FileManager::RegisterLoader(const std::string &prefix,
         FileLoader *handlerLoader)
@@ -26,7 +30,7 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 }
 
 
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback)
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback)
 {
     std::string prefix;
     std::string filePath;
@@ -47,22 +51,36 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, std:
     IncrementOutstandingOperations();
 
     //Create a handler
-    auto handle_read = [this](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse) {
+    auto handle_read = [this](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save) {
         std::cout << "Callback!" << std::endl;
+        //Parse Data
         if (parse)
         {
             auto parserIter = parsers.find("mnn");
             auto parser = dynamic_cast<FileParser*>(parserIter->second);
             shared_ptr<void> data = parser->ParseASync(buffer);
         }
-        // Handle completion
-        DecrementOutstandingOperations(ioc);
+        //Save data or otherwise decrement counter of operations
+        if (save)
+        {
+            auto handle_write = [this](std::shared_ptr<boost::asio::io_context> ioc) {
+                DecrementOutstandingOperations(ioc);
+            };
+            auto saverIter = savers.find("mnn");
+            auto saver = saverIter->second;
+            saver->SaveASync(ioc,handle_write,"",buffer);
+        }
+        else {
+            // Handle completion
+            DecrementOutstandingOperations(ioc);
+        }
+
     };
 
     auto loader = loaderIter->second;
     // double check pointer is to a FileLoader class
     assert(dynamic_cast<FileLoader*>(loader));
-    shared_ptr<void> data = loader->LoadASync(filePath,parse,ioc,handle_read);
+    shared_ptr<void> data = loader->LoadASync(filePath,parse,save,ioc,handle_read);
     return data;
 }
 

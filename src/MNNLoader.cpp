@@ -34,7 +34,7 @@ namespace sgns
         return result;
     }
 
-    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
+    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
         //Make a stream_file which should work multi-platform
         auto file = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::read_only);
@@ -45,11 +45,11 @@ namespace sgns
         boost::asio::async_read(*file,
             boost::asio::buffer(*buffer),
             boost::asio::transfer_exactly(buffer->size()),
-            [file, ioc, handle_read, parse, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+            [file, ioc, handle_read, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if (!error)
                 {
                     std::cout << "LOCAL Finish" << std::endl;
-                    handle_read(ioc, buffer, parse);
+                    handle_read(ioc, buffer, parse, save);
                 }
                 else {
                     std::cerr << "File read error: " << error.message() << std::endl;

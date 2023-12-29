@@ -29,16 +29,17 @@ namespace sgns
 
     void start_async_download(std::shared_ptr<boost::asio::io_context> ioc, 
         std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket, 
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read, 
+        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read, 
         bool parse, 
+        bool save,
         const std::string& host, const std::string& path) {
         //Create HTTP Get request and write to server
         std::string get_request = "GET " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
-        boost::asio::async_write(*socket, boost::asio::buffer(get_request), [ioc, handle_read, parse, socket, host, path](const boost::system::error_code& write_error, std::size_t) {
+        boost::asio::async_write(*socket, boost::asio::buffer(get_request), [ioc, handle_read, parse, save, socket, host, path](const boost::system::error_code& write_error, std::size_t) {
             if (!write_error) {
                 //Create a buffer for returned data and read from server
                 auto headerbuff = std::make_shared<boost::asio::streambuf>();
-                boost::asio::async_read(*socket, *headerbuff, boost::asio::transfer_all(), [ioc, handle_read, parse, headerbuff, socket](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
+                boost::asio::async_read(*socket, *headerbuff, boost::asio::transfer_all(), [ioc, handle_read, parse, save, headerbuff, socket](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                     //Make a vector buffer from data
                     auto buffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(headerbuff->data()), boost::asio::buffers_end(headerbuff->data()));
 
@@ -55,7 +56,7 @@ namespace sgns
 
                         //Send this to handler to be processed.
                         std::cout << "HTTPS Finish" << std::endl;
-                        handle_read(ioc, binaryData, parse);
+                        handle_read(ioc, binaryData, parse, save);
                     }
                     else {
                         std::cerr << "Data does not contain header" << std::endl;
@@ -67,7 +68,7 @@ namespace sgns
             }
             });
     }
-    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
+    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
     {
         //Parse hostname and path
         std::string http_host;
@@ -95,14 +96,14 @@ namespace sgns
         auto socket = std::make_shared<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>(*ioc, *ssl_context);
 
         //Connect socket
-        socket->lowest_layer().async_connect(endpoint, [ioc, socket, handle_read, parse, http_host, http_path](const boost::system::error_code& connect_error)
+        socket->lowest_layer().async_connect(endpoint, [ioc, socket, handle_read, parse, save, http_host, http_path](const boost::system::error_code& connect_error)
             {
                 if (!connect_error)
                 {
-                    socket->async_handshake(boost::asio::ssl::stream_base::client, [ioc, socket, handle_read, parse, http_host, http_path](const boost::system::error_code& handshake_error) {
+                    socket->async_handshake(boost::asio::ssl::stream_base::client, [ioc, socket, handle_read, parse, save, http_host, http_path](const boost::system::error_code& handshake_error) {
                         if (!handshake_error) {
                             // Start the asynchronous download for a specific path
-                            start_async_download(ioc, socket, handle_read, parse, http_host, http_path);
+                            start_async_download(ioc, socket, handle_read, parse, save, http_host, http_path);
                         }
                         else {
                             std::cerr << "Handshake error: " << handshake_error.message() << std::endl;
