@@ -45,7 +45,7 @@ extern void parseHTTPUrl(std::string url, std::string& host, std::string& path, 
     }
 }
 
-extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, std::string& user, std::string& pass, std::string& key_file)
+extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, std::string& user, std::string& pass, std::string& publickey_file, std::string& privatekey_file, std::string& privatekey_pass)
 {
     // Find the first occurrence of "@" in the URL.
     size_t index = url.find("@");
@@ -70,13 +70,29 @@ extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, 
         user = user.substr(0, index);
     }
 
-    //Find key location
-    index = pass.find("key_identifier");
-    // If "key_identifier" is not found, then we have no key
+    //Find public key location
+    index = pass.find("pubkey_identifier");
+    // If "pubkey_identifier" is not found, then we have no key
     if (index != std::string::npos) {
-        key_file = pass.substr(index + 14, pass.length());
+        publickey_file = pass.substr(index + 17, pass.length());
         pass = "";
     }
+    
+    //Find Private key location
+    index = pass.find("privkey_identifier");
+    // If "privkey_identifier" is not found, then we have no private key
+    if (index != std::string::npos) {
+        privatekey_file = pass.substr(index + 18, pass.length());
+        pass = "";
+    }
+    //Find Private key passphrase
+    index = privatekey_file.find("key_passphrase");
+    // If "key_passphrase" is not found, then we have no passphrase
+    if (index != std::string::npos) {
+        privatekey_pass = privatekey_file.substr(index + 14, privatekey_file.length());
+        privatekey_file = privatekey_file.substr(0, index);
+    }
+
     //Find host and path
     index = host.find("/");
     // If "/" is not found, then the URL is missing full path

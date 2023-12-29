@@ -44,7 +44,9 @@ namespace sgns
         std::string sftp_path,
         std::string sftp_user,
         std::string sftp_pass,
-        std::string sftp_keyfile,
+        std::string sftp_pubkeyfile,
+        std::string sftp_privkeyfile,
+        std::string sftp_privkeypass,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse)> handle_read,
         bool parse) {
@@ -55,13 +57,20 @@ namespace sgns
         libssh2_session_handshake(session, sock);
         libssh2_session_set_blocking(session, 1);
 
-        // Authenticate with username and password
-        if (!sftp_keyfile.empty()) {
-            libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_keyfile.c_str(), nullptr);
+        // Authenticate, giving priority to private key, then public key, then user/pass
+        if (!sftp_privkeyfile.empty())
+        {
+            libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_privkeyfile.c_str(), nullptr);
         }
         else {
-            int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+            if (!sftp_pubkeyfile.empty()) {
+                libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_pubkeyfile.c_str(), sftp_privkeypass.c_str());
+            }
+            else {
+                int auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
+            }
         }
+
 
         // Combine . and sftpPath to form the full path
         std::string fullPath = "." + sftp_path;
@@ -126,13 +135,17 @@ namespace sgns
         std::string sftp_path;
         std::string sftp_user;
         std::string sftp_pass;
-        std::string sftp_keyfile;
-        parseSFTPUrl(filename, sftp_host, sftp_path, sftp_user, sftp_pass, sftp_keyfile);
+        std::string sftp_pubkeyfile;
+        std::string sftp_privkeyfile;
+        std::string sftp_privekeypass;
+        parseSFTPUrl(filename, sftp_host, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass);
         std::cout << "host " << sftp_host << std::endl;
         std::cout << "path " << sftp_path << std::endl;
         std::cout << "user " << sftp_user << std::endl;
         std::cout << "pass " << sftp_pass << std::endl;
-        std::cout << "keyfile " << sftp_keyfile << std::endl;
+        std::cout << "pubkeyfile " << sftp_pubkeyfile << std::endl;
+        std::cout << "privkeyfile " << sftp_privkeyfile << std::endl;
+        std::cout << "privkeypass " << sftp_privekeypass << std::endl;
 
         // Initialize libssh2
         libssh2_init(0);
@@ -148,12 +161,12 @@ namespace sgns
         auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
 
 
-        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_keyfile, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
+        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, ioc, handle_read, parse](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
             if (!connect_error)
             {
                 //Create a new thread to process this synchronous sftp read.
-                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_keyfile, handle_read, parse]() {
-                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_keyfile, tcpSocket, handle_read, parse);
+                std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, handle_read, parse]() {
+                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, tcpSocket, handle_read, parse);
                     }).detach();
             }
             else {
