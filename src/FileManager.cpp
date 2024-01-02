@@ -30,7 +30,7 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 }
 
 
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback)
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback, std::function<void(const int&)> status)
 {
     std::string prefix;
     std::string filePath;
@@ -80,7 +80,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
     auto loader = loaderIter->second;
     // double check pointer is to a FileLoader class
     assert(dynamic_cast<FileLoader*>(loader));
-    shared_ptr<void> data = loader->LoadASync(filePath,parse,save,ioc,handle_read);
+    shared_ptr<void> data = loader->LoadASync(filePath,parse,save,ioc,handle_read,status);
     return data;
 }
 

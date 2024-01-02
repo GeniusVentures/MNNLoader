@@ -51,6 +51,7 @@ namespace sgns
     void asyncBlockRead(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         size_t totalBytesRead, LIBSSH2_SESSION* session, LIBSSH2_SFTP* sftp, LIBSSH2_SFTP_HANDLE* sftpHandle, bool parse, bool save)
     {
         libssh2_session_set_blocking(session, 0);
@@ -65,18 +66,21 @@ namespace sgns
             {
                 //We've read all the data, send to parse/save
                 std::cout << "SFTP Finish" << std::endl;
+                status(0);
                 handle_read(ioc, buffer, parse, save);
                 asyncCleanup(session, sftp, sftpHandle);
             }
             else {
                 //Async wait for the next part
-                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, buffer, tcpSocket, handle_read, totalBytesRead, session, sftp, sftpHandle, parse, save](const boost::system::error_code& ec) {
+                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, buffer, tcpSocket, handle_read, status, totalBytesRead, session, sftp, sftpHandle, parse, save](const boost::system::error_code& ec) {
                     if (!ec) {
                         // Socket is readable, continue the SFTP read operation
-                        asyncBlockRead(ioc, buffer, tcpSocket, handle_read, totalBytesRead, session, sftp, sftpHandle, parse, save);
+                        asyncBlockRead(ioc, buffer, tcpSocket, handle_read, status, totalBytesRead, session, sftp, sftpHandle, parse, save);
                     }
                     else {
                         // Handle error
+                        status(-7);
+                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                     }
                     });
             }
@@ -84,18 +88,22 @@ namespace sgns
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN) {
             // Operation would block, set up asynchronous wait
-            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, buffer, tcpSocket, handle_read, totalBytesRead, session, sftp, sftpHandle, parse, save](const boost::system::error_code& ec) {
+            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, buffer, tcpSocket, handle_read, status, totalBytesRead, session, sftp, sftpHandle, parse, save](const boost::system::error_code& ec) {
                 if (!ec) {
                     // Socket is readable, continue the SFTP read operation
-                    asyncBlockRead(ioc, buffer, tcpSocket, handle_read, totalBytesRead, session, sftp, sftpHandle, parse, save);
+                    asyncBlockRead(ioc, buffer, tcpSocket, handle_read, status, totalBytesRead, session, sftp, sftpHandle, parse, save);
                 }
                 else {
                     // Handle error
+                    status(-7);
+                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
                 });
         }
         else {
             // Handle other errors
+            status(-7);
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
         }
     }
 
@@ -105,6 +113,7 @@ namespace sgns
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         LIBSSH2_SFTP* sftp,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         LIBSSH2_SFTP_HANDLE* sftpHandle, bool parse, bool save)
     {
         std::string fullPath = "." + sftp_path;
@@ -116,21 +125,25 @@ namespace sgns
             //Got size, start reading to buffer
             std::size_t file_size = sftpAttrs.filesize;
             auto buffer = std::make_shared<std::vector<char>>(file_size);
-            asyncBlockRead(ioc, buffer, tcpSocket, handle_read, 0, session, sftp, sftpHandle, parse, save);
+            status(7);
+            asyncBlockRead(ioc, buffer, tcpSocket, handle_read, status, 0, session, sftp, sftpHandle, parse, save);
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN)
         {
             //Continue getting size
-            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, sftp, handle_read, sftpHandle, parse, save](const boost::system::error_code& ec) {
+            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, sftpHandle, parse, save](const boost::system::error_code& ec) {
                 if (!ec) {
-                    asyncSFTPSize(ioc, session, sftp_path, tcpSocket, sftp, handle_read, sftpHandle, parse, save);
+                    asyncSFTPSize(ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, sftpHandle, parse, save);
                 }
                 else {
+                    status(-6);
+                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
                 });
         }
         else {
-
+            status(-6);
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
         }
     }
     void asyncSFTPOpen(std::shared_ptr<boost::asio::io_context> ioc,
@@ -139,6 +152,7 @@ namespace sgns
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         LIBSSH2_SFTP* sftp,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         bool parse, bool save)
     {
         std::string fullPath = "." + sftp_path;
@@ -149,21 +163,25 @@ namespace sgns
             int sftp_error_code = libssh2_session_last_errno(session);
             if (sftp_error_code == LIBSSH2_ERROR_EAGAIN)
             {
-                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, sftp, handle_read, parse, save](const boost::system::error_code& ec) {
+                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, parse, save](const boost::system::error_code& ec) {
                     if (!ec) {
-                        asyncSFTPOpen(ioc, session, sftp_path, tcpSocket, sftp, handle_read, parse, save);
+                        asyncSFTPOpen(ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, parse, save);
                     }
                     else {
+                        status(-5);
+                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                     }
                     });
             }
             else {
-
+                status(-5);
+                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
             }
         }
         else {
             //SFTP Opened, get file size
-            asyncSFTPSize(ioc, session, sftp_path, tcpSocket, sftp, handle_read, sftpHandle, parse, save);
+            status(6);
+            asyncSFTPSize(ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, sftpHandle, parse, save);
         }
 
     }
@@ -173,6 +191,7 @@ namespace sgns
         std::string sftp_path,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         bool parse, bool save)
     {
         LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
@@ -181,21 +200,25 @@ namespace sgns
             int sftp_error_code = libssh2_session_last_errno(session);
             if (sftp_error_code == LIBSSH2_ERROR_EAGAIN)
             {
-                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, handle_read, parse, save](const boost::system::error_code& ec) {
+                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, tcpSocket, handle_read, status, parse, save](const boost::system::error_code& ec) {
                     if (!ec) {
-                        asyncSFTPCreateSFTP(ioc, session, sftp_path, tcpSocket, handle_read, parse, save);
+                        asyncSFTPCreateSFTP(ioc, session, sftp_path, tcpSocket, handle_read, status, parse, save);
                     }
                     else {
+                        status(-4);
+                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                     }
                     });
             }
             else {
-
+                status(-4);
+                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
             }
         }
         else {
             // SFTP instance initialization succeeded
-            asyncSFTPOpen(ioc, session, sftp_path, tcpSocket, sftp, handle_read, parse, save);
+            status(5);
+            asyncSFTPOpen(ioc, session, sftp_path, tcpSocket, sftp, handle_read, status, parse, save);
         }
     }
 
@@ -209,6 +232,7 @@ namespace sgns
         std::string sftp_privkeypass,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         bool parse, bool save)
     {
         int auth_result;
@@ -227,23 +251,27 @@ namespace sgns
         
         if (auth_result == 0) {
             // Auth successful, create sftp instance
-            asyncSFTPCreateSFTP(ioc, session, sftp_path, tcpSocket, handle_read, parse, save);
+            status(4);
+            asyncSFTPCreateSFTP(ioc, session, sftp_path, tcpSocket, handle_read, status, parse, save);
             
         }
         else if (auth_result == LIBSSH2_ERROR_EAGAIN) {
-            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save](const boost::system::error_code& ec) {
+            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save](const boost::system::error_code& ec) {
                 if (!ec) {
                     // Continue with auth
-                    asyncSFTPAuth(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save);
+                    asyncSFTPAuth(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save);
                 }
                 else {
                     // Handle error
+                    status(-3);
+                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
                 });
         }
         else
         {
-
+            status(-3);
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
         }
     }
 
@@ -257,6 +285,7 @@ namespace sgns
         std::string sftp_privkeypass,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         bool parse, bool save)
     {
         libssh2_socket_t sock;
@@ -265,22 +294,26 @@ namespace sgns
        
         if (rc == 0) {
             // Handshake successful, proceed with authentication
-            asyncSFTPAuth(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save);
+            status(3);
+            asyncSFTPAuth(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save);
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN) {
-            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save](const boost::system::error_code& ec) {
+            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save](const boost::system::error_code& ec) {
                 if (!ec) {
                     // Continue with handshake
-                    asyncSFTPHandshake(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save);
+                    asyncSFTPHandshake(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save);
                 }
                 else {
                     // Handle error
+                    status(-2);
+                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
                 });
         }
         else
         {
-
+            status(-2);
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
         }
     }
     void asyncSFTPRead(
@@ -294,96 +327,22 @@ namespace sgns
         std::string sftp_privkeypass,
         std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
+        std::function<void(const int&)> status,
         bool parse, bool save) {
 
         // Connect to the SFTP server
         libssh2_socket_t sock;
         sock = tcpSocket->native_handle();
-        //libssh2_session_handshake(session, sock);
         libssh2_session_set_blocking(session, 0);
-
-        asyncSFTPHandshake(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, parse, save);
-
-        // Authenticate, giving priority to private key, then public key, then user/pass
-        //int auth_result;
-        //if (!sftp_privkeyfile.empty())
-        //{
-        //    auth_result = libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_privkeyfile.c_str(), nullptr);
-        //}
-        //else {
-        //    if (!sftp_pubkeyfile.empty()) {
-        //        auth_result =libssh2_userauth_publickey_fromfile(session, sftp_user.c_str(), nullptr, sftp_pubkeyfile.c_str(), sftp_privkeypass.c_str());
-        //    }
-        //    else {
-        //        auth_result = libssh2_userauth_password(session, sftp_user.c_str(), sftp_pass.c_str());
-        //    }
-        //}
-
-
-        //// Combine . and sftpPath to form the full path
-        //std::string fullPath = "." + sftp_path;
-
-        //// Open an SFTP channel
-        //LIBSSH2_SFTP* sftp = libssh2_sftp_init(session);
-        //LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(sftp, fullPath.c_str(), LIBSSH2_FXF_READ, 0);
-
-        //if (!sftpHandle) {
-        //    int sftp_error_code = libssh2_sftp_last_error(sftp);
-        //    std::cerr << "Error opening SFTP file handle: " << sftp_error_code << std::endl;
-        //}
-        //// Get the size of the file
-        //LIBSSH2_SFTP_ATTRIBUTES sftpAttrs;
-        //libssh2_sftp_stat(sftp, fullPath.c_str(), &sftpAttrs);
-        //std::size_t file_size = sftpAttrs.filesize;
-
-        ////Create a buffer based on file size
-        //auto buffer = std::make_shared<std::vector<char>>(file_size);
-
-        //libssh2_session_set_blocking(session, 0);
-
-            //Start reading
-        //int rc;
-        //size_t totalBytesRead = 0;
-        //bool complete = false;
-        //while (!complete) {
-        //    rc = libssh2_sftp_read(sftpHandle, buffer->data() + totalBytesRead, buffer->size() - totalBytesRead);
-        //    if (rc > 0)
-        //    {
-        //        // Increment the total bytes read
-        //        totalBytesRead += rc;
-        //        //std::cout << "reading" << std::endl;
-        //        // Check if the buffer is full
-        //        if (totalBytesRead >= buffer->size()) {
-        //            // Process the buffer
-        //            std::cout << "SFTP Finish" << std::endl;
-        //            ioc->post([ioc, buffer, parse, save, handle_read]() {
-        //                handle_read(ioc, buffer, parse, save);
-        //                });
-        //            complete = true;
-
-        //            // Reset totalBytesRead for the next iteration
-        //                //totalBytesRead = 0;
-        //        }
-        //    }
-        //    else {
-        //        std::cout << "Not complete but err" << std::endl;
-        //    }
-        //}
-        //asyncBlockRead(ioc, buffer, tcpSocket, handle_read, totalBytesRead, session, sftp, sftpHandle, parse, save);
-            //Cleanup
-        //libssh2_sftp_close_handle(sftpHandle);
-        //libssh2_sftp_shutdown(sftp);
-        //libssh2_session_disconnect(session, "Normal Shutdown");
-        //libssh2_session_free(session);
-        //libssh2_exit();
-
+        status(2);
+        asyncSFTPHandshake(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privkeypass, tcpSocket, handle_read, status, parse, save);
     }
 
 
 
 
 
-    std::shared_ptr<void> SFTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
+    std::shared_ptr<void> SFTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
     {
             //Parse hostname and path
         std::string sftp_host;
@@ -415,17 +374,17 @@ namespace sgns
 
         auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
 
-
-        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, ioc, handle_read, parse, save](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
+        status(1);
+        boost::asio::async_connect(*tcpSocket, results, [session, tcpSocket, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, ioc, handle_read, status, parse, save](const boost::system::error_code& connect_error, const auto& /*endpoint*/) {
             if (!connect_error)
             {
                 //Create a new thread to process this synchronous sftp read.
-                //std::thread([ioc, session, tcpSocket, sftp_user, sftp_pass, sftp_path, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, handle_read, parse, save]() {
-                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, tcpSocket, handle_read, parse,save);
-                    //}).detach();
+                    asyncSFTPRead(ioc, session, sftp_path, sftp_user, sftp_pass, sftp_pubkeyfile, sftp_privkeyfile, sftp_privekeypass, tcpSocket, handle_read, status, parse,save);
             }
             else {
                 std::cerr << "Error connecting to server: " << connect_error.message() << std::endl;
+                status(-1);
+                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
             }
             });
  

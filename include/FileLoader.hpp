@@ -17,7 +17,7 @@ public:
     /// @param filename URL prefix based filename to load from, i.e. 'https://filename.html', 'ipfs://testme.mnn', etc.
     /// @return a shared void pointer to the in memory data that was loaded, auto deletes at termination
     virtual std::shared_ptr<void> LoadFile(std::string filename) = 0;
-    virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback) = 0;
+    virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, std::function<void(const int&)> status) = 0;
 };
 
 #endif

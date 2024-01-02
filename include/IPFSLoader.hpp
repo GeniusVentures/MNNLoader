@@ -17,7 +17,7 @@ public:
     /// @param filename URL prefix encoded filename, i.e. https://filename.html, ipfs://filename.mnn
     /// @return a void pointer to the data associated with loading the file into memory
     virtual std::shared_ptr<void> LoadFile(std::string filename) override;
-    virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback) override;
+    virtual std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, std::function<void(const int&)> status) override;
 
 };
 

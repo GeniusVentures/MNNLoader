@@ -32,7 +32,7 @@ namespace sgns
          *
          */
         std::shared_ptr<void> LoadFile(std::string filename) override;
-        std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback) override;
+        std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, std::function<void(const int&)> status) override;
     protected:
 
     };

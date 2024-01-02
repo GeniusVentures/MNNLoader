@@ -61,7 +61,7 @@ class FileManager
         /// @param url the full path and filename to load
         /// @param parse bool on weather to parse the file or not
         /// @return shared pointer to void * of the data loaded
-        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback);
+        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, std::function<void(const int&)> status);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load

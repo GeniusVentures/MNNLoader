@@ -34,30 +34,42 @@ namespace sgns
         return result;
     }
 
-    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read)
+    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
     {
+        std::shared_ptr<string> result = std::make_shared < string>("init");
+        auto file = std::make_shared<boost::asio::stream_file>(*ioc);
         //Make a stream_file which should work multi-platform
-        auto file = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::read_only);
+        try {
+            file->open(filename, boost::asio::stream_file::flags::read_only);
+        }
+        catch(const boost::system::system_error& er){
+            std::cerr << "Error: " << er.what() << std::endl;
+            status(-12);
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+            return result;
+        }
         //Make a Buffer
         std::size_t file_size = file->size();
         auto buffer = std::make_shared<std::vector<char>>(file_size);
+        status(7);
         //Async Read.
         boost::asio::async_read(*file,
             boost::asio::buffer(*buffer),
             boost::asio::transfer_exactly(buffer->size()),
-            [file, ioc, handle_read, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+            [file, ioc, handle_read, status, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if (!error)
                 {
                     std::cout << "LOCAL Finish" << std::endl;
+                    status(0);
                     handle_read(ioc, buffer, parse, save);
                 }
                 else {
                     std::cerr << "File read error: " << error.message() << std::endl;
+                    status(-7);
+                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
             });
-        //work.reset();
-        //ioc.run();
-        std::shared_ptr<string> result = std::make_shared < string>("test");
+       
         return result;
     }
 

@@ -105,7 +105,10 @@ int main(int argc, char **argv)
     for (int i = 0; i < file_names.size(); i++)
     {
         std::cout << "LoadASync: " << file_names[i] << std::endl;
-        auto data = FileManager::GetInstance().LoadASync(file_names[i],true,true,ioc,dummyCallback);
+        auto data = FileManager::GetInstance().LoadASync(file_names[i], true, true, ioc, dummyCallback, [](const int& status)
+        {
+                std::cout << "status: " << status << std::endl;
+        });
         //FileManager::GetInstance().IncrementOutstandingOperations();
 
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
@@ -123,6 +126,7 @@ int main(int argc, char **argv)
     //std::thread([ioc]() {
     //    ioc->run();
     //    }).detach();
+    ioc->reset();
     ioc->run();
 
     return 0;
