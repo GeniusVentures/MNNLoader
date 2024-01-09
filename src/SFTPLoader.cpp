@@ -14,14 +14,6 @@
 #include "libssh2_sftp.h"
 #include <thread>
 
-#ifdef _WIN32
-    // Windows platform
-    using StreamDescriptor = boost::asio::windows::stream_handle;
-#else
-    // Assume POSIX-like platform
-    using StreamDescriptor = boost::asio::posix::stream_descriptor;
-#endif
-
 namespace sgns
 {
     SINGLETON_PTR_INIT(SFTPLoader);

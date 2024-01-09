@@ -103,7 +103,16 @@ extern void parseSFTPUrl(std::string url, std::string& host, std::string& path, 
         path = host.substr(index, host.length());
         host = host.substr(1, index-1);
     }
-
-
 }
 
+extern void parseIPFSUrl(std::string url, std::string& cid, std::string& file)
+{
+    // Find the first occurrence of "/" in the URL.
+    size_t index = url.find("/");
+    // If "/" is not found, then the URL has no prefix.
+    if (index == std::string::npos) {
+        throw std::invalid_argument("url");
+    }
+    cid = url.substr(0, index);
+    file = url.substr(index+1, url.length());
+}

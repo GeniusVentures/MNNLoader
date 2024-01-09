@@ -17,7 +17,7 @@
 /**
  * This program is example to loading MNN model file
  */
-#define IPFS_FILE_PATH_NAME "ipfs://example.mnn"
+//#define IPFS_FILE_PATH_NAME "ipfs://example.mnn"
 #define FILE_PATH_NAME "file://../test/1.mnn"
 #define FILE_SAVE_NAME "file://test.mnn"
 void loadhandler(boost::system::error_code ec, std::size_t n, std::vector<char>& buffer) {
