@@ -11,7 +11,7 @@
 //#include "SFTPLoader.hpp"
 //#include "WSLoader.hpp"
 #include "URLStringUtil.h"
-
+#include <libp2p/injector/host_injector.hpp>
 
 
 /**
@@ -93,7 +93,10 @@ int main(int argc, char **argv)
     {
         file_name = FILE_PATH_NAME;
     }
-    auto ioc = std::make_shared<boost::asio::io_context>();
+
+    //auto ioc = std::make_shared<boost::asio::io_context>();
+    auto injector = libp2p::injector::makeHostInjector();
+    auto ioc = injector.create<std::shared_ptr<boost::asio::io_context>>();
     // Create a work guard to keep the io_context alive
     boost::asio::io_context::executor_type executor = ioc->get_executor();
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard(executor);
