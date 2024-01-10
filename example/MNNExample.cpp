@@ -95,13 +95,14 @@ int main(int argc, char **argv)
     }
 
     //auto ioc = std::make_shared<boost::asio::io_context>();
+    
     auto injector = libp2p::injector::makeHostInjector();
     auto ioc = injector.create<std::shared_ptr<boost::asio::io_context>>();
+
     // Create a work guard to keep the io_context alive
     boost::asio::io_context::executor_type executor = ioc->get_executor();
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard(executor);
-    //auto outstandingOperations = std::make_shared<int>(1);
-    //FileManager::GetInstance() manager;
+
     auto dummyCallback = [](std::shared_ptr<boost::asio::io_context>, std::shared_ptr<std::vector<char>>, bool parse, bool save) {
         // Do nothing
     };

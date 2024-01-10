@@ -52,36 +52,6 @@ namespace sgns
         ping->startPinging(sconn, &OnSessionPing);
     }
 
-    bool RequestBlock(
-        std::shared_ptr<boost::asio::io_context> ioc,
-        std::shared_ptr<sgns::ipfs_bitswap::Bitswap> bitswap,
-        const sgns::ipfs_bitswap::CID& cid,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressBeginIt,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressEndIt)
-    {
-        std::cout << "Requestblock" << std::endl;
-        if (addressBeginIt != addressEndIt)
-        {
-            auto peerId = libp2p::peer::PeerId::fromBase58(addressBeginIt->getPeerId().value()).value();
-            auto address = *addressBeginIt;
-            bitswap->RequestBlock({ peerId, { address } }, cid,
-                [=](libp2p::outcome::result<std::string> data)
-                {
-                    if (data)
-                    {
-                        std::cout << "Bitswap data received: " << data.value() << std::endl;
-                        return true;
-                    }
-                    else
-                    {
-                        return RequestBlock(ioc, bitswap, cid, addressBeginIt + 1, addressEndIt);
-                    }
-                });
-        }
-
-        return false;
-    }
-
     const std::string logger_config(R"(
     # ----------------
     sinks:
@@ -118,20 +88,9 @@ namespace sgns
         std::cout << "IPFS Parse" << ipfs_cid << std::endl;
         std::cout << "IPFS Parse" << ipfs_file << std::endl;
         //Create Host
-        auto injector = libp2p::injector::makeHostInjector();
-        auto host = injector.create<std::shared_ptr<libp2p::Host>>();
-
+        auto ipfsDevice = IPFSDevice::getInstance(ioc);
         auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
-        auto self_id = host->getId();
-        std::cerr << self_id.toBase58() << " * started" << std::endl;
 
-        // Identify protocol initialization
-        //auto identityManager = injector.create<std::shared_ptr<libp2p::peer::IdentityManager>>();
-        //auto keyMarshaller = injector.create<std::shared_ptr<libp2p::crypto::marshaller::KeyMarshaller>>();
-
-        //auto identifyMessageProcessor = std::make_shared<libp2p::protocol::IdentifyMessageProcessor>(
-        //    *host, host->getNetwork().getConnectionManager(), *identityManager, keyMarshaller);
-        //auto identify = std::make_shared<libp2p::protocol::Identify>(*host, identifyMessageProcessor, host->getBus());
 
         std::vector< libp2p::multi::Multiaddress> peerAddresses = {
             //libp2p::multi::Multiaddress::create(
@@ -145,42 +104,23 @@ namespace sgns
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
 
-        // Ping protocol setup
-        //libp2p::protocol::PingConfig pingConfig{};
-        //auto rng = std::make_shared<libp2p::crypto::random::BoostRandomGenerator>();
-        //auto ping = std::make_shared<libp2p::protocol::Ping>(*host, host->getBus(), *ioc, rng, pingConfig);
-
-        //auto subsOnNewConnection = host->getBus().getChannel<libp2p::event::network::OnNewConnectionChannel>().subscribe(
-        //    [ping](auto&& conn) {
-        //        return OnNewConnection(conn, ping);
-        //    });
-
-        //host->setProtocolHandler(
-        //    ping->getProtocolId(),
-        //    [ping](libp2p::protocol::BaseProtocol::StreamResult rstream) {
-        //        ping->handle(std::move(rstream));
-        //    });
-
-        //Bitswap setup
-        auto bitswap = std::make_shared<sgns::ipfs_bitswap::Bitswap>(*host, host->getBus(), ioc);
-
-        //ioc->post([ioc, ma, host, identify, bitswap, cid, peerAddresses] {
+        status(13);
         ioc->post([=] {
-            auto listen = host->listen(ma);
+            auto listen = ipfsDevice->getHost()->listen(ma);
             if (!listen)
             {
+                status(-13);
+                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 std::cerr << "Cannot listen address " << ma.getStringAddress().data()
                     << ". Error: " << listen.error().message() << std::endl;
-                std::exit(EXIT_FAILURE);
             }
-
-            //identify->start();
-            bitswap->start();
-            host->start();
-            RequestBlock(ioc, bitswap, cid, peerAddresses.begin(), peerAddresses.end());           
+            else {
+                status(14);
+                ipfsDevice->getBitswap()->start();
+                ipfsDevice->getHost()->start();
+                ipfsDevice->RequestBlockMain(ioc, cid, peerAddresses.begin(), peerAddresses.end(), handle_read, status);
+            }
             });
-        //context->run()
-
 
         std::cout << "ok" << std::endl;
         std::shared_ptr<string> result = std::make_shared < string>("init");
