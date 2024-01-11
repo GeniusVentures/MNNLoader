@@ -1,5 +1,11 @@
 //IPFSCommon.cpp
 #include "IPFSCommon.hpp"
+#include "codec/cbor/cbor.hpp"
+#include "primitives/big_int.hpp"
+#include "ipfs_lite/ipfs/merkledag/merkledag_service.hpp"
+#include "ipfs_lite/ipfs/merkledag/leaf.hpp"
+#include "ipfs_lite/ipld/impl/ipld_node_decoder_pb.hpp"
+#include "ipfs_lite/ipld/impl/ipld_node_encoder_pb.hpp"
 
 namespace sgns
 {
@@ -43,13 +49,30 @@ namespace sgns
                 {
                     if (data)
                     {
-                        std::cout << "Bitswap data received: " << data.value() << std::endl;
-                        //auto bindata = std::make_shared<std::vector<char>>(data.value().begin(), data.value().end());
-                        //handle_read(ioc, bindata, false, true);
+                        //std::cout << "Bitswap data received: " << data.value() << std::endl;
+                        //auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
+                        //auto cid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
+                        gsl::span<const uint8_t> byteSpan(
+                            reinterpret_cast<const uint8_t*>(data.value().data()),
+                            data.value().size());
+                        auto decoder = ipfs_lite::ipld::IPLDNodeDecoderPB();
+                        
+                        auto diddecode = decoder.decode(byteSpan);
+                        std::cout << "ContentTest" << decoder.getContent() << std::endl;
+                        
+                        for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
+                            auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
+                            auto scid = libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value();
+                            std::cout << "tostring? " << scid << std::endl;
+                        }
+
+                        auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin(), decoder.getContent().end());
+                        handle_read(ioc, bindata, false, true);
                         return true;
                     }
                     else
                     {
+                        std::cout << "not data" << std::endl;
                         return RequestBlockMain(ioc, cid, addressBeginIt + 1, addressEndIt, handle_read, status);
                     }
                 });

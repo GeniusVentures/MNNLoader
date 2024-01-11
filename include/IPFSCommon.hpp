@@ -23,7 +23,7 @@ namespace sgns
 		std::shared_ptr<sgns::ipfs_bitswap::Bitswap> getBitswap() const;
 		std::shared_ptr<libp2p::Host> getHost() const;
 		~IPFSDevice() {
-		//	// Cleanup resources if needed
+			// Cleanup resources if needed
 		}
 		bool RequestBlockMain(
 			std::shared_ptr<boost::asio::io_context> ioc,
