@@ -135,7 +135,7 @@ namespace sgns
                         }
                         
 
-                        auto bindata = std::vector<char>(decoder.getContent().begin(), decoder.getContent().end());
+                        auto bindata = std::vector<char>(decoder.getContent().begin()+6, decoder.getContent().end()-4);
                         bool allset = setContentForLinkedCID(cid, scid, bindata);
                         if (allset)
                         {
