@@ -80,7 +80,7 @@ namespace sgns
 		//IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) {
 		//	initializeHostAndBitswap(ioc);
 		//}
-		static std::shared_ptr<IPFSDevice> getInstance(std::shared_ptr<boost::asio::io_context> ioc);
+		static outcome::result<std::shared_ptr<IPFSDevice>> getInstance(std::shared_ptr<boost::asio::io_context> ioc);
 		std::shared_ptr<sgns::ipfs_bitswap::Bitswap> getBitswap() const;
 		std::shared_ptr<libp2p::Host> getHost() const;
 		~IPFSDevice() {

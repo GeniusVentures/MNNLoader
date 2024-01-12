@@ -80,6 +80,7 @@ namespace sgns
 
         auto loggerProcessingEngine = sgns::ipfs_bitswap::createLogger("Bitswap");
         loggerProcessingEngine->set_level(spdlog::level::debug);
+        std::shared_ptr<string> result = std::make_shared < string>("init");
 
         //Get CID and Filename
         std::string ipfs_cid;
@@ -88,34 +89,29 @@ namespace sgns
         //std::cout << "IPFS Parse" << ipfs_cid << std::endl;
         //std::cout << "IPFS Parse" << ipfs_file << std::endl;
         //Create Host
-        auto ipfsDevice = IPFSDevice::getInstance(ioc);
-        auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
+        auto ipfsDeviceResult = IPFSDevice::getInstance(ioc);
+        if (!ipfsDeviceResult)
+        {   
+            //Error Listening
+            status(-16);
+            std::cerr << "Cannot listen address " << ". Error: " << ipfsDeviceResult.error().message() << std::endl;
+            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+            return result;
+        }
+        auto ipfsDevice = ipfsDeviceResult.value();
+        //auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
 
         ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJvtKnbpvdzAUvfkH1TZG5S33DdrnCMWEqb41ut8pdAu9").value());
 
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
-
+        
         status(13);
         ioc->post([=] {
-            auto listen = ipfsDevice->getHost()->listen(ma);
-            if (!listen)
-            {
-                status(-13);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-                std::cerr << "Cannot listen address " << ma.getStringAddress().data()
-                    << ". Error: " << listen.error().message() << std::endl;
-            }
-            else {
-                status(14);
-                ipfsDevice->getBitswap()->start();
-                ipfsDevice->getHost()->start();
-                ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
-            }
+            status(14);
+            ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
             });
-
-        std::cout << "ok" << std::endl;
-        std::shared_ptr<string> result = std::make_shared < string>("init");
+        
         return result;
     }
 

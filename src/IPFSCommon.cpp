@@ -7,12 +7,21 @@ namespace sgns
     std::shared_ptr<IPFSDevice> IPFSDevice::instance_;
     std::mutex IPFSDevice::mutex_;
 
-    std::shared_ptr<IPFSDevice> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) {
+    outcome::result<std::shared_ptr<IPFSDevice>> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) {
         //Create IPFSDevice if needed
         std::lock_guard<std::mutex> lock(mutex_);
 
         if (!instance_) {
             instance_ = std::shared_ptr<IPFSDevice>(new IPFSDevice(ioc));
+            auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
+            auto listenresult = instance_->host_->listen(ma);
+            if (!listenresult)
+            {
+                instance_.reset();
+                return listenresult.error();
+            }
+            instance_->host_->start();
+            instance_->bitswap_->start();
         }
 
         return instance_;
