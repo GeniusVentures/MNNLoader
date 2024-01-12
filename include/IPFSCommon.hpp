@@ -1,16 +1,18 @@
 //IPFSCommon.hpp
 #include <iostream>
 #include <memory>
-#include "logger.hpp"
-#include <bitswap.hpp>
-#include <boost/asio/io_context.hpp>
-#include <libp2p/injector/host_injector.hpp>
-#include <libp2p/log/configurator.hpp>
-#include <libp2p/protocol/identify/identify.hpp>
-#include <libp2p/multi/content_identifier_codec.hpp>
-#include <libp2p/protocol/ping/ping.hpp>
 #include <vector>
 #include <algorithm>
+#include "logger.hpp"
+#include "bitswap.hpp"
+#include "boost/asio/io_context.hpp"
+#include "libp2p/injector/host_injector.hpp"
+#include "libp2p/log/configurator.hpp"
+#include "libp2p/protocol/identify/identify.hpp"
+#include "libp2p/multi/content_identifier_codec.hpp"
+#include "libp2p/protocol/ping/ping.hpp"
+#include "ipfs_lite/ipld/impl/ipld_node_decoder_pb.hpp"
+
 
 #ifndef IPFSCOMMON_HPP
 #define IPFSCOMMON_HPP
@@ -90,6 +92,8 @@ namespace sgns
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
 			int addressoffset,
+			bool parse,
+			bool save,
 			std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
 			std::function<void(const int&)> status);
 
@@ -99,6 +103,8 @@ namespace sgns
 			const sgns::ipfs_bitswap::CID& cid,
 			const sgns::ipfs_bitswap::CID& scid,
 			int addressoffset,
+			bool parse,
+			bool save,
 			std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
 			std::function<void(const int&)> status);
 

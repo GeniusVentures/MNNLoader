@@ -61,7 +61,7 @@ namespace sgns
     groups:
       - name: main
         sink: console
-        level: debug
+        level: error
         children:
           - name: libp2p
     # ----------------
@@ -85,21 +85,12 @@ namespace sgns
         std::string ipfs_cid;
         std::string ipfs_file;
         parseIPFSUrl(filename, ipfs_cid, ipfs_file);
-        std::cout << "IPFS Parse" << ipfs_cid << std::endl;
-        std::cout << "IPFS Parse" << ipfs_file << std::endl;
+        //std::cout << "IPFS Parse" << ipfs_cid << std::endl;
+        //std::cout << "IPFS Parse" << ipfs_file << std::endl;
         //Create Host
         auto ipfsDevice = IPFSDevice::getInstance(ioc);
         auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
 
-
-        std::vector< libp2p::multi::Multiaddress> peerAddresses = {
-            //libp2p::multi::Multiaddress::create(
-            //    "/ip4/54.89.112.218/tcp/4001/p2p/QmSrq3jnqGAja4z96Jq9SMQFJ8TzbRAgrMLi1sTR6Ane6W").value(),
-
-            libp2p::multi::Multiaddress::create(
-                "/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJvtKnbpvdzAUvfkH1TZG5S33DdrnCMWEqb41ut8pdAu9").value(),
-
-        };
         ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJvtKnbpvdzAUvfkH1TZG5S33DdrnCMWEqb41ut8pdAu9").value());
 
         //CID of File
@@ -119,7 +110,7 @@ namespace sgns
                 status(14);
                 ipfsDevice->getBitswap()->start();
                 ipfsDevice->getHost()->start();
-                ipfsDevice->RequestBlockMain(ioc, cid, 0, handle_read, status);
+                ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
             }
             });
 
