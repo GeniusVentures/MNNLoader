@@ -83,8 +83,11 @@ namespace sgns
                             RequestBlockSub(ioc, cid, scid, 0, handle_read, status);
                         }
                         addCID(cidInfo);
-                        //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin(), decoder.getContent().end());
-                        //handle_read(ioc, bindata, false, true);
+                        if (decoder.getLinksCount() <= 0)
+                        {
+                            auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin()+4, decoder.getContent().end()-2);
+                            handle_read(ioc, bindata, false, true);
+                        }
                         return true;
                     }
                     else
