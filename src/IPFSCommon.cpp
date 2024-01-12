@@ -31,21 +31,21 @@ namespace sgns
 
         // Initialize Bitswap using the created host
         bitswap_ = std::make_shared<sgns::ipfs_bitswap::Bitswap>(*host_, host_->getBus(), ioc);
+        //Initialize address holder
+        peerAddresses_ = std::make_shared<std::vector<libp2p::multi::Multiaddress>>();
     }
 
     bool IPFSDevice::RequestBlockMain(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressBeginIt,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressEndIt,
+        int addressoffset,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
         std::function<void(const int&)> status)
     {
-        if (addressBeginIt != addressEndIt)
+        if (addressoffset < peerAddresses_->size())
         {
-            std::cout << "addrbegin0: " << addressBeginIt->getPeerId().value() << std::endl;
-            auto peerId = libp2p::peer::PeerId::fromBase58(addressBeginIt->getPeerId().value()).value();
-            auto address = *addressBeginIt;
+            auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
+            auto address = peerAddresses_->at(addressoffset);
             bitswap_->RequestBlock({ peerId, { address } }, cid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
@@ -73,14 +73,14 @@ namespace sgns
                         
                         //Start Adding to list
                         CIDInfo cidInfo(maincid.value());
-                        std::cout << "addrbegin: " << addressBeginIt->getPeerId().value() << std::endl;
+                        //std::cout << "addrbegin: " << addressIt->getPeerId().value() << std::endl;
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
                             auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
                             //auto scid = libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value();
                             auto scid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
                             CIDInfo::LinkedCIDInfo linkedCID(subcid.value());
                             cidInfo.linkedCIDs.push_back(linkedCID);
-                            RequestBlockSub(ioc, cid, scid, addressBeginIt, addressEndIt, handle_read, status);
+                            RequestBlockSub(ioc, cid, scid, 0, handle_read, status);
                         }
                         addCID(cidInfo);
                         //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin(), decoder.getContent().end());
@@ -90,7 +90,7 @@ namespace sgns
                     else
                     {
                         std::cout << "not data" << std::endl;
-                        return RequestBlockMain(ioc, cid, addressBeginIt + 1, addressEndIt, handle_read, status);
+                        return RequestBlockMain(ioc, cid, addressoffset + 1, handle_read, status);
                     }
                 });
         }
@@ -103,17 +103,15 @@ namespace sgns
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
         const sgns::ipfs_bitswap::CID& scid,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressBeginIt,
-        std::vector<libp2p::multi::Multiaddress>::const_iterator addressEndIt,
+        int addressoffset,
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
         std::function<void(const int&)> status)
     {
-        if (addressBeginIt != addressEndIt)
+        if (addressoffset < peerAddresses_->size())
         {
-            std::cout << addressBeginIt->getPeerId().value() << std::endl;
-            auto peerId = libp2p::peer::PeerId::fromBase58(addressBeginIt->getPeerId().value()).value();
-            auto address = *addressBeginIt;
-            bitswap_->RequestBlock({ peerId, { address } }, cid,
+            auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
+            auto address = peerAddresses_->at(addressoffset);
+            bitswap_->RequestBlock({ peerId, { address } }, scid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
                     if (data)
@@ -138,14 +136,19 @@ namespace sgns
                         
 
                         auto bindata = std::vector<char>(decoder.getContent().begin(), decoder.getContent().end());
-                        setContentForLinkedCID(cid, scid, bindata);
-                        //handle_read(ioc, bindata, false, true);
+                        bool allset = setContentForLinkedCID(cid, scid, bindata);
+                        if (allset)
+                        {
+                            auto finaldata = combineLinkedCIDs(cid);
+                            handle_read(ioc, finaldata, false, true);
+                        }
+                        
                         return true;
                     }
                     else
                     {
                         std::cout << "not data" << std::endl;
-                        return RequestBlockMain(ioc, cid, addressBeginIt + 1, addressEndIt, handle_read, status);
+                        return RequestBlockSub(ioc, cid, scid, addressoffset + 1, handle_read, status);
                     }
                 });
         }
@@ -154,7 +157,7 @@ namespace sgns
         return false;
     }
 
-    void IPFSDevice::setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
+    bool IPFSDevice::setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
         const sgns::ipfs_bitswap::CID& linkedCID,
         const std::vector<char>& content)
     {
@@ -167,7 +170,25 @@ namespace sgns
         {
             // Update the content for the linked CID within the found CIDInfo
             it->setContentForLinkedCID(linkedCID, content);
+            // Check if all linkedCIDs have content
+            return it->allLinkedCIDsHaveContent();
         }
+        return false;
+    }
+
+    std::shared_ptr<std::vector<char>> IPFSDevice::combineLinkedCIDs(const sgns::ipfs_bitswap::CID& mainCID)
+    {
+        auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
+            [&mainCID](const CIDInfo& info) {
+                return info.mainCID == mainCID;
+            });
+        auto combinedContent = std::make_shared<std::vector<char>>();
+        if (it != requestedCIDs_.end())
+        {
+            // Get the combined content
+            combinedContent = it->combineContents();
+        }
+        return combinedContent;
     }
 
     void IPFSDevice::addCID(const CIDInfo& cidInfo)
@@ -177,6 +198,13 @@ namespace sgns
 
         // Add the CIDInfo to the list
         requestedCIDs_.push_back(cidInfo);
+    }
+
+    void IPFSDevice::addAddress(
+        libp2p::multi::Multiaddress address
+    )
+    {
+        peerAddresses_->push_back(address);
     }
 
     std::shared_ptr<sgns::ipfs_bitswap::Bitswap> IPFSDevice::getBitswap() const {

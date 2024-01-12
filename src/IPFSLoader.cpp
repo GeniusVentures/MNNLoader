@@ -100,6 +100,7 @@ namespace sgns
                 "/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJvtKnbpvdzAUvfkH1TZG5S33DdrnCMWEqb41ut8pdAu9").value(),
 
         };
+        ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJvtKnbpvdzAUvfkH1TZG5S33DdrnCMWEqb41ut8pdAu9").value());
 
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
@@ -118,7 +119,7 @@ namespace sgns
                 status(14);
                 ipfsDevice->getBitswap()->start();
                 ipfsDevice->getHost()->start();
-                ipfsDevice->RequestBlockMain(ioc, cid, peerAddresses.begin(), peerAddresses.end(), handle_read, status);
+                ipfsDevice->RequestBlockMain(ioc, cid, 0, handle_read, status);
             }
             });
 

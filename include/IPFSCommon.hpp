@@ -31,6 +31,7 @@ namespace sgns
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
 			: mainCID(cid), linkedCIDs() {}
+
 		// Need to be able to set the content for a linked CID as we get it
 		void setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
 		{
@@ -44,6 +45,31 @@ namespace sgns
 				// Update the content for the linked CID
 				it->content = content;
 			}
+		}
+
+		// Check if all linkedCIDs have content
+		bool allLinkedCIDsHaveContent() const
+		{
+			return std::all_of(linkedCIDs.begin(), linkedCIDs.end(),
+				[](const LinkedCIDInfo& linkedCIDInfo) {
+					return !linkedCIDInfo.content.empty();
+				});
+		}
+
+		//Combine Blocks into single set of data
+		std::shared_ptr<std::vector<char>> combineContents() const
+		{
+			auto combinedContent = std::make_shared<std::vector<char>>();
+
+			// Iterate through each linkedCID and appends
+			for (const auto& linkedCIDInfo : linkedCIDs)
+			{
+				combinedContent->insert(combinedContent->end(),
+					linkedCIDInfo.content.begin(),
+					linkedCIDInfo.content.end());
+			}
+
+			return combinedContent;
 		}
 	};
 
@@ -63,23 +89,33 @@ namespace sgns
 		bool RequestBlockMain(
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
-			std::vector<libp2p::multi::Multiaddress>::const_iterator addressBeginIt,
-			std::vector<libp2p::multi::Multiaddress>::const_iterator addressEndIt,
+			int addressoffset,
 			std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
 			std::function<void(const int&)> status);
+
+		//Request Linked CID blocks
 		bool RequestBlockSub(
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
 			const sgns::ipfs_bitswap::CID& scid,
-			std::vector<libp2p::multi::Multiaddress>::const_iterator addressBeginIt,
-			std::vector<libp2p::multi::Multiaddress>::const_iterator addressEndIt,
+			int addressoffset,
 			std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
 			std::function<void(const int&)> status);
 
-		void setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
+		//Add Address to pool
+		void addAddress(
+			libp2p::multi::Multiaddress address
+		);
+
+		//Set content for a linked CID
+		bool setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
 			const sgns::ipfs_bitswap::CID& linkedCID,
 			const std::vector<char>& content);
-		// Add a CID 
+
+		//Get combined data for all linked CIDs
+		std::shared_ptr<std::vector<char>> combineLinkedCIDs(const sgns::ipfs_bitswap::CID& mainCID);
+
+		// Add a CIDinfo block
 		void addCID(const CIDInfo& cidInfo);
 	private:
 		//void initializeHostAndBitswap(std::shared_ptr<boost::asio::io_context> ioc);
@@ -90,6 +126,7 @@ namespace sgns
 
 		std::shared_ptr<libp2p::Host> host_;
 		std::shared_ptr<sgns::ipfs_bitswap::Bitswap> bitswap_;
+		std::shared_ptr<std::vector<libp2p::multi::Multiaddress>> peerAddresses_;
 
 		// Maintain a list of requested CIDs along with their linked CIDs and the content of the linked CIDs
 		std::vector<CIDInfo> requestedCIDs_;
