@@ -53,8 +53,6 @@ namespace sgns
 			std::string sftp_pubkeyfile,
 			std::string sftp_privkeyfile,
 			std::string sftp_privkeypass,
-			CompletionCallback handle_read,
-			StatusCallback status,
 			bool parse, bool save);
 		~SFTPDevice() {
 			// Cleanup
