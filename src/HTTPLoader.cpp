@@ -22,7 +22,7 @@ namespace sgns
     }
 
 
-    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
+    std::shared_ptr<void> HTTPLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status)
     {
         //Parse hostname and path
         std::string http_host;
