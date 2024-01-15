@@ -1,4 +1,6 @@
-//SFTPCommon.hpp
+/**
+ * Header file for the SFTPCommon
+ */
 #include <iostream>
 #include <sstream>
 #include <filesystem>
@@ -20,12 +22,29 @@
 namespace sgns
 {
 	using namespace boost::asio;
-
+	/**
+	 * This class creates an SFTP Device and has a function to download
+	 * from an SFTP server.
+	 */
 	class SFTPDevice : public std::enable_shared_from_this<SFTPDevice> {
 	public:
 		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)>;
 		using StatusCallback = std::function<void(const int&)>;
 
+		/**
+		 * Create an SFTP Device to load a file from SFTP. Will authenticate with priority towards private key, public key, and lastly user/pass
+		 * @param sftp_host - address of SFTP
+		 * @param sftp_path - File on SFTP to get
+		 * @param sftp_user - Username for SFTP
+		 * @param sftp_pass - Password for SFTP
+		 * @param sftp_pubkeyfile - Public key file for logging in
+		 * @param sftp_privkeyfile - Private key file for logging in
+		 * @param sftp_Privkeypass - Private key pass for logging in
+		 * @param callback - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 * @param parse - Whether to parse file upon completion (for MNN currently)
+		 * @param save - Whether to save the file to local disk upon completion
+		 */
 		SFTPDevice(
 			std::string sftp_host,
 			std::string sftp_path,
@@ -38,26 +57,88 @@ namespace sgns
 			StatusCallback status,
 			bool parse, bool save);
 		~SFTPDevice() {
-			// Cleanup resources if needed
-			//libssh2_sftp_close_handle(sftpHandle_);
-			//libssh2_sftp_shutdown(sftp_);
-			//libssh2_session_disconnect(sftp2session_, "Normal Shutdown");
-			//libssh2_session_free(sftp2session_);
-			//libssh2_exit();
+			// Cleanup
 		}
+		/**
+		 * Start downloading file on an SFTPDevice
+		 * @param ioc - ASIO context for async loading
+		 * @param tcpSocket - tcp socket for network 
+		 * @param sftp2session - SFTP session 
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
 		void StartSFTPDownload(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SESSION* sftp2session, CompletionCallback handle_read, StatusCallback status);
-		void StartSFTPHandshake(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, basic_socket<ip::tcp, any_io_executor>::native_handle_type sock, CompletionCallback handle_read, StatusCallback status);
-		void StartSFTPAuth(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, CompletionCallback handle_read, StatusCallback status);
-		void StartCreateSFTP(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, CompletionCallback handle_read, StatusCallback status);
-		void StartSFTPOpen(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket,LIBSSH2_SFTP* sftp, CompletionCallback handle_read, StatusCallback status);
-		void StartSFTPGetSize(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP* sftp, LIBSSH2_SFTP_HANDLE* sftpHandle, CompletionCallback handle_read, StatusCallback status);
-		void StartSFTPGetBlocks(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP_HANDLE* sftpHandle, std::shared_ptr<std::vector<char>> buffer, size_t totalBytesRead, CompletionCallback handle_read, StatusCallback status);
 	private:
+		/**
+		 * Do a SFTP Handshake
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param sock - native handle socket for operations
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartSFTPHandshake(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, basic_socket<ip::tcp, any_io_executor>::native_handle_type sock, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Authenticate SFTP
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartSFTPAuth(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Create SFTP 
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartCreateSFTP(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Create SFTP Handler to open file for read
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param sftp - sftp 
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartSFTPOpen(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP* sftp, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Get file size to create appropriate buffer
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param sftp - sftp
+		 * @param sftpHandle - sftp handler that opened file for read
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartSFTPGetSize(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP* sftp, LIBSSH2_SFTP_HANDLE* sftpHandle, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Download the file
+		 * @param ioc - ASIO context for async loading
+		 * @param sftp2session - SFTP session
+		 * @param tcpSocket - tcp socket for network
+		 * @param sftp - sftp
+		 * @param sftpHandle - sftp handler that opened file for read
+		 * @param buffer - buffer created based on file size
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
+		void StartSFTPGetBlocks(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP* sftp, LIBSSH2_SFTP_HANDLE* sftpHandle, std::shared_ptr<std::vector<char>> buffer, size_t totalBytesRead, CompletionCallback handle_read, StatusCallback status);
+		/**
+		 * Clean up SFTP2 items
+		 * @param sftp2session - SFTP session
+		 * @param sftp - sftp
+		 * @param sftpHandle - sftp handler that opened file for read
+		 */
+		void StartSFTPCleanup(LIBSSH2_SESSION* sftp2session, LIBSSH2_SFTP_HANDLE* sftpHandle, LIBSSH2_SFTP* sftp);
 
-
-		static std::shared_ptr<SFTPDevice> instance_;
-
-		//Vars
+		//Common vars used for getting file from SFTP
 		std::size_t file_size_;
 		std::string sftp_host_;
 		std::string sftp_path_;

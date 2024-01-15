@@ -1,11 +1,14 @@
-//IPFSCommon.cpp
+/**
+ * Source file for the SFTPCommon
+ */
 #include "SFTPCommon.hpp"
 
 
 namespace sgns
 {
     using namespace boost::asio;
-    SFTPDevice::SFTPDevice(std::string sftp_host,
+    SFTPDevice::SFTPDevice(
+        std::string sftp_host,
         std::string sftp_path,
         std::string sftp_user,
         std::string sftp_pass,
@@ -201,7 +204,7 @@ namespace sgns
             file_size_ = sftpAttrs.filesize;
             auto buffer = std::make_shared<std::vector<char>>(file_size_);
             status(7);
-            StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftpHandle, buffer, 0, handle_read, status);
+            StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, 0, handle_read, status);
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN)
         {
@@ -222,7 +225,7 @@ namespace sgns
         }
     }
 
-    void SFTPDevice::StartSFTPGetBlocks(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP_HANDLE* sftpHandle, std::shared_ptr<std::vector<char>> buffer, size_t totalBytesRead, CompletionCallback handle_read, StatusCallback status)
+    void SFTPDevice::StartSFTPGetBlocks(std::shared_ptr<boost::asio::io_context> ioc, LIBSSH2_SESSION* sftp2session, std::shared_ptr<boost::asio::ip::tcp::socket> tcpSocket, LIBSSH2_SFTP* sftp, LIBSSH2_SFTP_HANDLE* sftpHandle, std::shared_ptr<std::vector<char>> buffer, size_t totalBytesRead, CompletionCallback handle_read, StatusCallback status)
     {
         //libssh2_session_set_blocking(sftp2session_, 0);
         int rc;
@@ -242,14 +245,15 @@ namespace sgns
             }
             else {
                 //Async wait for the next part
-                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [self = shared_from_this(), ioc, sftp2session, tcpSocket, sftpHandle, buffer, totalBytesRead, handle_read, status](const boost::system::error_code& ec) {
+                tcpSocket->async_wait(boost::asio::socket_base::wait_read, [self = shared_from_this(), ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, totalBytesRead, handle_read, status](const boost::system::error_code& ec) {
                     if (!ec) {
                         // Socket is readable, continue the SFTP read operation
-                        self->StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftpHandle, buffer, totalBytesRead, handle_read, status);
+                        self->StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, totalBytesRead, handle_read, status);
                     }
                     else {
                         // Handle error
                         status(-7);
+                        self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
                         handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                     }
                     });
@@ -258,14 +262,15 @@ namespace sgns
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN) {
             // Operation would block, set up asynchronous wait
-            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [self = shared_from_this(), ioc, sftp2session, tcpSocket, sftpHandle, buffer, totalBytesRead, handle_read, status](const boost::system::error_code& ec) {
+            tcpSocket->async_wait(boost::asio::socket_base::wait_read, [self = shared_from_this(), ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, totalBytesRead, handle_read, status](const boost::system::error_code& ec) {
                 if (!ec) {
                     // Socket is readable, continue the SFTP read operation
-                    self->StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftpHandle, buffer, totalBytesRead, handle_read, status);
+                    self->StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, totalBytesRead, handle_read, status);
                 }
                 else {
                     // Handle error
                     status(-7);
+                    self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
                     handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
                 });
@@ -273,7 +278,17 @@ namespace sgns
         else {
             // Handle other errors
             status(-7);
+            StartSFTPCleanup(sftp2session, sftpHandle, sftp);
             handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
         }
+    }
+
+    void SFTPDevice::StartSFTPCleanup(LIBSSH2_SESSION* sftp2session, LIBSSH2_SFTP_HANDLE* sftpHandle, LIBSSH2_SFTP* sftp)
+    {
+        libssh2_sftp_close_handle(sftpHandle);
+        libssh2_sftp_shutdown(sftp);
+        libssh2_session_disconnect(sftp2session, "Normal Shutdown");
+        libssh2_session_free(sftp2session);
+        libssh2_exit();
     }
 }
