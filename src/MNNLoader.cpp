@@ -34,7 +34,7 @@ namespace sgns
         return result;
     }
 
-    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
+    std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status)
     {
         std::shared_ptr<string> result = std::make_shared < string>("init");
         auto file = std::make_shared<boost::asio::stream_file>(*ioc);

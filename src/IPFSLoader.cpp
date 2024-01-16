@@ -67,7 +67,7 @@ namespace sgns
     # ----------------
       )");
 
-    std::shared_ptr<void> IPFSLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
+    std::shared_ptr<void> IPFSLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status)
     {
         auto logging_system = std::make_shared<soralog::LoggingSystem>(
             std::make_shared<soralog::ConfiguratorFromYAML>(

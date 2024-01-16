@@ -32,9 +32,22 @@ class FileManager
 
         int outstandingOperations_ = 0;
     public:
-        /// @brief Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
-        /// @param io_context that we are using to async files. Data from the async load.
+        /**
+         * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
+         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
+         * @param buffer - Contains data loaded
+         * @param parse - Whether to parse file upon completion (for MNN)
+         * @param save - Whether to save the file to local disk upon completion
+         */
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)>;
+        /**
+         * Status callback returns an error code as an async load proceeds
+         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
+         * @param buffer - Contains data loaded
+         * @param parse - Whether to parse file upon completion (for MNN)
+         * @param save - Whether to save the file to local disk upon completion
+         */
+        using StatusCallback = std::function<void(const int&)>;
         /// @brief Decrement operations counter so io_context thread can be shut down when all are complete.
         /// @param The io_context that we have been reading on
         void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc);
@@ -57,11 +70,17 @@ class FileManager
         void RegisterSaver(const std::string &prefix,
                 FileSaver *handlerSaver);
 
-        /// @brief Async Load a file given a filePath and optional parse the data
-        /// @param url the full path and filename to load
-        /// @param parse bool on weather to parse the file or not
-        /// @return shared pointer to void * of the data loaded
-        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, std::function<void(const int&)> status);
+        /**
+         * Asynchronously load a file based on type
+         * @param url - URL to load, will determine loader we use
+         * @param parse - Whether to parse file upon completion (for MNN)
+         * @param save - Whether to save the file to local disk upon completion
+         * @param ioc - ASIO context for async loading
+         * @param callback - Filemanager callback on completion
+         * @param status - Status function that will be updated with status codes as operation progresses
+         * @return String indicating init
+         */
+        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, StatusCallback status);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load

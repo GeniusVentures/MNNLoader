@@ -7,7 +7,8 @@ namespace sgns
     std::shared_ptr<IPFSDevice> IPFSDevice::instance_;
     std::mutex IPFSDevice::mutex_;
 
-    outcome::result<std::shared_ptr<IPFSDevice>> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) {
+    outcome::result<std::shared_ptr<IPFSDevice>> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) 
+    {
         //Create IPFSDevice if needed
         std::lock_guard<std::mutex> lock(mutex_);
 
@@ -27,7 +28,8 @@ namespace sgns
         return instance_;
     }
 
-    IPFSDevice::IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) {
+    IPFSDevice::IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) 
+    {
         // Use libp2p::injector::makeHostInjector()to create the host
         auto injector = libp2p::injector::makeHostInjector();
         host_ = injector.create<std::shared_ptr<libp2p::Host>>();
@@ -44,8 +46,8 @@ namespace sgns
         int addressoffset,
         bool parse,
         bool save,
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
-        std::function<void(const int&)> status)
+        CompletionCallback handle_read,
+        StatusCallback status)
     {
         if (addressoffset < peerAddresses_->size())
         {
@@ -112,8 +114,8 @@ namespace sgns
         int addressoffset,
         bool parse,
         bool save,
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
-        std::function<void(const int&)> status)
+        CompletionCallback handle_read,
+        StatusCallback status)
     {
         if (addressoffset < peerAddresses_->size())
         {

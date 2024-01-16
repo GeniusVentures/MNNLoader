@@ -30,7 +30,7 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 }
 
 
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback, std::function<void(const int&)> status)
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback, StatusCallback status)
 {
     std::string prefix;
     std::string filePath;

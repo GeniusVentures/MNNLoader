@@ -19,6 +19,10 @@
 namespace sgns
 {
 	using namespace boost::asio;
+	/**
+	* This class creates an WS Device and has a function to download
+	* from an WS server.
+	*/
 	class WSDevice : public std::enable_shared_from_this<WSDevice> {
 	public:
 		/**

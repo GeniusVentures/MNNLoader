@@ -18,6 +18,10 @@
 namespace sgns
 {
 	using namespace boost::asio;
+	/**
+	 * This class creates an HTTP Device and has a function to download
+	 * from an HTTP server.
+	 */
 	class HTTPDevice : public std::enable_shared_from_this<HTTPDevice> {
 	public:
 		/**
@@ -73,7 +77,7 @@ namespace sgns
 			CompletionCallback handle_read,
 			StatusCallback status);
 
-		//Common vars used for getting file from SFTP
+		//Common vars used for getting file from HTTP
 		std::string http_host_;
 		std::string http_path_;
 		std::string http_port_;
