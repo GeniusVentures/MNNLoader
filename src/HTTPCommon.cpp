@@ -10,7 +10,8 @@ namespace sgns
         std::string http_host,
         std::string http_path,
         std::string http_port,
-        bool parse, bool save) {
+        bool parse, bool save) 
+    {
         http_host_ = http_host;
         http_path_ = http_path;
         http_port_ = http_port;

@@ -6,10 +6,8 @@
 #include <memory>
 #include "FileManager.hpp"
 #include "WSLoader.hpp"
-#include "boost/asio/ssl.hpp"
-#include "boost/beast/websocket/ssl.hpp"
-#include "boost/beast.hpp"
-#include "URLStringUtil.h"
+#include "WSCommon.hpp"
+
 
 
 namespace sgns
@@ -29,54 +27,7 @@ namespace sgns
         /* TODO: scorpioluck20 - Need to implement this. How we load file base on format file?*/
     }
 
-    void StreamWS(std::shared_ptr<boost::asio::io_context> ioc,
-        std::shared_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws,
-        std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)> handle_read,
-        std::function<void(const int&)> status,
-        bool parse, bool save,
-        const std::string& host, const std::string& path) {
-        // Perform the WebSocket asynchronous handshake
-        status(10);
-        ws->async_handshake(host, path, [ioc, ws, handle_read, status, parse, save](const boost::system::error_code& handshakeError) {
-            if (!handshakeError) {
-                //Request the file
-                status(11);
-                std::string request = "GET_FILE";
-                ws->async_write(boost::asio::buffer(request), [ioc, ws, handle_read, status, parse, save](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
-                    if (!write_error) {
-                        //Read until WSEOF
-                        status(7);
-                        auto buffer = std::make_shared<boost::asio::streambuf>();
-                        boost::asio::async_read_until(*ws, *buffer, "WSEOF", [ioc, ws, handle_read, status, parse, save, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
-                            if (!read_error)
-                            {
-                                auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
-                                std::cout << "WSS Finish" << std::endl;
-                                status(0);
-                                handle_read(ioc, outbuf,parse,save);
-                            }
-                            else {
-                                std::cerr << "File request read error: " << read_error.message() << std::endl;
-                                status(-7);
-                                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-                            }
-                            });
-                    }
-                    else {
-                        std::cerr << "File request write error: " << write_error.message() << std::endl;
-                        status(11);
-                    }
-                    });
-            }
-            else {
-                std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
-                status(-10);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-            }
-            });
-    }
-
-    std::shared_ptr<void> WSLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, std::function<void(const int&)> status)
+    std::shared_ptr<void> WSLoader::LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status)
     {
         //Parse hostname and path
         std::string ws_host;
@@ -86,48 +37,10 @@ namespace sgns
         std::cout << "host " << ws_host << std::endl;
         std::cout << "path " << ws_path << std::endl;
         std::cout << "port " << ws_port << std::endl;
-        //Resolve Address
-        boost::asio::ip::tcp::resolver resolver(*ioc);
-        auto const results = resolver.resolve(ws_host, ws_port);
 
-        //Create SSL Context, using context::tls to accept the highest version client/server can deal with
-        auto ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tls);
+        auto httpDevice = std::make_shared<WSDevice>(ws_host, ws_path, ws_port, parse, save);
+        httpDevice->StartWSDownload(ioc, handle_read, status);
 
-        //Disclude certain older insecure options
-        ctx->set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3);
-
-        //Default trusted authority definitions
-        ctx->set_default_verify_paths();
-
-        //Consider setting verify callback to check whether domain name matches cert
-        // ctx->set_verify_callback(...);
-
-        //Create Socket
-        auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
-        //Connect to server
-        status(1);
-        boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [ioc, ws, handle_read, status, parse, save, ws_host, ws_path](const boost::system::error_code& error, const auto&) {
-            if (!error) {
-                // Perform the SSL asynchronous handshake
-                status(9);
-                ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [ioc, ws, handle_read, status, parse, save, ws_host, ws_path](const boost::system::error_code& handshakeError) {
-                    if (!handshakeError) {
-                        // Perform the WebSocket asynchronous handshake
-                        StreamWS(ioc,ws,handle_read,status,parse,save,ws_host,ws_path);
-                    }
-                    else {
-                        std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;
-                        status(-9);
-                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-                    }
-                    });
-            }
-            else {
-                std::cerr << "Connect error: " << error.message() << std::endl;
-                status(-1);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-            }
-            });
         std::shared_ptr<string> result = std::make_shared < string>("test");
         return result;
     }

@@ -20,7 +20,21 @@ namespace sgns
     {
         SINGLETON_PTR(SFTPLoader);
     public:
+        /**
+         * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
+         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
+         * @param buffer - Contains data loaded
+         * @param parse - Whether to parse file upon completion (for MNN)
+         * @param save - Whether to save the file to local disk upon completion
+         */
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save)>;
+        /**
+         * Status callback returns an error code as an async load proceeds
+         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
+         * @param buffer - Contains data loaded
+         * @param parse - Whether to parse file upon completion (for MNN)
+         * @param save - Whether to save the file to local disk upon completion
+         */
         using StatusCallback = std::function<void(const int&)>;
         /**ok
          * Load Data on the MNN file

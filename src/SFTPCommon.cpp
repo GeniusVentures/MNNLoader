@@ -15,7 +15,8 @@ namespace sgns
         std::string sftp_pubkeyfile,
         std::string sftp_privkeyfile,
         std::string sftp_privkeypass,
-        bool parse, bool save) {
+        bool parse, bool save) 
+    {
         sftp_host_ = sftp_host;
         sftp_path_ = sftp_path;
         sftp_user_ = sftp_user;
