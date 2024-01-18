@@ -4,12 +4,13 @@
 
 #ifndef INCLUDE_MNNLOADER_HPP_
 #define INCLUDE_MNNLOADER_HPP_
-
 #include <memory>
 #include <string>
 #include "FileLoader.hpp"
 #include "MNNCommon.hpp"
 #include "Singleton.hpp"
+//#include "boost/asio/posix/stream_descriptor.hpp"
+
 
 namespace sgns
 {
@@ -58,7 +59,31 @@ namespace sgns
         protected:
 
     };
-
+//#if defined(BOOST_ASIO_WINDOWS)
+//    using FileStream = boost::asio::stream_file;
+//#else
+//    using FileStream = boost::asio::posix::stream_descriptor;
+//#endif
+//
+//    class PlatformFileStream {
+//    private:
+//        std::unique_ptr<FileStream> fileStream_;
+//
+//    public:
+//        PlatformFileStream() : fileStream_(std::make_unique<FileStream>()) {}
+//
+//        void open(const std::string& filename) {
+//            fileStream_->open(filename, boost::asio::stream_file::flags::read_only);
+//        }
+//
+//        std::size_t size() const {
+//            return fileStream_->size();
+//        }
+//
+//        auto& getFileStream() {
+//            return *fileStream_;
+//        }
+//    };
 } // End namespace sgns
 
 #endif /* INCLUDE_MNNLOADER_HPP_ */

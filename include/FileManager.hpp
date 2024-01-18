@@ -1,6 +1,9 @@
 #ifndef FILELOADERMANAGER_HPP
 #define FILELOADERMANAGER_HPP
 
+#if defined(__linux__) || defined(__APPLE__)
+#define BOOST_ASIO_HAS_IO_URING 1
+#endif
 #include <iostream>
 #include <string>
 #include <map>
@@ -50,10 +53,10 @@ class FileManager
         using StatusCallback = std::function<void(const int&)>;
         /// @brief Decrement operations counter so io_context thread can be shut down when all are complete.
         /// @param The io_context that we have been reading on
-        void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc);
+        void DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc);
         /// @brief Increment operations counter so io_context thread can be shut down when all are complete.
-        void FileManager::IncrementOutstandingOperations();
-        shared_ptr<int> FileManager::GetOutstandingOperationsPointer();
+        void IncrementOutstandingOperations();
+        shared_ptr<int> GetOutstandingOperationsPointer();
         /// @brief Register a synchronous loader class to handle a specific prefix
         /// @param prefix = "https", "file", etc from https://xxxxx
         /// @param handlerLoader Handler class object that can load the data

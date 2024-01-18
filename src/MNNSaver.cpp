@@ -11,6 +11,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "FileManager.hpp"
 #include "MNNSaver.hpp"
+
 namespace sgns
 {
     SINGLETON_PTR_INIT(MNNSaver);
@@ -58,8 +59,13 @@ namespace sgns
         }
 
         std::ofstream file(filename, std::ios::binary);
-
+//#if defined(BOOST_ASIO_WINDOWS)
         auto file_stream = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::write_only);
+//#else
+//        auto file_stream = std::make_shared<boost::asio::posix::stream_descriptor>(*ioc);
+//        int fileDescriptor = open(filename, O_RDONLY);
+//        file_stream->assign(fileDescriptor);
+//#endif
         async_write(*file_stream, boost::asio::buffer(data->data(), data->size()), boost::asio::transfer_exactly(data->size()), [ioc, handle_write, file_stream, data](const boost::system::error_code& error, std::size_t bytes_transferred)
         {
                 handle_write(ioc);
