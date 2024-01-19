@@ -51,8 +51,6 @@ if ( Protobuf_FOUND )
 endif()
 include(${PROJECT_ROOT}/cmake/functions.cmake)
 
-
-
 # --------------------------------------------------------
 # Set config of openssl project
 set(OPENSSL_DIR "${_THIRDPARTY_BUILD_DIR}/openssl/build/${CMAKE_SYSTEM_NAME}${ABI_SUBFOLDER_NAME}" CACHE PATH "Path to OpenSSL install folder")
@@ -63,7 +61,6 @@ set(OPENSSL_INCLUDE_DIR "${OPENSSL_DIR}/include" CACHE PATH "Path to OpenSSL inc
 set(OPENSSL_LIBRARIES "${OPENSSL_DIR}/lib" CACHE PATH "Path to OpenSSL lib folder")
 set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_LIBRARIES}/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX} CACHE PATH "Path to OpenSSL crypto lib")
 set(OPENSSL_SSL_LIBRARY ${OPENSSL_LIBRARIES}/libssl${CMAKE_STATIC_LIBRARY_SUFFIX} CACHE PATH "Path to OpenSSL ssl lib")
-message("FINDOPENSSL ${OPENSSL_CRYPTO_LIBRARY}")
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
@@ -269,10 +266,8 @@ include_directories(${xxhash_INCLUDE_DIR})
 # Set config of MNN
 set(MNN_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/MNN/include")
 set(MNN_LIBRARY_DIR "${_THIRDPARTY_BUILD_DIR}/MNN/lib")
-#find_package(MNN CONFIG REQUIRED)
-#find_path(MNN NAMES MNN.lib PATHS ${MNN_LIBRARY_DIR})
-#find_library(MNN NAMES MNN.lib PATHS ${MNN_LIBRARY_DIR})
 include_directories(${MNN_INCLUDE_DIR})
+set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
 
 # ----------------------BUILD EXTERNAL PROJECT------------------
 # Builds LIBSSH
@@ -291,6 +286,8 @@ if (NOT TARGET libssh2)
             -DCMAKE_CXX_FLAGS_DEBUG:STRING=${CMAKE_CXX_FLAGS_DEBUG}
             -DCMAKE_C_FLAGS_RELEASE:STRING=${CMAKE_C_FLAGS_RELEASE}
             -DCMAKE_CXX_FLAGS_RELEASE:STRING=${CMAKE_CXX_FLAGS_RELEASE}
+			-DOPENSSL_ROOT_DIR:STRING=${OPENSSL_ROOT_DIR}
+			-DCRYPTO_BACKEND:STRING=OpenSSL
             ${_CMAKE_COMMON_BUILD_PARAMS}
     )
 	message("COMMON BUILD PARAMS _--------------------------------------- ${_CMAKE_COMMON_BUILD_PARAMS}")

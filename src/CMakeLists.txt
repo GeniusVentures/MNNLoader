@@ -5,13 +5,13 @@ FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
 add_library(fileloader OBJECT
     ${FILELOADER_SRCS}
     )
-
 add_dependencies(fileloader libssh2)
 target_link_libraries(fileloader PRIVATE
-	${LIBSSH2_LIBRARIES}
 	${Boost_LIBRARIES}
 	OpenSSL::SSL 
 	OpenSSL::Crypto
+	${LIBSSH2_LIBRARIES}
+	${MNN_LIBS}
     graphsync
     ipfs_merkledag_service
     p2p::asio_scheduler
@@ -34,7 +34,6 @@ target_link_libraries(fileloader PRIVATE
 	ipfs-bitswap-proto
 	ipfs-bitswap-cpp 
 	spdlog::spdlog
-	${MNN_LIBS}
 	)
 #target_link_libraries( ${Boost_LIBRARIES})
 #file(INSTALL ${FILELOADER_HEADER} DESTINATION ${CMAKE_BINARY_DIR}/FileLoader/include)

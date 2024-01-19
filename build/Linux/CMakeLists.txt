@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 # --------------------------------------------------------
-# if on Linux system, build the linux executables
+# if on Linux system, build the Linux executables
 if (NOT ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
     message(FATAL_ERROR "${CMAKE_HOST_SYSTEM_NAME} host system name does not match Linux - Please select the correct folder for configuring project")
 endif()
+
 # --------------------------------------------------------
 # Set toolchain file before the project call
 get_filename_component(_LINUX_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}" DIRECTORY ABSOLUTE)
@@ -16,7 +17,7 @@ set(CMAKE_TOOLCHAIN_FILE "${_BUILD_FOLDER}/cmake/toolchain/cxx17.cmake" CACHE IN
 project(FileLoader C CXX)
 
 # --------------------------------------------------------
-# build common libraries by platforms
+# include common compiler options
 include(../CommonCompilerOptions.CMake)
 
 # --------------------------------------------------------
@@ -36,37 +37,20 @@ set(MULTIPLE_OPTION "-z muldefs")
 # Set extra compiler flags
 set(EXTRA_CXX_FLAGS)
 
-# ------------------------------------------
-# Set Linux specific runtime options
-if("${LINUX_TARGET_ARCHITECTURES}" STREQUAL "")
-    set(LINUX_TARGET_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
-endif("${LINUX_TARGET_ARCHITECTURES}" STREQUAL "")
-
-# --------------------------------------------------------
-# Allow multiple definitions
-set(FORCE_MULTILE ON)
-set(MULTIPLE_OPTION /FORCE:MULTIPLE)
-
-# --------------------------------------------------------
-# Set extra compiler flags
-set(EXTRA_CXX_FLAGS)
-
 # --------------------------------------------------------
 # Set custom subfolder for ABI
-set(ABI_SUBFOLDER_NAME "") 
+set(ABI_SUBFOLDER_NAME "")
 
 include(ExternalProject)
 include_directories(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/include
 )
-
-
 # --------------------------------------------------------
-# Include common build paramaeters
+# Include common build parameters
 include(../CommonBuildParameters.cmake)
 
 # install example binary to bin
-SET(TESTAPP MNNExample )
+#SET(TESTAPP MNNExample )
 
 install(TARGETS ${TESTAPP} DESTINATION "${BUILD_FILELOADER_DIR}/bin")

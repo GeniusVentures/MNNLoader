@@ -1,5 +1,6 @@
 #add_subdirectory(application)
 FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
 add_executable(MNNExample MNNExample.cpp)
-include_directories(../include)
+add_dependencies(MNNExample fileloader)
 target_link_libraries(MNNExample fileloader)
+include_directories(../include)
