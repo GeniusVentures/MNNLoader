@@ -1,9 +1,10 @@
 #ifndef FILELOADERMANAGER_HPP
 #define FILELOADERMANAGER_HPP
 
-//#if defined(__linux__) || defined(__APPLE__)
-//#define BOOST_ASIO_HAS_IO_URING 1
-//#endif
+#if defined(__linux__) || defined(__APPLE__)
+#define BOOST_ASIO_HAS_IO_URING 1
+#include <liburing.h>
+#endif
 #include <iostream>
 #include <string>
 #include <map>

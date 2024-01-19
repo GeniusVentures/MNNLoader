@@ -35,6 +35,10 @@ target_link_libraries(fileloader PRIVATE
 	ipfs-bitswap-cpp 
 	spdlog::spdlog
 	)
+if(NOT WIN32)
+    # Link against liburing.a on non-Windows systems
+    target_link_libraries(fileloader PRIVATE liburing.a)
+endif()
 #target_link_libraries( ${Boost_LIBRARIES})
 #file(INSTALL ${FILELOADER_HEADER} DESTINATION ${CMAKE_BINARY_DIR}/FileLoader/include)
 #include_directories(${CMAKE_BINARY_DIR}/FileLoader/include )
