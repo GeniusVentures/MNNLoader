@@ -54,10 +54,14 @@ namespace sgns
         }
 
         std::ofstream file(filename, std::ios::binary);
-        auto file_stream = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::write_only);
+        int fd = open(filename.c_str(), O_WRONLY);
+        auto file_stream = std::make_shared<boost::asio::posix::stream_descriptor>(*ioc, fd);
+
+        //auto file_stream = std::make_shared<boost::asio::stream_file>(*ioc, filename, boost::asio::stream_file::flags::write_only);
 
         async_write(*file_stream, boost::asio::buffer(data->data(), data->size()), boost::asio::transfer_exactly(data->size()), [ioc, handle_write, file_stream, data](const boost::system::error_code& error, std::size_t bytes_transferred)
         {
+                std::cout << "wrote" << std::endl;
                 handle_write(ioc);
         });
     }

@@ -2,8 +2,10 @@
 #define FILELOADERMANAGER_HPP
 
 #if defined(__linux__) || defined(__APPLE__)
-#define BOOST_ASIO_HAS_IO_URING 1
-#include <liburing.h>
+//#define BOOST_ASIO_HAS_IO_URING 1
+//#include <liburing.h>
+#include <fcntl.h>
+#include "boost/asio/posix/stream_descriptor.hpp"
 #endif
 #include <iostream>
 #include <string>
