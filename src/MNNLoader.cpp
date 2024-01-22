@@ -5,6 +5,7 @@
 #include <string>
 #include "FileManager.hpp"
 #include "MNNLoader.hpp"
+#include "FILECommon.hpp"
 
 namespace sgns
 {
@@ -38,24 +39,14 @@ namespace sgns
     {
         std::shared_ptr<string> result = std::make_shared < string>("init");
 
-
-        // Open a file descriptor
-        int fd = open(filename.c_str(), O_RDONLY);
-        if (fd == -1) {
-            std::cerr << "Error: Cannot Open File" << std::endl;
-            status(-12);
-            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-            return result;
-        }
-
-        // Wrap the file descriptor in a stream_descriptor
-        auto file = std::make_shared<boost::asio::posix::stream_descriptor>(*ioc, fd);
+        // Create a file device which will have a stream_descriptor or stream_file based on whether we are on posix OS or not.
+        auto fileDevice = std::make_shared<FILEDevice>(ioc, filename, 0);
         auto buffer = std::make_shared<boost::asio::streambuf>();
         status(7);
         ////Async Read.
-       boost::asio::async_read(*file, *buffer,
+       boost::asio::async_read(fileDevice->getFile(), *buffer,
             boost::asio::transfer_all(),
-            [file, ioc, handle_read, status, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+            [fileDevice, ioc, handle_read, status, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if (error.value() == 2)
                 {
                     std::cout << "LOCAL Finish" << std::endl;
@@ -69,39 +60,6 @@ namespace sgns
                     handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                 }
             });
-        //auto file = std::make_shared<boost::asio::stream_file>(*ioc);
-        ////Make a stream_file which should work multi-platform
-        //try {
-        //    file->open(filename, boost::asio::stream_file::flags::read_only);
-        //}
-        //catch(const boost::system::system_error& er){
-        //    std::cerr << "Error: " << er.what() << std::endl;
-        //    status(-12);
-        //    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-        //    return result;
-        //}
-
-        ////Make a Buffer
-        //auto buffer = std::make_shared<boost::asio::streambuf>();
-        //status(7);
-        ////Async Read.
-        //boost::asio::async_read(*file,
-        //    *buffer,
-        //    boost::asio::transfer_all(),
-        //    [file, ioc, handle_read, status, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
-        //        if (error.value() == 2)
-        //        {
-        //            std::cout << "LOCAL Finish" << std::endl;
-        //            auto finalbuffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()));
-        //            status(0);
-        //            handle_read(ioc, finalbuffer, parse, save);
-        //        }
-        //        else {
-        //            std::cerr << "File read error: " << error.message() << std::endl;
-        //            status(-7);
-        //            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-        //        }
-        //    });
        
         return result;
     }
