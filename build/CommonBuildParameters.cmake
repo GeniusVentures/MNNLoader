@@ -270,37 +270,12 @@ include_directories(${MNN_INCLUDE_DIR})
 set(MNN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MNN/include")
 
 # ----------------------BUILD EXTERNAL PROJECT------------------
-# Builds LIBSSH
-if (NOT TARGET libssh2)
-    message(STATUS "Start building LIBSSH2 library")
-    ExternalProject_Add(
-        libssh2
-        PREFIX libssh2
-        SOURCE_DIR "${_THIRDPARTY_DIR}/libssh2"
-        CMAKE_CACHE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/libssh2
-            -DBUILD_STATIC_LIBS:BOOL=ON
-            -DBUILD_SHARED_LIBS:BOOL=OFF
-            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-            -DCMAKE_C_FLAGS_DEBUG:STRING=${CMAKE_C_FLAGS_DEBUG}
-            -DCMAKE_CXX_FLAGS_DEBUG:STRING=${CMAKE_CXX_FLAGS_DEBUG}
-            -DCMAKE_C_FLAGS_RELEASE:STRING=${CMAKE_C_FLAGS_RELEASE}
-            -DCMAKE_CXX_FLAGS_RELEASE:STRING=${CMAKE_CXX_FLAGS_RELEASE}
-			-DOPENSSL_ROOT_DIR:STRING=${OPENSSL_ROOT_DIR}
-			-DCRYPTO_BACKEND:STRING=OpenSSL
-			-DZLIB_ROOT:STRING=${_THIRDPARTY_BUILD_DIR}/zlib
-			-DCMAKE_OSX_ARCHITECTURES:STRING=x86_64
-            ${_CMAKE_COMMON_BUILD_PARAMS}
-    )
-	message("COMMON BUILD PARAMS _--------------------------------------- ${_CMAKE_COMMON_BUILD_PARAMS}")
-    ExternalProject_Get_Property(libssh2 INSTALL_DIR)
-    # Include libssh2 headers
-    include_directories(SYSTEM ${INSTALL_DIR}/include)
-
-    set(LIBSSH2_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libssh2/lib)
-    set(LIBSSH2_LIBRARIES ${LIBSSH2_LIBRARY_DIR}/libssh2${CMAKE_STATIC_LIBRARY_SUFFIX}) 
-	
-endif()
+# Set config of LIBSSH2
+set(Libssh2_DIR "${_THIRDPARTY_BUILD_DIR}/libssh2/lib/cmake/libssh2")
+set(Libssh2_LIBRARY_DIR "${_THIRDPARTY_BUILD_DIR}/libssh2/lib")
+set(Libssh2_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/libssh2/include")
+find_package(Libssh2 CONFIG REQUIRED)
+include_directories(${LIBSSH2_INCLUDE_DIR})
 
 # --------------------------------------------------------
 include_directories(
