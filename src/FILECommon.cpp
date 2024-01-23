@@ -42,9 +42,6 @@ namespace sgns
         }
         catch(const boost::system::system_error& er){
             std::cerr << "Error: " << er.what() << std::endl;
-            //status(-12);
-            //handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
-            //return result;
         }
     }
 #endif
