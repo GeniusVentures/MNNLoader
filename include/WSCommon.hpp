@@ -8,11 +8,9 @@
 #include <streambuf>
 #include <string>
 #include <memory>
-#include "boost/asio/ssl.hpp"
 #include "boost/beast/websocket/ssl.hpp"
 #include "boost/beast.hpp"
 #include "boost/asio.hpp"
-#include "boost/bind.hpp"
 #include "URLStringUtil.h"
 #ifndef WSCOMMON_HPP
 #define WSCOMMON_HPP
