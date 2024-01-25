@@ -8,7 +8,7 @@ set(
 )
 
 include(GNUInstallDirs)
-project(ASyncIOManager C CXX)
+project(AsyncIOManager C CXX)
 if (NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -61,21 +61,21 @@ add_subdirectory(${PROJECT.Path})
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING  PATTERN "*.hpp")
 
 #Install LIB
-install(TARGETS ASyncIOManager
-        EXPORT ASyncIOManagerTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install(TARGETS AsyncIOManager
+        EXPORT AsyncIOManagerTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 		
 #Install Targets
-set(ASYNCIOMANAGER_CONFIG_DESTINATION_DIR "lib/cmake/ASyncIOManager")
-install(EXPORT ASyncIOManagerTargets
-  FILE ASyncIOManagerTargets.cmake
-  DESTINATION ${ASYNCIOMANAGER_CONFIG_DESTINATION_DIR}
+set(AsyncIOManager_CONFIG_DESTINATION_DIR "lib/cmake/AsyncIOManager")
+install(EXPORT AsyncIOManagerTargets
+  FILE AsyncIOManagerTargets.cmake
+  DESTINATION ${AsyncIOManager_CONFIG_DESTINATION_DIR}
 )
 
 include(CMakePackageConfigHelpers)
 
 # generate the config file that is includes the exports
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/AsyncIOManagerConfig.cmake"
   INSTALL_DESTINATION "lib/cmake/examples"
   NO_SET_AND_CHECK_MACRO
   NO_CHECK_REQUIRED_COMPONENTS_MACRO
@@ -83,13 +83,13 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
 
 # generate the version file for the config file
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/AsyncIOManagerConfigVersion.cmake"
   VERSION "${VERSION_STRING}.${SUBVERSION_STRING}"
   COMPATIBILITY AnyNewerVersion
 )
 
 # install the configuration file
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfig.cmake
-  DESTINATION ${ASYNCIOMANAGER_CONFIG_DESTINATION_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/AsyncIOManagerConfig.cmake
+  DESTINATION ${AsyncIOManager_CONFIG_DESTINATION_DIR}
 )
