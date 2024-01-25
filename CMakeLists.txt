@@ -8,7 +8,7 @@ set(
 )
 
 include(GNUInstallDirs)
-project(FileLoader C CXX)
+project(ASyncIOManager C CXX)
 if (NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,28 +39,15 @@ find_package(Libssh2 CONFIG REQUIRED)
 include_directories(${libssh2_INCLUDE_DIR})
 
 # ---------------------------
-# Set default variable
-# FileLoader defines the version
-set(VERSION_STRING 0.0.1)
-set(SOVERSION_STRING 0.0.1)
+# Set version
+set(VERSION_STRING 0)
+set(SUBVERSION_STRING 1)
 
-# root dir
-set(FILELOADER_ROOT_DIR ${CMAKE_SOURCE_DIR})
-# set default build dir
-
-#if (NOT DEFINED BUILD_FILELOADER_DIR)
-#    set(BUILD_FILELOADER_DIR ${FILELOADER_ROOT_DIR}/.build/FileLoader)
-#endif ()
-#message(STATUS "BUILD_FILELOADER_DIR: ${BUILD_FILELOADER_DIR}")
 # Set source file dir
 set(PROJECT.Path ${CMAKE_SOURCE_DIR}/src)
 set(PROJECT.Source_DIR
     ${PROJECT.Path}
 )
-
-set(FileLoader_LIB "fileloader")
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_FILELOADER_DIR}/lib" )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_FILELOADER_DIR}/lib" )
 
 # -----------------------------------
 # Include external plugin need
@@ -70,40 +57,25 @@ include_directories(
 )
 add_subdirectory(${PROJECT.Path})
 
-# -------------- Include common function ----------------------------
-#include (cmake/common.cmake)
-
-
-# ----------------Build library---------------------------------
-# Set source file
-foreach(dir_path ${PROJECT.Source_DIR})
-    aux_source_directory(${dir_path} PROJECT_SRC_CODE)
-endforeach()
-
-
-# ------------------------------------------
-# Build Binary
-#add_fileloader_library(${VERSION_STRING} ${SOVERSION_STRING})
-# -------------------------------------------
-# Combine binary to execute the example
-link_directories(${BUILD_FILELOADER_DIR}/lib)
-
+#Install Headers
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING  PATTERN "*.hpp")
 
-install(TARGETS fileloader
-        EXPORT fileloaderTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+#Install LIB
+install(TARGETS ASyncIOManager
+        EXPORT ASyncIOManagerTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 		
-set(FILELOADER_CONFIG_DESTINATION_DIR "lib/cmake/fileloader")
-install(EXPORT fileloaderTargets
-  FILE fileloaderTargets.cmake
-  DESTINATION ${FILELOADER_CONFIG_DESTINATION_DIR}
+#Install Targets
+set(ASYNCIOMANAGER_CONFIG_DESTINATION_DIR "lib/cmake/ASyncIOManager")
+install(EXPORT ASyncIOManagerTargets
+  FILE ASyncIOManagerTargets.cmake
+  DESTINATION ${ASYNCIOMANAGER_CONFIG_DESTINATION_DIR}
 )
 
 include(CMakePackageConfigHelpers)
 
 # generate the config file that is includes the exports
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/fileloaderConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfig.cmake"
   INSTALL_DESTINATION "lib/cmake/examples"
   NO_SET_AND_CHECK_MACRO
   NO_CHECK_REQUIRED_COMPONENTS_MACRO
@@ -111,13 +83,13 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
 
 # generate the version file for the config file
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/fileloaderConfigVersion.cmake"
-  VERSION "0.1"
+  "${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfigVersion.cmake"
+  VERSION "${VERSION_STRING}.${SUBVERSION_STRING}"
   COMPATIBILITY AnyNewerVersion
 )
 
 # install the configuration file
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/fileloaderConfig.cmake
-  DESTINATION ${FILELOADER_CONFIG_DESTINATION_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/ASyncIOManagerConfig.cmake
+  DESTINATION ${ASYNCIOMANAGER_CONFIG_DESTINATION_DIR}
 )
