@@ -6,7 +6,7 @@ if (NOT ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
     message(FATAL_ERROR "${CMAKE_HOST_SYSTEM_NAME} host system name does not match Windows - Please select the correct folder for configuring project")
 endif()
 
-project(FileLoader C CXX)
+project(AsyncIOManager C CXX)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

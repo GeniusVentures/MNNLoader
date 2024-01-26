@@ -239,14 +239,6 @@ set(jsonrpc_lean_INCLUDE_DIR "${_THIRDPARTY_DIR}/jsonrpc-lean/include")
 include_directories(${jsonrpc_lean_INCLUDE_DIR})
 
 # --------------------------------------------------------
-# Set config of binaryen
-#set(binaryen_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/binaryen/include")
-#set(binaryen_LIBRARIES "${_THIRDPARTY_BUILD_DIR}/binaryen/lib")
-#set(binaryen_DIR "${_THIRDPARTY_BUILD_DIR}/binaryen/lib/cmake/binaryen")
-#find_package(binaryen CONFIG REQUIRED)
-#include_directories(${binaryen_INCLUDE_DIR} ${binaryen_INCLUDE_DIR}/binaryen)
-
-# --------------------------------------------------------
 # Set config of secp256k1
 set(libsecp256k1_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/libsecp256k1/include")
 set(libsecp256k1_LIBRARY_DIR "${_THIRDPARTY_BUILD_DIR}/libsecp256k1/lib")
@@ -303,8 +295,8 @@ link_directories(
   ${ipfs-lite-cpp_LIB_DIR}
 )
 
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/FileLoader/lib" )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/FileLoader/lib" )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AsyncIOManager/lib" )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AsyncIOManager/lib" )
 
 add_subdirectory(${PROJECT_ROOT}/src ${CMAKE_BINARY_DIR}/src)
 #add_subdirectory(${PROJECT_ROOT}/node ${CMAKE_BINARY_DIR}/node)
