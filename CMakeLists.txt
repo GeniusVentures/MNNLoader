@@ -58,7 +58,7 @@ include_directories(
 add_subdirectory(${PROJECT.Path})
 
 #Install Headers
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING  PATTERN "*.hpp")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING  PATTERN "*.h*")
 
 #Install LIB
 install(TARGETS AsyncIOManager
