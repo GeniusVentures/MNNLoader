@@ -2,11 +2,11 @@
 file(GLOB FILELOADER_HEADER "../include/*.h*")
 file(GLOB FILELOADER_SRCS "*.cpp")
 FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
-add_library(ASyncIOManager
+add_library(AsyncIOManager STATIC
     ${FILELOADER_SRCS}
     )
 
-target_link_libraries(ASyncIOManager PRIVATE
+target_link_libraries(AsyncIOManager PRIVATE
 	${Boost_LIBRARIES}
 	OpenSSL::SSL 
 	OpenSSL::Crypto

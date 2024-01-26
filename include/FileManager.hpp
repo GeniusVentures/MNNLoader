@@ -32,6 +32,7 @@ class FileManager
 
         int outstandingOperations_ = 0;
     public:
+        static void InitializeSingletons();
         /**
          * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
          * @param ioc - asio io context so we can stop this if no outstanding async tasks remain

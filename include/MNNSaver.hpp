@@ -16,6 +16,7 @@ namespace sgns
         SINGLETON_PTR(MNNSaver)
             ;
         public:
+            static void InitializeSingleton();
             /// @brief save a file to ipfs, throws on error
             /// @param filename filename to save the file as
             virtual void SaveFile(std::string filename,

@@ -9,8 +9,13 @@
 #include <MNN/Interpreter.hpp>
 namespace sgns
 {
-    SINGLETON_PTR_INIT(MNNParser);
-
+    //SINGLETON_PTR_INIT(MNNParser);
+    MNNParser* MNNParser::_instance = nullptr;
+    void MNNParser::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new MNNParser();
+        }
+    }
     MNNParser::MNNParser()
     {
         FileManager::GetInstance().RegisterParser("mnn", this);

@@ -6,10 +6,14 @@
 #include "FileManager.hpp"
 #include "MNNLoader.hpp"
 #include "FILECommon.hpp"
-
 namespace sgns
 {
-    SINGLETON_PTR_INIT(MNNLoader);
+    MNNLoader* MNNLoader::_instance = nullptr;
+    void MNNLoader::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new MNNLoader();
+        }
+    }
     MNNLoader::MNNLoader()
     {
         FileManager::GetInstance().RegisterLoader("file", this);
@@ -38,7 +42,6 @@ namespace sgns
     std::shared_ptr<void> MNNLoader::LoadASync(std::string filename,bool parse,bool save,std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status)
     {
         std::shared_ptr<string> result = std::make_shared < string>("init");
-
         // Create a file device which will have a stream_descriptor or stream_file based on whether we are on posix OS or not.
         auto fileDevice = std::make_shared<FILEDevice>(ioc, filename, 0);
         auto buffer = std::make_shared<boost::asio::streambuf>();

@@ -12,7 +12,12 @@
 
 namespace sgns
 {
-    SINGLETON_PTR_INIT(SFTPLoader);
+    SFTPLoader* SFTPLoader::_instance = nullptr;
+    void SFTPLoader::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new SFTPLoader();
+        }
+    }
     SFTPLoader::SFTPLoader()
     {
         FileManager::GetInstance().RegisterLoader("sftp", this);

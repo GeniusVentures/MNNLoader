@@ -21,7 +21,12 @@ namespace sgns
 {
     using libp2p::Host;
     //using sgns::ipfspeer;
-    SINGLETON_PTR_INIT(IPFSLoader);
+    IPFSLoader* IPFSLoader::_instance = nullptr;
+    void IPFSLoader::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new IPFSLoader();
+        }
+    }
     IPFSLoader::IPFSLoader()
     {
         FileManager::GetInstance().RegisterLoader("ipfs", this);

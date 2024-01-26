@@ -15,8 +15,12 @@
 
 namespace sgns
 {
-    SINGLETON_PTR_INIT(MNNSaver);
-
+    MNNSaver* MNNSaver::_instance = nullptr;
+    void MNNSaver::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new MNNSaver();
+        }
+    }
     MNNSaver::MNNSaver()
     {
         FileManager::GetInstance().RegisterSaver("file", this);

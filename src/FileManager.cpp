@@ -1,11 +1,13 @@
 #include "FileManager.hpp"
 #include "URLStringUtil.h"
 #include "MNNLoader.hpp"
+#include "MNNParser.hpp"
+#include "MNNSaver.hpp"
 #include "IPFSLoader.hpp"
 #include "HTTPLoader.hpp"
 #include "SFTPLoader.hpp"
 #include "WSLoader.hpp"
-
+#pragma message("Including FileManager.hpp")
 void FileManager::RegisterLoader(const std::string &prefix,
         FileLoader *handlerLoader)
 {   
@@ -29,20 +31,27 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 
 }
 
-
+void FileManager::InitializeSingletons() {
+    sgns::MNNLoader::InitializeSingleton();
+    sgns::MNNParser::InitializeSingleton();
+    sgns::SFTPLoader::InitializeSingleton();
+    sgns::HTTPLoader::InitializeSingleton();
+    sgns::WSLoader::InitializeSingleton();
+    sgns::IPFSLoader::InitializeSingleton();
+    sgns::MNNSaver::InitializeSingleton();
+}
 shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback, StatusCallback status)
 {
     std::string prefix;
     std::string filePath;
     std::string suffix;
-
+	
     getURLComponents(url, prefix, filePath, suffix);
 #if 0
     std::cout << "DEBUG: URL: " << url << " -prefix: " << prefix << " -filePath: " << filePath << " -suffix: " << suffix << std::endl;
 #endif
 
     auto loaderIter = loaders.find(prefix);
-
     if (loaderIter == loaders.end())
     {
         throw std::range_error("No loader registered for prefix " + prefix);

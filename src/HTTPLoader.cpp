@@ -6,7 +6,12 @@
 
 namespace sgns
 {
-    SINGLETON_PTR_INIT(HTTPLoader);
+    HTTPLoader* HTTPLoader::_instance = nullptr;
+    void HTTPLoader::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new HTTPLoader();
+        }
+    }
     HTTPLoader::HTTPLoader()
     {
         //FileManager::GetInstance().RegisterLoader("http", this);

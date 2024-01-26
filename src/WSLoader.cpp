@@ -12,7 +12,12 @@
 
 namespace sgns
 {
-    SINGLETON_PTR_INIT(WSLoader);
+    WSLoader* WSLoader::_instance = nullptr;
+    void WSLoader::InitializeSingleton() {
+        if (_instance == nullptr) {
+            _instance = new WSLoader();
+        }
+    }
     WSLoader::WSLoader()
     {
         FileManager::GetInstance().RegisterLoader("wss", this);
