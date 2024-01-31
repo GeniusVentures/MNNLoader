@@ -4,6 +4,7 @@
 #include "MNNParser.hpp"
 #include "MNNSaver.hpp"
 #include "IPFSLoader.hpp"
+#include "IPFSSaver.hpp"
 #include "HTTPLoader.hpp"
 #include "SFTPLoader.hpp"
 #include "WSLoader.hpp"
@@ -38,6 +39,7 @@ void FileManager::InitializeSingletons() {
     sgns::HTTPLoader::InitializeSingleton();
     sgns::WSLoader::InitializeSingleton();
     sgns::IPFSLoader::InitializeSingleton();
+    sgns::IPFSSaver::InitializeSingleton();
     sgns::MNNSaver::InitializeSingleton();
 }
 shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback dummycallback, StatusCallback status)
@@ -75,7 +77,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
             auto handle_write = [this](std::shared_ptr<boost::asio::io_context> ioc) {
                 DecrementOutstandingOperations(ioc);
             };
-            auto saverIter = savers.find("mnn");
+            auto saverIter = savers.find("ipfs");
             auto saver = saverIter->second;
             saver->SaveASync(ioc,handle_write,"",buffer);
         }

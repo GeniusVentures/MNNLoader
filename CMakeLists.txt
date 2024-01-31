@@ -6,6 +6,8 @@ set(
     FILEPATH
     "Default toolchain"
 )
+add_definitions(-D_WIN32_WINNT=0x0601)
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 include(GNUInstallDirs)
 project(AsyncIOManager C CXX)
