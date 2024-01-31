@@ -32,23 +32,20 @@ namespace sgns
             throw range_error("Can not save with null data");
         }
         sgns::ipfs_lite::rocksdb::Options options;
+        //sgns::ipfs_lite::rocksdb::ReadOptions readoptions;
+        //sgns::ipfs_lite::rocksdb::WriteOptions writeoptions;
+        //readoptions.async_io = true;
+        //options.write_thread_max_yield_usec = true;
         options.create_if_missing = true;
         auto r = sgns::ipfs_lite::rocksdb::create("ipfsdb", options);
+        r.value()->setReadOptions(readoptions);
+        
         auto datastore = sgns::ipfs_lite::ipfs::RocksdbDatastore(r.value());
-        //auto datastore = sgns::ipfs_lite::ipfs::InMemoryDatastore();
-        gsl::span<const uint8_t> byteSpan(
-            reinterpret_cast<const uint8_t*>(data->data()),
-            data->size());
-        //auto cid = CID::fromBytes(byteSpan);
+
         auto cid = sgns::common::getCidOf(std::vector<uint8_t>(data->begin(), data->end()));
         common::Buffer buffer(std::vector<uint8_t>(data->begin(), data->end()));
-        //sgns::CID cid1{
-        //   CID::Version::V1,
-        //   libp2p::multi::MulticodecType::Code::SHA2_256,
-        //   libp2p::multi::Multihash::create(libp2p::multi::HashType::sha256,
-        //                     "0123456789ABCDEF0123456789ABCDEF"_unhex)
-        //       .value() };
         datastore.set(cid.value(), buffer);
+        handle_write(ioc);
     }
 }
 
