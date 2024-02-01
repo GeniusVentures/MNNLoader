@@ -23,7 +23,7 @@ namespace sgns
         virtual void SaveFile(std::string filename, std::shared_ptr<void> data) override;
         virtual void SaveASync(std::shared_ptr<boost::asio::io_context> ioc, std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write,
             std::string filename,
-            std::shared_ptr<std::vector<char>> data) override;
+            std::shared_ptr<std::vector<char>> data, std::string suffix) override;
 
     };
 }

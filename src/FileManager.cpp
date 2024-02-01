@@ -62,7 +62,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
     IncrementOutstandingOperations();
 
     //Create a handler
-    auto handle_read = [this,savetype](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save) {
+    auto handle_read = [this, savetype, suffix](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save) {
         std::cout << "Callback!" << std::endl;
         //Parse Data
         if (parse)
@@ -79,7 +79,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
             };
             auto saverIter = savers.find(savetype);
             auto saver = saverIter->second;
-            saver->SaveASync(ioc,handle_write,"",buffer);
+            saver->SaveASync(ioc,handle_write,"",buffer, suffix);
         }
         else {
             // Handle completion

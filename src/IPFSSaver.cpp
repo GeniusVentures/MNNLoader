@@ -25,7 +25,7 @@ namespace sgns
     inline std::vector<uint8_t> operator""_unhex(const char* c, size_t s) {
         return sgns::common::unhex(std::string_view(c, s)).value();
     }
-    void IPFSSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write, std::string filename, std::shared_ptr<std::vector<char>> data) {
+    void IPFSSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write, std::string filename, std::shared_ptr<std::vector<char>> data, std::string suffix) {
         std::cout << "Inside the IPFSSaver::SaveASync Function" << std::endl;
         if (data == nullptr)
         {

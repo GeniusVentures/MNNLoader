@@ -48,14 +48,14 @@ namespace sgns
 
     void MNNSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, 
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write,
-        std::string filename, std::shared_ptr<std::vector<char>> data)
+        std::string filename, std::shared_ptr<std::vector<char>> data, std::string suffix)
     {
         if (data == nullptr)
         {
             throw range_error("Can not save with null data");
         }
         if (filename.empty()) {
-            filename = boost::lexical_cast<string>((boost::uuids::random_generator())()) + ".mnn";
+            filename = boost::lexical_cast<string>((boost::uuids::random_generator())()) + "." + suffix;
         }
 
         std::ofstream file(filename, std::ios::binary);
