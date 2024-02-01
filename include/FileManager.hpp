@@ -81,7 +81,7 @@ class FileManager
          * @param status - Status function that will be updated with status codes as operation progresses
          * @return String indicating init
          */
-        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, StatusCallback status);
+        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, StatusCallback status, std::string savetype);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load

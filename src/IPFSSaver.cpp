@@ -38,7 +38,7 @@ namespace sgns
         //options.write_thread_max_yield_usec = true;
         options.create_if_missing = true;
         auto r = sgns::ipfs_lite::rocksdb::create("ipfsdb", options);
-        r.value()->setReadOptions(readoptions);
+        //r.value()->setReadOptions(readoptions);
         
         auto datastore = sgns::ipfs_lite::ipfs::RocksdbDatastore(r.value());
 
