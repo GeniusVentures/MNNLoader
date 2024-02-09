@@ -26,6 +26,7 @@ target_link_libraries(AsyncIOManager PRIVATE
 	p2p::p2p_identify_proto
 	p2p::p2p_basic_host
     p2p::p2p_multiaddress
+	p2p::p2p_kademlia
 	ipfs-lite-cpp::cbor
 	ipfs-lite-cpp::graphsync
 	ipfs-lite-cpp::ipld_node
