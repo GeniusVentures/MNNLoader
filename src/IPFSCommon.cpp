@@ -21,8 +21,6 @@ namespace sgns
 
 
             //Create DHT
-            
-
             auto listenresult = instance_->host_->listen(ma);
             if (!listenresult)
             {
@@ -39,8 +37,16 @@ namespace sgns
 
     IPFSDevice::IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) 
     {
-        // Use libp2p::injector::makeHostInjector()to create the host
-        auto injector = libp2p::injector::makeHostInjector();
+        //Make Kademlia Injector
+        libp2p::protocol::kademlia::Config kademlia_config;
+        kademlia_config.randomWalk.enabled = true;
+        kademlia_config.randomWalk.interval = std::chrono::seconds(300);
+        kademlia_config.requestConcurency = 20;
+        //auto injector = libp2p::injector::makeHostInjector();
+        auto injector = libp2p::injector::makeHostInjector(
+            // libp2p::injector::useKeyPair(kp), // Use predefined keypair
+            libp2p::injector::makeKademliaInjector(
+                libp2p::injector::useKademliaConfig(kademlia_config)));
         host_ = injector.create<std::shared_ptr<libp2p::Host>>();
 
         // Initialize Bitswap using the created host
@@ -48,24 +54,58 @@ namespace sgns
         //Initialize address holder
         peerAddresses_ = std::make_shared<std::vector<libp2p::multi::Multiaddress>>();
 
-        //Make Kademlia Injector
-        libp2p::protocol::kademlia::Config kademlia_config;
-        kademlia_config.randomWalk.enabled = true;
-        kademlia_config.randomWalk.interval = std::chrono::seconds(300);
-        kademlia_config.requestConcurency = 20;
-
-        auto dhtinjector = libp2p::injector::makeHostInjector(
-            // libp2p::injector::useKeyPair(kp), // Use predefined keypair
-            libp2p::injector::makeKademliaInjector(
-                libp2p::injector::useKademliaConfig(kademlia_config)));
+        //Create Kademlia
         auto kademlia =
-            dhtinjector
+            injector
             .create<std::shared_ptr<libp2p::protocol::kademlia::Kademlia>>();
 
         //Initialize DHT
         dht_ = std::make_shared<sgns::IpfsDHT>(kademlia, bootstrapAddresses_);
     }
 
+    bool IPFSDevice::StartFindingPeers(
+        std::shared_ptr<boost::asio::io_context> ioc,
+        const sgns::ipfs_bitswap::CID& cid,
+        int addressoffset,
+        bool parse,
+        bool save,
+        CompletionCallback handle_read,
+        StatusCallback status
+    )
+    {
+        status(16);
+        dht_->FindProviders(cid, [=](libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> res) {
+            status(17);
+            if (!res) {
+                std::cerr << "Cannot find providers: " << res.error().message() << std::endl;
+                status(-17);
+                return false;
+            }
+            std::cout << "Providers: " << std::endl;
+            auto& providers = res.value();
+            if (!providers.empty())
+            {
+                for (auto& provider : providers) {
+                    std::cout << provider.id.toBase58() << std::endl;
+                    for (const auto& address : provider.addresses) {
+                        std::cout << "Address: " << address.getStringAddress() << std::endl;
+                        // Assuming addAddress function accepts a multiaddress as argument
+                        addAddress(address);
+                    }
+                }
+
+                return RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
+            }
+            else
+            {
+                std::cout << "Empty providers list received" << std::endl;
+                status(-18);
+                return false;
+                //std::exit(EXIT_FAILURE);
+            }
+            });
+        return false;
+    }
     bool IPFSDevice::RequestBlockMain(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
@@ -262,6 +302,7 @@ namespace sgns
 
     void IpfsDHT::Start()
     {
+        std::cout << "DHT Start" << std::endl;
         auto&& bootstrapNodes = GetBootstrapNodes();
         for (auto& bootstrap_node : bootstrapNodes) {
             std::cout << "node" << std::endl;
@@ -271,10 +312,11 @@ namespace sgns
         kademlia_->start();
     }
 
-    void IpfsDHT::FindProviders(
+    bool IpfsDHT::FindProviders(
         const libp2p::multi::ContentIdentifier& cid,
         std::function<void(libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> onProvidersFound)> onProvidersFound)
     {
+        std::cout << "find providers" << std::endl;
         auto kadCID = libp2p::protocol::kademlia::ContentId::fromWire(
             libp2p::multi::ContentIdentifierCodec::encode(cid).value());
         if (!kadCID)
@@ -282,13 +324,16 @@ namespace sgns
             //logger_->error("Wrong CID {}",
             //    libp2p::peer::PeerId::fromHash(cid.content_address).value().toBase58());
             std::cerr << "Wrong CID" << std::endl;
+            return false;
             // TODO: pass an error to callback
             //onProvidersFound(ERROR);
         }
         else
         {
+            std::cout << "actually find providers" << std::endl;
             [[maybe_unused]] auto res = kademlia_->findProviders(
                 kadCID.value(), 0, onProvidersFound);
+            return true;
         }
     }
 

@@ -84,8 +84,10 @@ namespace sgns
         auto r = logging_system->configure();
         libp2p::log::setLoggingSystem(logging_system);
 
+        auto loggerIdentifyMsgProcessor = libp2p::log::createLogger("IdentifyMsgProcessor");
+        loggerIdentifyMsgProcessor->setLevel(soralog::Level::ERROR_);
         auto loggerProcessingEngine = sgns::ipfs_bitswap::createLogger("Bitswap");
-        loggerProcessingEngine->set_level(spdlog::level::debug);
+        loggerProcessingEngine->set_level(spdlog::level::off);
         std::shared_ptr<string> result = std::make_shared < string>("init");
 
         //Get CID and Filename
@@ -115,7 +117,8 @@ namespace sgns
         status(13);
         ioc->post([=] {
             status(14);
-            ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
+            //ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
+            ipfsDevice->StartFindingPeers(ioc, cid, 0, parse, save, handle_read, status);
             });
         
         return result;
