@@ -27,8 +27,8 @@ namespace sgns
                 instance_.reset();
                 return listenresult.error();
             }
-            instance_->host_->start();
             instance_->bitswap_->start();
+            instance_->host_->start();
             instance_->dht_->Start();
         }
 
@@ -52,7 +52,7 @@ namespace sgns
         // Initialize Bitswap using the created host
         bitswap_ = std::make_shared<sgns::ipfs_bitswap::Bitswap>(*host_, host_->getBus(), ioc);
         //Initialize address holder
-        peerAddresses_ = std::make_shared<std::vector<libp2p::multi::Multiaddress>>();
+        peerAddresses_ = std::make_shared<std::vector<libp2p::peer::PeerInfo>>();
 
         //Create Kademlia
         auto kademlia =
@@ -85,14 +85,21 @@ namespace sgns
             auto& providers = res.value();
             if (!providers.empty())
             {
-                for (auto& provider : providers) {
-                    std::cout << provider.id.toBase58() << std::endl;
-                    for (const auto& address : provider.addresses) {
-                        std::cout << "Address: " << address.getStringAddress() << std::endl;
+                addAddresses(providers);
+                //for (auto& provider : providers) {
+                //    std::cout << provider.id.toBase58() << std::endl;
+                //    auto providerid = provider.id.toBase58();
+                    
+                    //for (const auto& address : provider.addresses) {
+                        
                         // Assuming addAddress function accepts a multiaddress as argument
-                        addAddress(address);
-                    }
-                }
+                        //bool hasPeerId = address.hasProtocol(libp2p::multi::Protocol::Code::P2P);
+                        //if (hasPeerId) {
+                        //    std::cout << "Address: " << address.getStringAddress() << std::endl;
+                        //    addAddress(address);
+                        //}
+                    //}
+                //}
 
                 return RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
             }
@@ -115,11 +122,12 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
+        std::cout << "request main block" << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            auto address = peerAddresses_->at(addressoffset);
-            bitswap_->RequestBlock({ peerId, { address } }, cid,
+            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
+            //auto address = peerAddresses_->at(addressoffset);
+            bitswap_->RequestBlock(peerAddresses_->at(addressoffset) , cid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
                     if (data)
@@ -183,11 +191,12 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
+        std::cout << "Request SubBlock" << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            auto address = peerAddresses_->at(addressoffset);
-            bitswap_->RequestBlock({ peerId, { address } }, scid,
+            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
+            //auto address = peerAddresses_->at(addressoffset);
+            bitswap_->RequestBlock(peerAddresses_->at(addressoffset), scid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
                     if (data)
@@ -282,7 +291,16 @@ namespace sgns
         libp2p::multi::Multiaddress address
     )
     {
-        peerAddresses_->push_back(address);
+        //libp2p::peer::PeerInfo peerInfo;
+        //peerInfo.id = peerId.value();
+        //peerInfo.addresses.push_back(address);
+
+        //peerAddresses_.push_back(peerInfo);
+        //peerAddresses_->push_back(address);
+    }
+
+    void IPFSDevice::addAddresses(const std::vector<libp2p::peer::PeerInfo>& addresses) {
+        peerAddresses_->insert(peerAddresses_->end(), addresses.begin(), addresses.end());
     }
 
     std::shared_ptr<sgns::ipfs_bitswap::Bitswap> IPFSDevice::getBitswap() const {
