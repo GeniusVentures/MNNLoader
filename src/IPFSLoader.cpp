@@ -109,7 +109,7 @@ namespace sgns
         auto ipfsDevice = ipfsDeviceResult.value();
         //auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
 
-        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
+        ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
 
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
@@ -117,8 +117,8 @@ namespace sgns
         status(13);
         ioc->post([=] {
             status(14);
-            //ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
-            ipfsDevice->StartFindingPeers(ioc, cid, 0, parse, save, handle_read, status);
+            ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
+            //ipfsDevice->StartFindingPeers(ioc, cid, 0, parse, save, handle_read, status);
             });
         
         return result;

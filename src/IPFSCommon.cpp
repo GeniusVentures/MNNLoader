@@ -291,12 +291,13 @@ namespace sgns
         libp2p::multi::Multiaddress address
     )
     {
-        //libp2p::peer::PeerInfo peerInfo;
-        //peerInfo.id = peerId.value();
-        //peerInfo.addresses.push_back(address);
-
-        //peerAddresses_.push_back(peerInfo);
-        //peerAddresses_->push_back(address);
+        std::vector<libp2p::multi::Multiaddress> addresses;
+        addresses.push_back(address);
+        auto peerId = libp2p::peer::PeerId::fromBase58(address.getPeerId().value());
+        auto peerInfo = sgns::Peer{
+            libp2p::peer::PeerInfo{peerId.value(), std::move(addresses)}
+        };
+        peerAddresses_->push_back(peerInfo.info);
     }
 
     void IPFSDevice::addAddresses(const std::vector<libp2p::peer::PeerInfo>& addresses) {

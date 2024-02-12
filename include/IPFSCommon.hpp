@@ -90,6 +90,9 @@ namespace sgns
 			return combinedContent;
 		}
 	};
+	struct Peer {
+		libp2p::peer::PeerInfo info;
+	};
 	/**
 	 * This class creates an DHT for finding peers with CIDs we want
 	 * from IPFS node(s).
