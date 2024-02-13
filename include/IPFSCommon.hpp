@@ -115,6 +115,7 @@ namespace sgns
 
 		libp2p::multi::ContentIdentifier mainCID;
 		std::vector<Content> contents;
+		std::vector<libp2p::multi::ContentIdentifier> requestedCIDs;
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
 			: mainCID(cid), contents() {}
@@ -140,6 +141,14 @@ namespace sgns
 			return std::all_of(contents.begin(), contents.end(), [](const Content& content) {
 				return !content.isDirectory || !content.subDirectories.empty() || !content.data.empty();
 				});
+		}
+
+		void addRequestedCID(const libp2p::multi::ContentIdentifier& cid) {
+			requestedCIDs.push_back(cid);
+		}
+
+		void removeRequestedCID(const libp2p::multi::ContentIdentifier& cid) {
+			requestedCIDs.erase(std::remove(requestedCIDs.begin(), requestedCIDs.end(), cid), requestedCIDs.end());
 		}
 
 		std::shared_ptr<std::vector<char>> combineContents() const {
@@ -303,6 +312,7 @@ namespace sgns
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
 			const sgns::ipfs_bitswap::CID& scid,
+			std::shared_ptr<CIDInfo> maincidInfo,
 			std::shared_ptr<CIDInfo::Content> cidcontent,
 			int addressoffset,
 			bool parse,

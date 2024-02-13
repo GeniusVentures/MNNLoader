@@ -164,9 +164,11 @@ namespace sgns
                             std::cout << subcid.value().toPrettyString(prettystring) << std::endl;
                             std::cout << decoder.getLinkName(i) << std::endl;
                             std::cout << decoder.getLinkSize(i) << std::endl;
+                            std::shared_ptr<CIDInfo> maincidInfoPtr = std::make_shared<CIDInfo>(requestedCIDs_[index]);
+                            maincidInfoPtr->addRequestedCID(scid);
                             std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
                                 requestedCIDs_[index].addContent(subcid.value(), decoder.getLinkName(i)));
-                            RequestBlockSub(ioc, cid, scid, contentHolder, 0, parse, save, handle_read, status);
+                            RequestBlockSub(ioc, cid, scid, maincidInfoPtr, contentHolder, 0, parse, save, handle_read, status);
                         }
                         
                         if (decoder.getLinksCount() <= 0)
@@ -191,6 +193,7 @@ namespace sgns
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
         const sgns::ipfs_bitswap::CID& scid,
+        std::shared_ptr<CIDInfo> maincidInfo,
         std::shared_ptr<CIDInfo::Content> cidcontent,
         int addressoffset,
         bool parse,
@@ -227,6 +230,7 @@ namespace sgns
                             handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                             return false;
                         }
+                        maincidInfo->removeRequestedCID(scid);
                         //Check Each link if needed
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
                             auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
@@ -235,6 +239,9 @@ namespace sgns
                             std::cout << subcid.value().toPrettyString(prettystring) << std::endl;
                             std::cout << decoder.getLinkName(i) << std::endl;
                             std::cout << decoder.getLinkSize(i) << std::endl;
+                            maincidInfo->addRequestedCID(sscid);
+                            //If this has a name, we're working within a directory and will now get more info
+                            //If it has no name, we're working with a file so we will add links 
                             if (decoder.getLinkName(i).size() > 0)
                             {
                                 CIDInfo cidInfo(subcid.value());
@@ -242,7 +249,7 @@ namespace sgns
                                 cidcontent->isDirectory = true;
                                 std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
                                     cidInfo.addContent(subcid.value(), decoder.getLinkName(i)));
-                                RequestBlockSub(ioc, scid, sscid, contentHolder, 0, parse, save, handle_read, status);
+                                RequestBlockSub(ioc, scid, sscid, maincidInfo, contentHolder, 0, parse, save, handle_read, status);
                             }
                             else {
                                 CIDInfo cidInfo(subcid.value());
@@ -250,12 +257,19 @@ namespace sgns
                                 cidcontent->isDirectory = false;
                                 std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
                                     cidInfo.addContent(subcid.value(), decoder.getLinkName(i)));
+                                RequestBlockSub(ioc, scid, sscid, maincidInfo, contentHolder, 0, parse, save, handle_read, status);
                             }
                         }
+                        //If we have no links, we can add the data
                         if (decoder.getLinksCount() <= 0)
                         {
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
                             cidcontent->setData(bindata);
+                        }
+                        //If we're not waiting for any more requests, we can finish the operation.
+                        if (maincidInfo->requestedCIDs.empty())
+                        {
+
                         }
                         //auto bindata = std::vector<char>(decoder.getContent().begin()+6, decoder.getContent().end()-4);
                         //bool allset = setContentForLinkedCID(cid, scid, bindata);
@@ -271,7 +285,8 @@ namespace sgns
                     }
                     else
                     {
-                        return RequestBlockSub(ioc, cid, scid, cidcontent, addressoffset + 1, parse, save, handle_read, status);
+                        //Try next address
+                        return RequestBlockSub(ioc, cid, scid, maincidInfo, cidcontent, addressoffset + 1, parse, save, handle_read, status);
                     }
                 });
         }
