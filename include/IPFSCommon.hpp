@@ -23,73 +23,134 @@ namespace sgns
 	 * A struct holding IPFS CIDs and related content for reconstructing
 	 * an entire file grabbed over bitswap
 	 */
-	struct CIDInfo
-	{
-		/**
-		 * Data, which contains the main CID and any linked CIDs stored as a vector, as well as any associated data
-		 * an entire file grabbed over bitswap
-		 */
-		libp2p::multi::ContentIdentifier mainCID;
-		struct LinkedCIDInfo
-		{
-			libp2p::multi::ContentIdentifier linkedCID;
-			std::vector<char> content;
-			LinkedCIDInfo(const libp2p::multi::ContentIdentifier& cid)
-				: linkedCID(cid), content() {}
+	//struct CIDInfo
+	//{
+	//	/**
+	//	 * Data, which contains the main CID and any linked CIDs stored as a vector, as well as any associated data
+	//	 * an entire file grabbed over bitswap
+	//	 */
+	//	libp2p::multi::ContentIdentifier mainCID;
+	//	struct LinkedCIDInfo
+	//	{
+	//		libp2p::multi::ContentIdentifier linkedCID;
+	//		std::vector<char> content;
+	//		LinkedCIDInfo(const libp2p::multi::ContentIdentifier& cid)
+	//			: linkedCID(cid), content() {}
+	//	};
+	//	std::vector<LinkedCIDInfo> linkedCIDs;
+
+	//	CIDInfo(const libp2p::multi::ContentIdentifier& cid)
+	//		: mainCID(cid), linkedCIDs() {}
+
+	//	/**
+	//	 * Set the data for a linked CID
+	//	 * @param linkedCID - Linked CID to set content to
+	//	 * @param content - Content to insert
+	//	 */
+	//	void setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
+	//	{
+	//		auto it = std::find_if(linkedCIDs.begin(), linkedCIDs.end(),
+	//			[&linkedCID](const LinkedCIDInfo& info) {
+	//				return info.linkedCID == linkedCID;
+	//			});
+
+	//		if (it != linkedCIDs.end())
+	//		{
+	//			// Update the content for the linked CID
+	//			it->content = content;
+	//		}
+	//	}
+
+	//	/**
+	//	 * Check whether we have gotten data for all linked CIDs
+	//	 */
+	//	bool allLinkedCIDsHaveContent() const
+	//	{
+	//		return std::all_of(linkedCIDs.begin(), linkedCIDs.end(),
+	//			[](const LinkedCIDInfo& linkedCIDInfo) {
+	//				return !linkedCIDInfo.content.empty();
+	//			});
+	//	}
+
+	//	/**
+	//	 * Create a shared buffer vector with data from all linked CIDs combined to create a single file.
+	//	 */
+	//	std::shared_ptr<std::vector<char>> combineContents() const
+	//	{
+	//		auto combinedContent = std::make_shared<std::vector<char>>();
+
+	//		// Iterate through each linkedCID and appends
+	//		for (const auto& linkedCIDInfo : linkedCIDs)
+	//		{
+	//			combinedContent->insert(combinedContent->end(),
+	//				linkedCIDInfo.content.begin(),
+	//				linkedCIDInfo.content.end());
+	//		}
+
+	//		return combinedContent;
+	//	}
+	//};
+	struct CIDInfo {
+		struct Content {
+			libp2p::multi::ContentIdentifier cid;
+			std::string name;
+			bool isDirectory;
+			std::vector<char> data;  
+			std::vector<CIDInfo> subDirectories;  
+			std::vector<CIDInfo> links;
+
+			Content(const libp2p::multi::ContentIdentifier& cid, const std::string& name)
+				: cid(cid), name(name), isDirectory(false), data(), subDirectories() {}
+
+			void addSubDirectory(CIDInfo& subDir) {
+				subDirectories.push_back(subDir);
+			}
+			void addLink(const CIDInfo& link) {
+				links.push_back(link);
+			}
+			void setData(const std::vector<char>& newData) {
+				data = newData;
+			}
 		};
-		std::vector<LinkedCIDInfo> linkedCIDs;
+
+		libp2p::multi::ContentIdentifier mainCID;
+		std::vector<Content> contents;
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
-			: mainCID(cid), linkedCIDs() {}
+			: mainCID(cid), contents() {}
 
-		/**
-		 * Set the data for a linked CID
-		 * @param linkedCID - Linked CID to set content to
-		 * @param content - Content to insert
-		 */
-		void setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
+		Content& addContent(const libp2p::multi::ContentIdentifier& cid, const std::string& name) {
+			contents.emplace_back(cid, name); 
+			return contents.back();
+		}
+		
+		void setDirectoryStatus(const libp2p::multi::ContentIdentifier& cid, bool isDirectory)
 		{
-			auto it = std::find_if(linkedCIDs.begin(), linkedCIDs.end(),
-				[&linkedCID](const LinkedCIDInfo& info) {
-					return info.linkedCID == linkedCID;
+			//Set is directory status.
+			auto it = std::find_if(contents.begin(), contents.end(), [&cid](const Content& content) {
+				return content.cid == cid;
 				});
 
-			if (it != linkedCIDs.end())
-			{
-				// Update the content for the linked CID
-				it->content = content;
+			if (it != contents.end()) {
+				it->isDirectory = isDirectory;
 			}
 		}
 
-		/**
-		 * Check whether we have gotten data for all linked CIDs
-		 */
-		bool allLinkedCIDsHaveContent() const
-		{
-			return std::all_of(linkedCIDs.begin(), linkedCIDs.end(),
-				[](const LinkedCIDInfo& linkedCIDInfo) {
-					return !linkedCIDInfo.content.empty();
+		bool allContentsHaveData() const {
+			return std::all_of(contents.begin(), contents.end(), [](const Content& content) {
+				return !content.isDirectory || !content.subDirectories.empty() || !content.data.empty();
 				});
 		}
 
-		/**
-		 * Create a shared buffer vector with data from all linked CIDs combined to create a single file.
-		 */
-		std::shared_ptr<std::vector<char>> combineContents() const
-		{
+		std::shared_ptr<std::vector<char>> combineContents() const {
 			auto combinedContent = std::make_shared<std::vector<char>>();
-
-			// Iterate through each linkedCID and appends
-			for (const auto& linkedCIDInfo : linkedCIDs)
-			{
-				combinedContent->insert(combinedContent->end(),
-					linkedCIDInfo.content.begin(),
-					linkedCIDInfo.content.end());
+			for (const auto& content : contents) {
+				combinedContent->insert(combinedContent->end(), content.data.begin(), content.data.end());
 			}
-
 			return combinedContent;
 		}
 	};
+
 	struct Peer {
 		libp2p::peer::PeerInfo info;
 	};
@@ -219,7 +280,7 @@ namespace sgns
 		 * Add a CIDInfo object to list of CIDs we are trying to get.
 		 * @param cidInfo - A CIDInfo object struct as defined above
 		 */
-		void addCID(const CIDInfo& cidInfo);
+		size_t addCID(CIDInfo& cidInfo);
 	private:
 		/**
 		 * Create an IPFSDevice along with associated bitswap and host on an asio io_context
@@ -242,6 +303,7 @@ namespace sgns
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
 			const sgns::ipfs_bitswap::CID& scid,
+			std::shared_ptr<CIDInfo::Content> cidcontent,
 			int addressoffset,
 			bool parse,
 			bool save,

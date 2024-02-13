@@ -52,7 +52,6 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
 #if 0
     std::cout << "DEBUG: URL: " << url << " -prefix: " << prefix << " -filePath: " << filePath << " -suffix: " << suffix << std::endl;
 #endif
-
     auto loaderIter = loaders.find(prefix);
     if (loaderIter == loaders.end())
     {
@@ -60,7 +59,6 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
     }
     //Increment Operations
     IncrementOutstandingOperations();
-
     //Create a handler
     auto handle_read = [this, savetype, suffix](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save) {
         std::cout << "Callback!" << std::endl;
@@ -87,7 +85,6 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
         }
 
     };
-
     auto loader = loaderIter->second;
     // double check pointer is to a FileLoader class
     assert(dynamic_cast<FileLoader*>(loader));

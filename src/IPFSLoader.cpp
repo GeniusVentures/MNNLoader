@@ -66,7 +66,7 @@ namespace sgns
     groups:
       - name: main
         sink: console
-        level: error
+        level: critical
         children:
           - name: libp2p
           - name: kademlia
@@ -85,7 +85,7 @@ namespace sgns
         libp2p::log::setLoggingSystem(logging_system);
 
         auto loggerIdentifyMsgProcessor = libp2p::log::createLogger("IdentifyMsgProcessor");
-        loggerIdentifyMsgProcessor->setLevel(soralog::Level::ERROR_);
+        loggerIdentifyMsgProcessor->setLevel(soralog::Level::OFF);
         auto loggerProcessingEngine = sgns::ipfs_bitswap::createLogger("Bitswap");
         loggerProcessingEngine->set_level(spdlog::level::off);
         std::shared_ptr<string> result = std::make_shared < string>("init");

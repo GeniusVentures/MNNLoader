@@ -1,6 +1,12 @@
 //IPFSCommon.cpp
 #include "IPFSCommon.hpp"
 
+//TEMP REmove
+#include <fstream>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace sgns
 {
@@ -15,10 +21,6 @@ namespace sgns
         if (!instance_) {
             instance_ = std::shared_ptr<IPFSDevice>(new IPFSDevice(ioc));
             auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
-
-
-            //Create Kademlia for DHT
-
 
             //Create DHT
             auto listenresult = instance_->host_->listen(ma);
@@ -125,14 +127,12 @@ namespace sgns
         std::cout << "request main block" << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            //auto address = peerAddresses_->at(addressoffset);
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset) , cid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
                     if (data)
                     {
-                        //std::cout << "Bitswap data received: " << data.value() << std::endl;
+                        std::cout << "Bitswap data received: " << data.value() << std::endl;
                         auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
                         auto maincid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
 
@@ -151,18 +151,24 @@ namespace sgns
                             handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                             return false;
                         }
-                        //std::cout << "ContentTest" << decoder.getContent() << std::endl;
+                        std::cout << "ContentTest" << decoder.getContent() << std::endl;
+                        
                         status(15);
                         //Start Adding to list
                         CIDInfo cidInfo(maincid.value());
+                        size_t index = addCID(cidInfo);
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
                             auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
                             auto scid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
-                            CIDInfo::LinkedCIDInfo linkedCID(subcid.value());
-                            cidInfo.linkedCIDs.push_back(linkedCID);
-                            RequestBlockSub(ioc, cid, scid, 0, parse, save, handle_read, status);
+                            std::string prettystring;
+                            std::cout << subcid.value().toPrettyString(prettystring) << std::endl;
+                            std::cout << decoder.getLinkName(i) << std::endl;
+                            std::cout << decoder.getLinkSize(i) << std::endl;
+                            std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
+                                requestedCIDs_[index].addContent(subcid.value(), decoder.getLinkName(i)));
+                            RequestBlockSub(ioc, cid, scid, contentHolder, 0, parse, save, handle_read, status);
                         }
-                        addCID(cidInfo);
+                        
                         if (decoder.getLinksCount() <= 0)
                         {
                             auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin()+4, decoder.getContent().end()-2);
@@ -185,6 +191,7 @@ namespace sgns
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
         const sgns::ipfs_bitswap::CID& scid,
+        std::shared_ptr<CIDInfo::Content> cidcontent,
         int addressoffset,
         bool parse,
         bool save,
@@ -194,8 +201,6 @@ namespace sgns
         std::cout << "Request SubBlock" << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            //auto address = peerAddresses_->at(addressoffset);
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), scid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
@@ -222,69 +227,99 @@ namespace sgns
                             handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
                             return false;
                         }
-                        
-                        auto bindata = std::vector<char>(decoder.getContent().begin()+6, decoder.getContent().end()-4);
-                        bool allset = setContentForLinkedCID(cid, scid, bindata);
-                        if (allset)
-                        {
-                            auto finaldata = combineLinkedCIDs(cid);
-                            std::cout << "IPFS Finish" << std::endl;
-                            status(0);
-                            handle_read(ioc, finaldata, parse, save);
+                        //Check Each link if needed
+                        for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
+                            auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
+                            auto sscid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
+                            std::string prettystring;
+                            std::cout << subcid.value().toPrettyString(prettystring) << std::endl;
+                            std::cout << decoder.getLinkName(i) << std::endl;
+                            std::cout << decoder.getLinkSize(i) << std::endl;
+                            if (decoder.getLinkName(i).size() > 0)
+                            {
+                                CIDInfo cidInfo(subcid.value());
+                                cidcontent->addSubDirectory(cidInfo);
+                                cidcontent->isDirectory = true;
+                                std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
+                                    cidInfo.addContent(subcid.value(), decoder.getLinkName(i)));
+                                RequestBlockSub(ioc, scid, sscid, contentHolder, 0, parse, save, handle_read, status);
+                            }
+                            else {
+                                CIDInfo cidInfo(subcid.value());
+                                cidcontent->addLink(cidInfo);
+                                cidcontent->isDirectory = false;
+                                std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
+                                    cidInfo.addContent(subcid.value(), decoder.getLinkName(i)));
+                            }
                         }
+                        if (decoder.getLinksCount() <= 0)
+                        {
+                            auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
+                            cidcontent->setData(bindata);
+                        }
+                        //auto bindata = std::vector<char>(decoder.getContent().begin()+6, decoder.getContent().end()-4);
+                        //bool allset = setContentForLinkedCID(cid, scid, bindata);
+                        //if (allset)
+                        //{
+                        //    auto finaldata = combineLinkedCIDs(cid);
+                        //    std::cout << "IPFS Finish" << std::endl;
+                        //    status(0);
+                        //    handle_read(ioc, finaldata, parse, save);
+                        //}
                         
                         return true;
                     }
                     else
                     {
-                        return RequestBlockSub(ioc, cid, scid, addressoffset + 1, parse, save, handle_read, status);
+                        return RequestBlockSub(ioc, cid, scid, cidcontent, addressoffset + 1, parse, save, handle_read, status);
                     }
                 });
         }
         return false;
     }
 
-    bool IPFSDevice::setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
-        const sgns::ipfs_bitswap::CID& linkedCID,
-        const std::vector<char>& content)
-    {
-        auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
-            [&mainCID](const CIDInfo& info) {
-                return info.mainCID == mainCID;
-            });
+    //bool IPFSDevice::setContentForLinkedCID(const sgns::ipfs_bitswap::CID& mainCID,
+    //    const sgns::ipfs_bitswap::CID& linkedCID,
+    //    const std::vector<char>& content)
+    //{
+    //    auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
+    //        [&mainCID](const CIDInfo& info) {
+    //            return info.mainCID == mainCID;
+    //        });
 
-        if (it != requestedCIDs_.end())
-        {
-            // Update the content for the linked CID within the found CIDInfo
-            it->setContentForLinkedCID(linkedCID, content);
-            // Check if all linkedCIDs have content
-            return it->allLinkedCIDsHaveContent();
-        }
-        return false;
-    }
+    //    if (it != requestedCIDs_.end())
+    //    {
+    //        // Update the content for the linked CID within the found CIDInfo
+    //        it->setContentForLinkedCID(linkedCID, content);
+    //        // Check if all linkedCIDs have content
+    //        return it->allLinkedCIDsHaveContent();
+    //    }
+    //    return false;
+    //}
 
-    std::shared_ptr<std::vector<char>> IPFSDevice::combineLinkedCIDs(const sgns::ipfs_bitswap::CID& mainCID)
-    {
-        auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
-            [&mainCID](const CIDInfo& info) {
-                return info.mainCID == mainCID;
-            });
-        auto combinedContent = std::make_shared<std::vector<char>>();
-        if (it != requestedCIDs_.end())
-        {
-            // Get the combined content
-            combinedContent = it->combineContents();
-        }
-        return combinedContent;
-    }
+    //std::shared_ptr<std::vector<char>> IPFSDevice::combineLinkedCIDs(const sgns::ipfs_bitswap::CID& mainCID)
+    //{
+    //    auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
+    //        [&mainCID](const CIDInfo& info) {
+    //            return info.mainCID == mainCID;
+    //        });
+    //    auto combinedContent = std::make_shared<std::vector<char>>();
+    //    if (it != requestedCIDs_.end())
+    //    {
+    //        // Get the combined content
+    //        combinedContent = it->combineContents();
+    //    }
+    //    return combinedContent;
+    //}
 
-    void IPFSDevice::addCID(const CIDInfo& cidInfo)
+    size_t IPFSDevice::addCID(CIDInfo& cidInfo)
     {
         // Acquire lock to safely modify the list
         std::lock_guard<std::mutex> lock(mutex_);
 
         // Add the CIDInfo to the list
-        requestedCIDs_.push_back(cidInfo);
+        requestedCIDs_.push_back(std::move(cidInfo));
+        return requestedCIDs_.size() - 1;
     }
 
     void IPFSDevice::addAddress(
