@@ -14,7 +14,12 @@
 #include "ipfs_lite/ipld/impl/ipld_node_decoder_pb.hpp"
 #include "libp2p/protocol/kademlia/kademlia.hpp"
 #include "libp2p/injector/kademlia_injector.hpp"
-
+//TEMP REmove
+#include <fstream>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #ifndef IPFSCOMMON_HPP
 #define IPFSCOMMON_HPP
 namespace sgns
@@ -100,13 +105,15 @@ namespace sgns
 			std::vector<CIDInfo> links;
 
 			Content(const libp2p::multi::ContentIdentifier& cid, const std::string& name)
-				: cid(cid), name(name), isDirectory(false), data(), subDirectories() {}
+				: cid(cid), name(name), isDirectory(true), data(), subDirectories() {}
 
-			void addSubDirectory(CIDInfo& subDir) {
+			size_t addSubDirectory(CIDInfo& subDir) {
 				subDirectories.push_back(subDir);
+				return subDirectories.size() - 1;
 			}
-			void addLink(const CIDInfo& link) {
+			size_t addLink(const CIDInfo& link) {
 				links.push_back(link);
+				return links.size() - 1;
 			}
 			void setData(const std::vector<char>& newData) {
 				data = newData;
@@ -152,6 +159,7 @@ namespace sgns
 		}
 
 		bool isAllDataReceived() const {
+			std::cout << "Remaining:" << requestedCIDs.size() << std::endl;
 			return requestedCIDs.empty();
 		}
 
@@ -175,6 +183,7 @@ namespace sgns
 			}
 		}
 		void writeContentsToFile(const std::string& directoryPath) {
+			std::filesystem::create_directory(directoryPath);
 			for (auto& content : contents) {
 				if (content.isDirectory) {
 					// Create a directory
