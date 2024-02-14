@@ -267,7 +267,7 @@ namespace sgns
                             cidcontent->setData(bindata);
                         }
                         //If we're not waiting for any more requests, we can finish the operation.
-                        if (maincidInfo->requestedCIDs.empty())
+                        if (maincidInfo->isAllDataReceived())
                         {
 
                         }

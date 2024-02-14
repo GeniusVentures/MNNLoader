@@ -151,13 +151,56 @@ namespace sgns
 			requestedCIDs.erase(std::remove(requestedCIDs.begin(), requestedCIDs.end(), cid), requestedCIDs.end());
 		}
 
-		std::shared_ptr<std::vector<char>> combineContents() const {
-			auto combinedContent = std::make_shared<std::vector<char>>();
-			for (const auto& content : contents) {
-				combinedContent->insert(combinedContent->end(), content.data.begin(), content.data.end());
-			}
-			return combinedContent;
+		bool isAllDataReceived() const {
+			return requestedCIDs.empty();
 		}
+
+		void combineContents() {
+			for (auto& content : contents) {
+				if (!content.isDirectory) {
+					// If it's not a directory, combine the data from links
+					for (const auto& link : content.links) {
+						for (const auto& innercontent : link.contents)
+						{
+							content.data.insert(content.data.end(), innercontent.data.begin(), innercontent.data.end());
+						}
+					}
+				}
+				else {
+					// If it's a directory, recursively combine the contents of subdirectories
+					for (auto& subDir : content.subDirectories) {
+						subDir.combineContents();
+					}
+				}
+			}
+		}
+		void writeContentsToFile(const std::string& directoryPath) {
+			for (auto& content : contents) {
+				if (content.isDirectory) {
+					// Create a directory
+					std::string subDirectoryPath = directoryPath + "/" + content.name;
+					std::filesystem::create_directory(subDirectoryPath);
+
+					// Recursively write contents of subdirectories
+					for (auto& subDir : content.subDirectories) {
+						subDir.writeContentsToFile(subDirectoryPath);
+					}
+				}
+				else {
+					// Write file data
+					std::string filePath = directoryPath + "/" + content.name;
+					std::ofstream outputFile(filePath, std::ios::binary);
+					if (outputFile.is_open()) {
+						outputFile.write(content.data.data(), content.data.size());
+						outputFile.close();
+					}
+					else {
+						// Open Err
+					}
+				}
+			}
+		}
+
 	};
 
 	struct Peer {
