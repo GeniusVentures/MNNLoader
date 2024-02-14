@@ -152,18 +152,15 @@ namespace sgns
                         CIDInfo cidInfo(maincid.value());
                         size_t index = addCID(cidInfo);
                         std::shared_ptr<CIDInfo> maincidInfoPtr = std::shared_ptr<CIDInfo>(&requestedCIDs_[index]);
+                        //std::shared_ptr<CIDInfo> maincidInfoPtr(&requestedCIDs_[index]), [](CIDInfo* ptr) {});
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
                             auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
                             auto scid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
                             std::string prettystring;
-                            //std::cout << subcid.value().toPrettyString(prettystring) << std::endl;
-                            //std::cout << decoder.getLinkName(i) << std::endl;
-                            //std::cout << decoder.getLinkSize(i) << std::endl;
-                            //std::shared_ptr<CIDInfo> maincidInfoPtr = std::make_shared<CIDInfo>(requestedCIDs_[index]);
+
                             maincidInfoPtr->addRequestedCID(scid);
-                            //std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
-                            //    requestedCIDs_[index].addContent(subcid.value(), decoder.getLinkName(i)));
-                            std::shared_ptr<CIDInfo::Content> contentHolder = std::shared_ptr<CIDInfo::Content>(&maincidInfoPtr->addContent(subcid.value(), decoder.getLinkName(i)));
+
+                            auto contentHolder = maincidInfoPtr->addContent(subcid.value(), decoder.getLinkName(i));
                             RequestBlockSub(ioc, cid, scid, maincidInfoPtr, contentHolder, 0, parse, save, handle_read, status);
                         }
                         
@@ -241,23 +238,24 @@ namespace sgns
                             //If this has a name, we're working within a directory and will now get more info
                             //If it has no name, we're working with a file so we will add links 
                             //std::cout << "NameSize:" << decoder.getLinkName(i).size() << std::endl;
+                            CIDInfo cidInfo(subcid.value());
                             if (decoder.getLinkName(i).size() > 0)
                             {
-                                CIDInfo cidInfo(subcid.value());
-                                size_t index = cidcontent->addSubDirectory(cidInfo);
+                                std::cout << "Is Dir? " << cidcontent->isDirectory <<std::endl;
                                 cidcontent->isDirectory = true;
-                                //std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
-                                //    cidcontent->subDirectories[index].addContent(subcid.value(), decoder.getLinkName(i)));
-                                std::shared_ptr<CIDInfo::Content> contentHolder = std::shared_ptr<CIDInfo::Content>(&cidcontent->subDirectories[index].addContent(subcid.value(), decoder.getLinkName(i)));
+                                std::cout << "Is Dir2? " << cidcontent->isDirectory << std::endl;
+                                
+                                size_t index = cidcontent->addSubDirectory(cidInfo);
+                                
+
+                                auto contentHolder = cidcontent->subDirectories[index].addContent(subcid.value(), decoder.getLinkName(i));
                                 RequestBlockSub(ioc, scid, sscid, maincidInfo, contentHolder, 0, parse, save, handle_read, status);
                             }
                             else {
-                                CIDInfo cidInfo(subcid.value());
                                 size_t index = cidcontent->addLink(cidInfo);
                                 cidcontent->isDirectory = false;
-                                //std::shared_ptr<CIDInfo::Content> contentHolder = std::make_shared<CIDInfo::Content>(
-                                //    cidcontent->links[index].addContent(subcid.value(), decoder.getLinkName(i)));
-                                std::shared_ptr<CIDInfo::Content> contentHolder = std::shared_ptr<CIDInfo::Content>(&cidcontent->links[index].addContent(subcid.value(), decoder.getLinkName(i)));
+
+                                auto contentHolder = cidcontent->links[index].addContent(subcid.value(), decoder.getLinkName(i));
                                 RequestBlockSub(ioc, scid, sscid, maincidInfo, contentHolder, 0, parse, save, handle_read, status);
                             }
                         }

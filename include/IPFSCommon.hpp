@@ -127,11 +127,15 @@ namespace sgns
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
 			: mainCID(cid), contents() {}
 
-		Content& addContent(const libp2p::multi::ContentIdentifier& cid, const std::string& name) {
-			contents.emplace_back(cid, name); 
-			return contents.back();
+		//Content& addContent(const libp2p::multi::ContentIdentifier& cid, const std::string& name) {
+		//	contents.emplace_back(cid, name); 
+		//	return contents.back();
+		//}
+		std::shared_ptr<Content> addContent(const libp2p::multi::ContentIdentifier& cid, const std::string& name) {
+			contents.emplace_back(cid, name);
+			return std::make_shared<Content>(contents.back()); 
 		}
-		
+
 		void setDirectoryStatus(const libp2p::multi::ContentIdentifier& cid, bool isDirectory)
 		{
 			//Set is directory status.
