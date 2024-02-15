@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 #include "logger.hpp"
 #include "bitswap.hpp"
 #include "boost/asio/io_context.hpp"
@@ -24,187 +25,136 @@
 #define IPFSCOMMON_HPP
 namespace sgns
 {
-	/**
-	 * A struct holding IPFS CIDs and related content for reconstructing
-	 * an entire file grabbed over bitswap
-	 */
-
-	struct CIDInfo {
-
-		struct Content {
-			libp2p::multi::ContentIdentifier cid;
-			std::string name;
-			bool isDirectory;
-			std::vector<char> data;  
-			//std::vector<CIDInfo> subDirectories;  
-			std::vector<CIDInfo> contents;
-
-			Content(const libp2p::multi::ContentIdentifier& cid, const std::string& name)
-				: cid(cid), name(name), isDirectory(true), data(), contents() {}
-
-			//size_t addSubDirectory(CIDInfo subDir) {
-			//	subDirectories.push_back(subDir);
-			//	return subDirectories.size() - 1;
-			//}
-			size_t addLink(const CIDInfo link) {
-				contents.push_back(link);
-				return contents.size() - 1;
-			}
-			void setData(const std::vector<char> newData) {
-				data = newData;
-			}
-			Content& findContent(const std::vector<size_t> indexRefs, size_t index = 0) {
-				if (index >= indexRefs.size()) {
-					throw std::out_of_range("Invalid indexRefs");
-				}
-				//std::cout << "content test index" << indexRefs[index] << std::endl;
-				//std::cout << "content indexrefs size: " << indexRefs.size() << std::endl;
-				//std::cout << "content contents size: " << contents.size() << std::endl;
-				std::cout << index << " @";
-				for (auto& ref : indexRefs) {
-					std::cout << ref << " ";
-				}
-				std::cout << std::endl;
-				size_t nextIndex = indexRefs[index];
-				if (nextIndex >= contents.size()) {
-					std::cout << "OrInCrashinhere?" << std::endl;
-					throw std::out_of_range("Index out of range");
-				}
-
-				if (index == indexRefs.size() - 1) {
-					std::cout << "Crashinhere?" << std::endl;
-					throw std::out_of_range("Index out of range, last gotten was not a content");
-				}
-				else {
-					return contents[nextIndex].findContent(indexRefs, index + 1);
-				}
-			}
-		};
-
+	struct CIDInfo
+	{
+		/**
+		 * Data, which contains the main CID and any linked CIDs stored as a vector, as well as any associated data
+		 * an entire file grabbed over bitswap
+		 */
 		libp2p::multi::ContentIdentifier mainCID;
-		std::vector<Content> contents;
-		std::vector<libp2p::multi::ContentIdentifier> requestedCIDs;
+		std::vector<libp2p::multi::ContentIdentifier> mainCIDs;
+		std::vector<std::string> directories;
+
+		std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finalcontents;
+		struct LinkedCIDInfo
+		{
+			libp2p::multi::ContentIdentifier linkedCID;
+			libp2p::multi::ContentIdentifier parentCID;
+			std::string directory;
+			std::vector<char> content;
+
+			LinkedCIDInfo(const libp2p::multi::ContentIdentifier& cid, const libp2p::multi::ContentIdentifier& parentcid, std::string& dir)
+				: linkedCID(cid), content(), parentCID(parentcid), directory(dir) {}
+		};
+		std::vector<LinkedCIDInfo> linkedCIDs;
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
-			: mainCID(cid), contents(), requestedCIDs() {}
+			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents() {}
 
+		void groupLinkedCIDs() {
+			// Group by CID 
+			std::unordered_map<std::string, std::pair<std::string, std::vector<char>>> groupedData;
+			std::string cidbase;
+			// For each linked CID we will add data to group
+			for (const auto& linkedCID : linkedCIDs) {
+				//Use pretty string because CID can't be copied for unordered map
+				auto cidstring = linkedCID.parentCID.toPrettyString(cidbase);
+				auto it = groupedData.find(cidstring);
+				if (it == groupedData.end()) {
+					//Nothing there, so add it.
+					groupedData.emplace(cidstring, std::make_pair(linkedCID.directory, linkedCID.content));
+				}
+				else {
+					//Add it
+					it->second.second.insert(it->second.second.end(), linkedCID.content.begin(), linkedCID.content.end());
+				}
+			}
 
-		Content& findContent(const std::vector<size_t> indexRefs, size_t index = 0) {
-			if (index >= indexRefs.size()) {
-				throw std::out_of_range("Invalid indexRefs");
-			}
-			std::cout << index << " @";
-			for (auto& ref : indexRefs) {
-				std::cout << ref << " ";
-			}
-			
-			std::cout << std::endl;
-			//std::cout << "test index" << indexRefs[index] << std::endl;
-			//std::cout << "indexrefs size: " << indexRefs.size() << std::endl;
-			//std::cout << "contents size: " << contents.size() << std::endl;
-			size_t nextIndex = indexRefs[index];
-			if (nextIndex >= contents.size()) {
-				throw std::out_of_range("Index out of range");
-			}
+			//Clear finalcontents before populating
+			finalcontents.first.clear();
+			finalcontents.second.clear();
 
-			if (index == indexRefs.size() - 1) {
-				return contents[nextIndex];
-			}
-			else {
-				return contents[nextIndex].findContent(indexRefs, index + 1);
+			// Populate finalcontents
+			for (const auto& entry : groupedData) {
+				finalcontents.first.push_back(entry.second.first);
+				finalcontents.second.push_back(entry.second.second);
 			}
 		}
 
-		size_t addContent(const libp2p::multi::ContentIdentifier cid, const std::string name) {
-			contents.emplace_back(cid, name); 
-			return contents.size() - 1;
-		}
-		//std::shared_ptr<Content> addContent(const libp2p::multi::ContentIdentifier& cid, const std::string& name) {
-		//	contents.emplace_back(cid, name);
-		//	return std::shared_ptr<Content>(&contents.back()); 
-		//}
+		void writeFinalContentsToDirectories() {
+			auto basedir = boost::lexical_cast<std::string>((boost::uuids::random_generator())()) + "/";
+			//Iterate through finalcontents
+			for (size_t i = 0; i < finalcontents.first.size(); ++i) {
+				const std::string& directoryWithFile = basedir + finalcontents.first[i];
+				const std::vector<char>& content = finalcontents.second[i];
 
-		void setDirectoryStatus(const libp2p::multi::ContentIdentifier cid, bool isDirectory)
+				//Extract the directory path from the full path including the filename
+				std::filesystem::path filePath(directoryWithFile);
+				std::filesystem::path directory = filePath.parent_path();
+
+				// Create the directory if it doesn't exist
+				std::filesystem::create_directories(directory);
+
+				// Write the content to the file
+				std::ofstream outputFile(directoryWithFile, std::ios::binary);
+				if (outputFile.is_open()) {
+					outputFile.write(content.data(), content.size());
+					outputFile.close();
+				}
+				else {
+					// Handle error if unable to open file
+					std::cerr << "Error: Unable to open file " << directoryWithFile << " for writing." << std::endl;
+				}
+			}
+		}
+		/**
+		 * Set the data for a linked CID
+		 * @param linkedCID - Linked CID to set content to
+		 * @param content - Content to insert
+		 */
+		void setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
 		{
-			//Set is directory status.
-			auto it = std::find_if(contents.begin(), contents.end(), [&cid](const Content& content) {
-				return content.cid == cid;
+			auto it = std::find_if(linkedCIDs.begin(), linkedCIDs.end(),
+				[&linkedCID](const LinkedCIDInfo& info) {
+					return info.linkedCID == linkedCID;
 				});
 
-			if (it != contents.end()) {
-				it->isDirectory = isDirectory;
+			if (it != linkedCIDs.end())
+			{
+				// Update the content for the linked CID
+				it->content = content;
 			}
 		}
 
-		//bool allContentsHaveData() {
-		//	return std::all_of(contents.begin(), contents.end(), [](const Content& content) {
-		//		return !content.isDirectory || !content.subDirectories.empty() || !content.data.empty();
-		//		});
-		//}
-
-		void addRequestedCID(const libp2p::multi::ContentIdentifier cid) {
-			requestedCIDs.push_back(cid);
+		/**
+		 * Check whether we have gotten data for all linked CIDs
+		 */
+		bool allLinkedCIDsHaveContent() const
+		{
+			return std::all_of(linkedCIDs.begin(), linkedCIDs.end(),
+				[](const LinkedCIDInfo& linkedCIDInfo) {
+					return !linkedCIDInfo.content.empty();
+				});
 		}
 
-		void removeRequestedCID(const libp2p::multi::ContentIdentifier cid) {
-			requestedCIDs.erase(std::remove(requestedCIDs.begin(), requestedCIDs.end(), cid), requestedCIDs.end());
-		}
+		/**
+		 * Create a shared buffer vector with data from all linked CIDs combined to create a single file.
+		 */
+		std::shared_ptr<std::vector<char>> combineContents() const
+		{
+			auto combinedContent = std::make_shared<std::vector<char>>();
 
-		bool isAllDataReceived() const {
-			std::cout << "Remaining:" << requestedCIDs.size() << std::endl;
-			return requestedCIDs.empty();
-		}
-
-		void combineContents() {
-			for (auto& content : contents) {
-				if (!content.isDirectory) {
-					// If it's not a directory, combine the data from links
-					for (const auto& link : content.contents) {
-						for (const auto& innercontent : link.contents)
-						{
-							content.data.insert(content.data.end(), innercontent.data.begin(), innercontent.data.end());
-						}
-					}
-				}
-				else {
-					// If it's a directory, recursively combine the contents of subdirectories
-					for (auto& subDir : content.contents) {
-						subDir.combineContents();
-					}
-				}
+			// Iterate through each linkedCID and appends
+			for (const auto& linkedCIDInfo : linkedCIDs)
+			{
+				combinedContent->insert(combinedContent->end(),
+					linkedCIDInfo.content.begin(),
+					linkedCIDInfo.content.end());
 			}
-		}
-		void writeContentsToFile(const std::string directoryPath) {
-			std::filesystem::create_directory(directoryPath);
-			for (auto& content : contents) {
-				std::cout << "NameCHeck: " << content.name << std::endl;
-				if (content.isDirectory) {
-					// Create a directory
-					std::string subDirectoryPath = directoryPath + "/" + content.name;
-					std::filesystem::create_directory(subDirectoryPath);
 
-					// Recursively write contents of subdirectories
-					for (auto& subDir : content.contents) {
-						subDir.writeContentsToFile(subDirectoryPath);
-					}
-				}
-				else {
-					// Write file data
-					std::cout << "WriteFile: " << content.name << std::endl;
-					std::string filePath = directoryPath + "/" + content.name;
-					std::ofstream outputFile(filePath, std::ios::binary);
-					if (outputFile.is_open()) {
-						outputFile.write(content.data.data(), content.data.size());
-						outputFile.close();
-					}
-					else {
-						// Open Err
-					}
-				}
-			}
+			return combinedContent;
 		}
 	};
-
 	struct Peer {
 		libp2p::peer::PeerInfo info;
 	};
@@ -355,11 +305,10 @@ namespace sgns
 		 */
 		bool RequestBlockSub(
 			std::shared_ptr<boost::asio::io_context> ioc,
-			size_t maincidIndex,
+			const sgns::ipfs_bitswap::CID& cid,
 			const sgns::ipfs_bitswap::CID& parentcid,
 			const sgns::ipfs_bitswap::CID& scid,
-			std::vector<size_t> cidinfoRef,
-			size_t cidInfoContentInd,
+			std::string directory,
 			int addressoffset,
 			bool parse,
 			bool save,
