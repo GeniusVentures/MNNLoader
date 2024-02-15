@@ -170,10 +170,16 @@ namespace sgns
                         addCID(cidInfo);
                         if (decoder.getLinksCount() <= 0)
                         {
-                            auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
-                            std::cout << "IPFS Finish" << std::endl;
-                            status(0);
-                            handle_read(ioc, bindata, parse, save);
+                            std::cout << " are we in here?" << std::endl;
+                            //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
+                            auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
+                            //TODO: Pass in file name just in case of this scenario.
+                            requestedCIDs_.end()->finalcontents.first.push_back("testa.txt");
+                            requestedCIDs_.end()->finalcontents.second.push_back(bindata);
+                            bool allset = CheckIfAllSet(cid);
+                            //std::cout << "IPFS Finish" << std::endl;
+                            //status(0);
+                            //handle_read(ioc, bindata, parse, save);
                         }
                         return true;
                     }
@@ -198,8 +204,8 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
-        std::cout << "Request SubBlock" << std::endl;
-        std::cout << "directory: " << directory << std::endl;
+        //std::cout << "Request SubBlock" << std::endl;
+        //std::cout << "directory: " << directory << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
             //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
@@ -209,6 +215,7 @@ namespace sgns
                 {
                     if (data)
                     {
+                        size_t mainindex = findRequestedCIDIndex(cid);
                         //std::cout << "Bitswap subdata received: " << std::endl;
                         auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
                         auto maincid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
@@ -236,14 +243,13 @@ namespace sgns
                             std::string newdir = directory + "/" + decoder.getLinkName(i);
                             if (!decoder.getLinkName(i).empty())
                             {
-                                requestedCIDs_[0].directories.push_back(newdir);
-                                requestedCIDs_[0].mainCIDs.push_back(subcid.value());
+                                requestedCIDs_[mainindex].directories.push_back(newdir);
+                                requestedCIDs_[mainindex].mainCIDs.push_back(subcid.value());
                             }
                             else {
                                 newdir = directory;
                                 CIDInfo::LinkedCIDInfo linkedCID(subcid.value(), scid, newdir);
-                                std::cout << "add Linked CID: " << newdir << std::endl;
-                                requestedCIDs_[0].linkedCIDs.push_back(linkedCID);
+                                requestedCIDs_[mainindex].linkedCIDs.push_back(linkedCID);
                             }
                             RequestBlockSub(ioc, cid, scid, sscid, newdir, 0, parse, save, handle_read, status);
                         }
@@ -251,14 +257,18 @@ namespace sgns
                         {
                             
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
-                            bool allset = setContentForLinkedCID(cid, scid, bindata);
-                            std::cout << "Inhere " << allset << std::endl;
+                            bool setsubdata = setContentForLinkedCID(cid, scid, bindata);
+                            if (!setsubdata)
+                            {
+                                requestedCIDs_[mainindex].finalcontents.first.push_back(directory);
+                                requestedCIDs_[mainindex].finalcontents.second.push_back(bindata);
+                            }
+                            bool allset = CheckIfAllSet(cid);
                             if (allset)
                             {
-                                std::cout << "allset?" << std::endl;
                                 //auto finaldata = combineLinkedCIDs(cid);
-                                requestedCIDs_[0].groupLinkedCIDs();
-                                requestedCIDs_[0].writeFinalContentsToDirectories();
+                                requestedCIDs_[mainindex].groupLinkedCIDs();
+                                requestedCIDs_[mainindex].writeFinalContentsToDirectories();
                                 //std::cout << "IPFS Finish" << std::endl;
                                 //status(0);
                                 //handle_read(ioc, finaldata, parse, save);
@@ -289,8 +299,21 @@ namespace sgns
         if (it != requestedCIDs_.end())
         {
             // Update the content for the linked CID within the found CIDInfo
-            it->setContentForLinkedCID(linkedCID, content);
+            return it->setContentForLinkedCID(linkedCID, content);
             // Check if all linkedCIDs have content
+            //return it->allLinkedCIDsHaveContent();
+        }
+        return false;
+    }
+
+    bool IPFSDevice::CheckIfAllSet(const sgns::ipfs_bitswap::CID& mainCID)
+    {
+        auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
+            [&mainCID](const CIDInfo& info) {
+                return info.mainCID == mainCID;
+            });
+        if (it != requestedCIDs_.end())
+        {
             return it->allLinkedCIDsHaveContent();
         }
         return false;

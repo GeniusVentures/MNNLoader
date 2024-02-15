@@ -34,7 +34,6 @@ namespace sgns
 		libp2p::multi::ContentIdentifier mainCID;
 		std::vector<libp2p::multi::ContentIdentifier> mainCIDs;
 		std::vector<std::string> directories;
-
 		std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finalcontents;
 		struct LinkedCIDInfo
 		{
@@ -69,10 +68,6 @@ namespace sgns
 					it->second.second.insert(it->second.second.end(), linkedCID.content.begin(), linkedCID.content.end());
 				}
 			}
-
-			//Clear finalcontents before populating
-			finalcontents.first.clear();
-			finalcontents.second.clear();
 
 			// Populate finalcontents
 			for (const auto& entry : groupedData) {
@@ -112,7 +107,7 @@ namespace sgns
 		 * @param linkedCID - Linked CID to set content to
 		 * @param content - Content to insert
 		 */
-		void setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
+		bool setContentForLinkedCID(const libp2p::multi::ContentIdentifier& linkedCID, const std::vector<char>& content)
 		{
 			auto it = std::find_if(linkedCIDs.begin(), linkedCIDs.end(),
 				[&linkedCID](const LinkedCIDInfo& info) {
@@ -123,7 +118,9 @@ namespace sgns
 			{
 				// Update the content for the linked CID
 				it->content = content;
+				return true;
 			}
+			return false;
 		}
 
 		/**
@@ -274,6 +271,7 @@ namespace sgns
 			const sgns::ipfs_bitswap::CID& linkedCID,
 			const std::vector<char>& content);
 
+		bool IPFSDevice::CheckIfAllSet(const sgns::ipfs_bitswap::CID& mainCID);
 		/**
 		 * Get a buffer of the combineed data of all linked CIDs to create an entire file.
 		 * @param mainCID - Main CID of file we are getting
@@ -328,6 +326,23 @@ namespace sgns
 
 		// Maintain a list of requested CIDs along with their linked CIDs and the content of the linked CIDs
 		std::vector<CIDInfo> requestedCIDs_;
+
+
+		size_t findRequestedCIDIndex(const libp2p::multi::ContentIdentifier& cid) const {
+			auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
+				[&cid](const CIDInfo& cidInfo) {
+					return cidInfo.mainCID == cid;
+				});
+
+			if (it != requestedCIDs_.end()) {
+				// Found the CID, return its index
+				return std::distance(requestedCIDs_.begin(), it);
+			}
+			else {
+				// CID not found
+				return std::numeric_limits<size_t>::max(); // or any value indicating not found
+			}
+		}
 
 		//Default Bootstrap Servers
 		std::vector<std::string> bootstrapAddresses_ = {
