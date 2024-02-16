@@ -264,16 +264,17 @@ namespace sgns
                         }
                         if (decoder.getLinksCount() <= 0)
                         {
-                            
+                            //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
+                            //Set Content for linked CID, or otherwise push data to final contents if it has none
                             bool setsubdata = setContentForLinkedCID(cid, scid, bindata);
                             if (!setsubdata)
                             {
                                 requestedCIDs_[mainindex].finalcontents.first.push_back(directory);
                                 requestedCIDs_[mainindex].finalcontents.second.push_back(bindata);
                             }
-                            //bool allset = CheckIfAllSet(cid
-                            std::cout << "Outstanding Requests: " << requestedCIDs_[mainindex].outstandingRequests_ << std::endl;
+                            //bool allset = CheckIfAllSet(cid);
+                            //std::cout << "Outstanding Requests: " << requestedCIDs_[mainindex].outstandingRequests_ << std::endl;
                             if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
                                 //auto finaldata = combineLinkedCIDs(cid);
@@ -290,7 +291,7 @@ namespace sgns
                     }
                     else
                     {
-                        //return RequestBlockSub(ioc, cid, scid, directory, addressoffset + 1, parse, save, handle_read, status);
+                        return RequestBlockSub(ioc, cid, parentcid, scid, directory, addressoffset + 1, parse, save, handle_read, status);
                     }
                 });
         }
