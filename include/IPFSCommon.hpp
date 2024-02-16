@@ -51,6 +51,9 @@ namespace sgns
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
 			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents(), outstandingRequests_() {}
 
+		/**
+		 * Group data for linked CIDs to make a complete file
+		 */
 		void groupLinkedCIDs() {
 			// Group by CID 
 			std::unordered_map<std::string, std::pair<std::string, std::vector<char>>> groupedData;
@@ -77,6 +80,9 @@ namespace sgns
 			}
 		}
 
+		/**
+		 * Write final data out to directories. Not async.
+		 */
 		void writeFinalContentsToDirectories() {
 			auto basedir = boost::lexical_cast<std::string>((boost::uuids::random_generator())()) + "/";
 			//Iterate through finalcontents
@@ -126,6 +132,7 @@ namespace sgns
 
 		/**
 		 * Check whether we have gotten data for all linked CIDs
+		 * use of outstandingRequests_ is preferred.
 		 */
 		bool allLinkedCIDsHaveContent() const
 		{
@@ -153,9 +160,15 @@ namespace sgns
 			return combinedContent;
 		}
 	};
+
+	/**
+	 * For creating a peer
+	 */
 	struct Peer {
 		libp2p::peer::PeerInfo info;
 	};
+
+
 	/**
 	 * This class creates an DHT for finding peers with CIDs we want
 	 * from IPFS node(s).
@@ -224,9 +237,21 @@ namespace sgns
 			// Cleanup resources if needed
 		}
 
+		/**
+		 * Find peers with the CID we are looking for using Kademlia DHT.
+		 * @param ioc - Asio io context to use
+		 * @param cid - IPFS Main CID to get from bitswap
+		 * @param filename - Filename for file, mostly for use if this is a single file.
+		 * @param addressoffset - Offset from list of addresses to use, usually want to call 0 on this as it will loop through from starting point if needed
+		 * @param parse - Whether to parse file upon completion (for MNN currently)
+		 * @param save - Whether to save the file to local disk upon completion
+		 * @param handle_read - Filemanager callback on completion
+		 * @param status - Status function that will be updated with status codes as operation progresses
+		 */
 		bool StartFindingPeers(
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
+			std::string filename,
 			int addressoffset,
 			bool parse,
 			bool save,
@@ -238,6 +263,7 @@ namespace sgns
 		 * Add the Main CID for a file to bitswap wantlist to get information or file(if small enough)
 		 * @param ioc - Asio io context to use
 		 * @param cid - IPFS Main CID to get from bitswap
+		 * @param filename - Filename for file, mostly for use if this is a single file.
 		 * @param addressoffset - Offset from list of addresses to use, usually want to call 0 on this as it will loop through from starting point if needed
 		 * @param parse - Whether to parse file upon completion (for MNN currently)
 		 * @param save - Whether to save the file to local disk upon completion
@@ -247,6 +273,7 @@ namespace sgns
 		bool RequestBlockMain(
 			std::shared_ptr<boost::asio::io_context> ioc,
 			const sgns::ipfs_bitswap::CID& cid,
+			std::string filename,
 			int addressoffset,
 			bool parse,
 			bool save,
@@ -295,7 +322,9 @@ namespace sgns
 		 * Add the sub CID for a file to bitswap wantlist to get part of file
 		 * @param ioc - Asio io context to use
 		 * @param cid - IPFS Main CID to get from bitswap
+		 * @param parentcid - CID of the CID that had this linked CID
 		 * @param scid - Linked CID to get file of
+		 * @param directory - Path of file
 		 * @param addressoffset - Offset from list of addresses to use, usually want to call 0 on this as it will loop through from starting point if needed
 		 * @param parse - Whether to parse file upon completion (for MNN currently)
 		 * @param save - Whether to save the file to local disk upon completion
@@ -328,7 +357,10 @@ namespace sgns
 		// Maintain a list of requested CIDs along with their linked CIDs and the content of the linked CIDs
 		std::vector<CIDInfo> requestedCIDs_;
 
-
+		/**
+		 * Find index of CID we have requested for use in bitswap
+		 * @param cid - CID to find in list
+		 */
 		size_t findRequestedCIDIndex(const libp2p::multi::ContentIdentifier& cid) const {
 			auto it = std::find_if(requestedCIDs_.begin(), requestedCIDs_.end(),
 				[&cid](const CIDInfo& cidInfo) {
@@ -341,7 +373,7 @@ namespace sgns
 			}
 			else {
 				// CID not found
-				return std::numeric_limits<size_t>::max(); // or any value indicating not found
+				return -1; 
 			}
 		}
 

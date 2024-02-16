@@ -62,6 +62,7 @@ namespace sgns
     bool IPFSDevice::StartFindingPeers(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
+        std::string filename,
         int addressoffset,
         bool parse,
         bool save,
@@ -97,7 +98,7 @@ namespace sgns
                     //}
                 //}
 
-                return RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
+                return RequestBlockMain(ioc, cid, filename, 0, parse, save, handle_read, status);
             }
             else
             {
@@ -112,23 +113,21 @@ namespace sgns
     bool IPFSDevice::RequestBlockMain(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
+        std::string filename,
         int addressoffset,
         bool parse,
         bool save,
         CompletionCallback handle_read,
         StatusCallback status)
     {
-        std::cout << "request main block" << std::endl;
+        //std::cout << "request main block" << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            //auto address = peerAddresses_->at(addressoffset);
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), cid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
                     if (data)
                     {
-                        //std::cout << "Bitswap data received: " << data.value() << std::endl;
                         auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
                         auto maincid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
 
@@ -154,6 +153,8 @@ namespace sgns
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
                             auto subcid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)decoder.getLinkCID(i).data(), decoder.getLinkCID(i).size()));
                             auto scid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
+                            //If we have a link name, this is a file CID, and not a linked CID for that file
+                            //If we don't have a link name, this is a linked CID. This shouldn't happen here in the main request though.
                             if (!decoder.getLinkName(i).empty())
                             {
                                 cidInfo.directories.push_back(decoder.getLinkName(i));
@@ -165,16 +166,22 @@ namespace sgns
                                 std::cout << "add Linked CID: nothing here" << std::endl;
                                 cidInfo.linkedCIDs.push_back(linkedCID);
                             }
+                            //Increment Outstanding
                             cidInfo.outstandingRequests_++;
+                            //Request Additional CID
                             RequestBlockSub(ioc, cid, cid, scid, decoder.getLinkName(i), 0, parse, save, handle_read, status);
                         }
+
+                        //Add to list in IPFSDevice
                         addCID(cidInfo);
+
+                        //If there are no links, this was a single file with 1 block containing all the data, so we can write it out
                         if (decoder.getLinksCount() <= 0)
                         {
+                            //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
-                            //TODO: Pass in file name just in case of this scenario.
-                            requestedCIDs_.end()->finalcontents.first.push_back("testa.txt");
+                            requestedCIDs_.end()->finalcontents.first.push_back(filename);
                             requestedCIDs_.end()->finalcontents.second.push_back(bindata);
                             //bool allset = CheckIfAllSet(cid);
                             if (requestedCIDs_.end()->outstandingRequests_ <= 0)
@@ -190,7 +197,7 @@ namespace sgns
                     }
                     else
                     {
-                        return RequestBlockMain(ioc, cid, addressoffset + 1, parse, save, handle_read, status);
+                        return RequestBlockMain(ioc, cid, filename, addressoffset + 1, parse, save, handle_read, status);
                     }
                 });
         }
@@ -213,8 +220,6 @@ namespace sgns
         //std::cout << "directory: " << directory << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
-            //auto peerId = libp2p::peer::PeerId::fromBase58(peerAddresses_->at(addressoffset).getPeerId().value()).value();
-            //auto address = peerAddresses_->at(addressoffset);
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), scid,
                 [=](libp2p::outcome::result<std::string> data)
                 {
@@ -224,7 +229,8 @@ namespace sgns
                         size_t mainindex = findRequestedCIDIndex(cid);
                         //Decrement 
                         requestedCIDs_[mainindex].outstandingRequests_--;
-                        //std::cout << "Bitswap subdata received: " << std::endl;
+
+
                         auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
                         auto maincid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
 
@@ -262,6 +268,7 @@ namespace sgns
                             requestedCIDs_[mainindex].outstandingRequests_++;
                             RequestBlockSub(ioc, cid, scid, sscid, newdir, 0, parse, save, handle_read, status);
                         }
+                        //If there are no links, this block is complete and we can see if we have all blocks for writing
                         if (decoder.getLinksCount() <= 0)
                         {
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
@@ -274,10 +281,8 @@ namespace sgns
                                 requestedCIDs_[mainindex].finalcontents.second.push_back(bindata);
                             }
                             //bool allset = CheckIfAllSet(cid);
-                            //std::cout << "Outstanding Requests: " << requestedCIDs_[mainindex].outstandingRequests_ << std::endl;
                             if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
-                                //auto finaldata = combineLinkedCIDs(cid);
                                 requestedCIDs_[mainindex].groupLinkedCIDs();
                                 requestedCIDs_[mainindex].writeFinalContentsToDirectories();
                                 //std::cout << "IPFS Finish" << std::endl;
@@ -291,6 +296,7 @@ namespace sgns
                     }
                     else
                     {
+                        //Request Block on next address
                         return RequestBlockSub(ioc, cid, parentcid, scid, directory, addressoffset + 1, parse, save, handle_read, status);
                     }
                 });
@@ -311,8 +317,6 @@ namespace sgns
         {
             // Update the content for the linked CID within the found CIDInfo
             return it->setContentForLinkedCID(linkedCID, content);
-            // Check if all linkedCIDs have content
-            //return it->allLinkedCIDsHaveContent();
         }
         return false;
     }

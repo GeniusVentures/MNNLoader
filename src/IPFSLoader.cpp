@@ -117,8 +117,8 @@ namespace sgns
         status(13);
         ioc->post([=] {
             status(14);
-            ipfsDevice->RequestBlockMain(ioc, cid, 0, parse, save, handle_read, status);
-            //ipfsDevice->StartFindingPeers(ioc, cid, 0, parse, save, handle_read, status);
+            ipfsDevice->RequestBlockMain(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
+            //ipfsDevice->StartFindingPeers(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
             });
         
         return result;
