@@ -165,18 +165,23 @@ namespace sgns
                                 std::cout << "add Linked CID: nothing here" << std::endl;
                                 cidInfo.linkedCIDs.push_back(linkedCID);
                             }
+                            cidInfo.outstandingRequests_++;
                             RequestBlockSub(ioc, cid, cid, scid, decoder.getLinkName(i), 0, parse, save, handle_read, status);
                         }
                         addCID(cidInfo);
                         if (decoder.getLinksCount() <= 0)
                         {
-                            std::cout << " are we in here?" << std::endl;
                             //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
                             //TODO: Pass in file name just in case of this scenario.
                             requestedCIDs_.end()->finalcontents.first.push_back("testa.txt");
                             requestedCIDs_.end()->finalcontents.second.push_back(bindata);
-                            bool allset = CheckIfAllSet(cid);
+                            //bool allset = CheckIfAllSet(cid);
+                            if (requestedCIDs_.end()->outstandingRequests_ <= 0)
+                            {
+                                requestedCIDs_.end()->groupLinkedCIDs();
+                                requestedCIDs_.end()->writeFinalContentsToDirectories();
+                            }
                             //std::cout << "IPFS Finish" << std::endl;
                             //status(0);
                             //handle_read(ioc, bindata, parse, save);
@@ -215,7 +220,10 @@ namespace sgns
                 {
                     if (data)
                     {
+                        //Get CIDInfo Index
                         size_t mainindex = findRequestedCIDIndex(cid);
+                        //Decrement 
+                        requestedCIDs_[mainindex].outstandingRequests_--;
                         //std::cout << "Bitswap subdata received: " << std::endl;
                         auto cidV0 = libp2p::multi::ContentIdentifierCodec::encodeCIDV0(data.value().data(), data.value().size());
                         auto maincid = libp2p::multi::ContentIdentifierCodec::decode(gsl::span((uint8_t*)cidV0.data(), cidV0.size()));
@@ -251,6 +259,7 @@ namespace sgns
                                 CIDInfo::LinkedCIDInfo linkedCID(subcid.value(), scid, newdir);
                                 requestedCIDs_[mainindex].linkedCIDs.push_back(linkedCID);
                             }
+                            requestedCIDs_[mainindex].outstandingRequests_++;
                             RequestBlockSub(ioc, cid, scid, sscid, newdir, 0, parse, save, handle_read, status);
                         }
                         if (decoder.getLinksCount() <= 0)
@@ -263,8 +272,9 @@ namespace sgns
                                 requestedCIDs_[mainindex].finalcontents.first.push_back(directory);
                                 requestedCIDs_[mainindex].finalcontents.second.push_back(bindata);
                             }
-                            bool allset = CheckIfAllSet(cid);
-                            if (allset)
+                            //bool allset = CheckIfAllSet(cid
+                            std::cout << "Outstanding Requests: " << requestedCIDs_[mainindex].outstandingRequests_ << std::endl;
+                            if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
                                 //auto finaldata = combineLinkedCIDs(cid);
                                 requestedCIDs_[mainindex].groupLinkedCIDs();

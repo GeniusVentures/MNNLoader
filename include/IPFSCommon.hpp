@@ -35,6 +35,7 @@ namespace sgns
 		std::vector<libp2p::multi::ContentIdentifier> mainCIDs;
 		std::vector<std::string> directories;
 		std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finalcontents;
+		size_t outstandingRequests_;
 		struct LinkedCIDInfo
 		{
 			libp2p::multi::ContentIdentifier linkedCID;
@@ -48,7 +49,7 @@ namespace sgns
 		std::vector<LinkedCIDInfo> linkedCIDs;
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
-			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents() {}
+			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents(), outstandingRequests_() {}
 
 		void groupLinkedCIDs() {
 			// Group by CID 
