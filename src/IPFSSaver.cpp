@@ -42,8 +42,8 @@ namespace sgns
         
         auto datastore = sgns::ipfs_lite::ipfs::RocksdbDatastore(r.value());
         for (size_t i = 0; i < data.first.size(); ++i) {
-            auto cid = sgns::common::getCidOf(std::vector<uint8_t>(data.second.begin(), data.second.end()));
-            common::Buffer buffer(std::vector<uint8_t>(data.second.begin(), data.second.end()));
+            auto cid = sgns::common::getCidOf(std::vector<uint8_t>(data.second[i].begin(), data.second[i].end()));
+            common::Buffer buffer(std::vector<uint8_t>(data.second[i].begin(), data.second[i].end()));
             datastore.set(cid.value(), buffer);
 
         }

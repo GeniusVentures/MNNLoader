@@ -60,7 +60,10 @@ namespace sgns
 
         
 
-        size_t remainingWrites = data.first.size()-1;
+        //size_t remainingWrites = data.first.size();
+        auto remainingWrites = std::make_shared<size_t>(data.first.size());
+        std::cout << "Remaining Writes Origin:" << *remainingWrites << std::endl;
+
         for (size_t i = 0; i < data.first.size(); ++i) {
             //Create Directories for files
             const std::string& directoryWithFile = filename + data.first[i];
@@ -69,13 +72,14 @@ namespace sgns
             std::filesystem::create_directories(directory);
 
             //Create Steam for async writes
-            std::ofstream file(filename, std::ios::binary);
-            auto fileDevice = std::make_shared<FILEDevice>(ioc, filename, 1);
-            async_write(fileDevice->getFile(), boost::asio::buffer(data.second.data(), data.second.size()), boost::asio::transfer_exactly(data.second.size()), [fileDevice, ioc, handle_write, data, &remainingWrites](const boost::system::error_code& error, std::size_t bytes_transferred)
+            std::ofstream file(directoryWithFile, std::ios::binary);
+            auto fileDevice = std::make_shared<FILEDevice>(ioc, directoryWithFile, 1);
+            std::cout << "Size: " << data.second[i].size() << std::endl;
+            async_write(fileDevice->getFile(), boost::asio::buffer(data.second[i].data(), data.second[i].size()), boost::asio::transfer_exactly(data.second[i].size()), [fileDevice, ioc, handle_write, data, remainingWrites](const boost::system::error_code& error, std::size_t bytes_transferred)
                 {
                     std::cout << "wrote" << std::endl;
-                    remainingWrites--;
-                    if (remainingWrites <= 0)
+                    (*remainingWrites)--;
+                    if (*remainingWrites <= 0)
                     {
                         //Handle when written all
                         handle_write(ioc);

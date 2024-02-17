@@ -203,36 +203,7 @@ namespace sgns
         }
         return false;
     }
-    std::string base64Encode(const std::vector<uint8_t>& data) {
-        // Create a BIO object for Base64 encoding
-        BIO* base64Bio = BIO_new(BIO_f_base64());
-        BIO_set_flags(base64Bio, BIO_FLAGS_BASE64_NO_NL);
 
-        // Create a BIO object for memory buffer
-        BIO* memBio = BIO_new(BIO_s_mem());
-
-        // Chain the Base64 BIO to the memory BIO
-        BIO_push(base64Bio, memBio);
-
-        // Write the data to the Base64 BIO
-        BIO_write(base64Bio, data.data(), static_cast<int>(data.size()));
-        BIO_flush(base64Bio);
-
-        // Get the encoded data from the memory BIO
-        BUF_MEM* memPtr;
-        BIO_get_mem_ptr(memBio, &memPtr);
-
-        // Copy the encoded data to a string
-        std::string encodedData(memPtr->data, memPtr->length);
-
-        // Free the BIO objects
-        BIO_free_all(base64Bio);
-
-        return encodedData;
-    }
-    std::vector<uint8_t> stringToBytes(const std::string& str) {
-        return std::vector<uint8_t>(str.begin(), str.end());
-    }
     bool IPFSDevice::RequestBlockSub(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
@@ -330,7 +301,9 @@ namespace sgns
                             if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
                                 requestedCIDs_[mainindex].groupLinkedCIDs();
-                                requestedCIDs_[mainindex].writeFinalContentsToDirectories();
+                                //requestedCIDs_[mainindex].writeFinalContentsToDirectories();
+                                status(0);
+                                handle_read(ioc, requestedCIDs_[mainindex].finalcontents, parse, save);
                                 //std::cout << "IPFS Finish" << std::endl;
                                 //status(0);
                                 //handle_read(ioc, finaldata, parse, save);

@@ -53,14 +53,14 @@ namespace sgns
                     else {
                         std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;
                         status(-9);
-                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                     }
                     });
             }
             else {
                 std::cerr << "Connect error: " << error.message() << std::endl;
                 status(-1);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
             }
             });
     }
