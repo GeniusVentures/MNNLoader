@@ -60,14 +60,14 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
     //Increment Operations
     IncrementOutstandingOperations();
     //Create a handler
-    auto handle_read = [this, savetype, suffix](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::vector<char>> buffer, bool parse, bool save) {
+    auto handle_read = [this, savetype, suffix](std::shared_ptr<boost::asio::io_context> ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>> buffers, bool parse, bool save) {
         std::cout << "Callback!" << std::endl;
         //Parse Data
         if (parse)
         {
             auto parserIter = parsers.find("mnn");
             auto parser = dynamic_cast<FileParser*>(parserIter->second);
-            shared_ptr<void> data = parser->ParseASync(buffer);
+            //shared_ptr<void> data = parser->ParseASync(buffer);
         }
         //Save data or otherwise decrement counter of operations
         if (save)
@@ -77,7 +77,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
             };
             auto saverIter = savers.find(savetype);
             auto saver = saverIter->second;
-            saver->SaveASync(ioc,handle_write,"",buffer, suffix);
+            saver->SaveASync(ioc,handle_write,"",buffers, suffix);
         }
         else {
             // Handle completion

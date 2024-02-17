@@ -25,9 +25,9 @@ namespace sgns
     inline std::vector<uint8_t> operator""_unhex(const char* c, size_t s) {
         return sgns::common::unhex(std::string_view(c, s)).value();
     }
-    void IPFSSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write, std::string filename, std::shared_ptr<std::vector<char>> data, std::string suffix) {
+    void IPFSSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write, std::string filename, std::pair<std::vector<std::string>, std::vector<std::vector<char>>> data, std::string suffix) {
         std::cout << "Inside the IPFSSaver::SaveASync Function" << std::endl;
-        if (data == nullptr)
+        if (data.first.data() == nullptr)
         {
             throw range_error("Can not save with null data");
         }
@@ -41,10 +41,12 @@ namespace sgns
         //r.value()->setReadOptions(readoptions);
         
         auto datastore = sgns::ipfs_lite::ipfs::RocksdbDatastore(r.value());
+        for (size_t i = 0; i < data.first.size(); ++i) {
+            auto cid = sgns::common::getCidOf(std::vector<uint8_t>(data.second.begin(), data.second.end()));
+            common::Buffer buffer(std::vector<uint8_t>(data.second.begin(), data.second.end()));
+            datastore.set(cid.value(), buffer);
 
-        auto cid = sgns::common::getCidOf(std::vector<uint8_t>(data->begin(), data->end()));
-        common::Buffer buffer(std::vector<uint8_t>(data->begin(), data->end()));
-        datastore.set(cid.value(), buffer);
+        }
         handle_write(ioc);
     }
 }

@@ -49,18 +49,21 @@ namespace sgns
         ////Async Read.
        boost::asio::async_read(fileDevice->getFile(), *buffer,
             boost::asio::transfer_all(),
-            [fileDevice, ioc, handle_read, status, parse, save, buffer](const boost::system::error_code& error, std::size_t bytes_transferred) {
+            [fileDevice, ioc, handle_read, status, parse, save, buffer, filename](const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if (error.value() == 2)
                 {
                     std::cout << "LOCAL Finish" << std::endl;
                     auto finalbuffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()));
                     status(0);
-                    handle_read(ioc, finalbuffer, parse, save);
+                    std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
+                    finaldata.first.push_back(filename);
+                    finaldata.second.push_back(*finalbuffer);
+                    handle_read(ioc, finaldata, parse, save);
                 }
                 else {
                     std::cerr << "File read error: " << error.message() << std::endl;
                     status(-7);
-                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                 }
             });
        

@@ -143,7 +143,7 @@ namespace sgns
                         {
                             //Handle Error
                             status(-14);
-                            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                             return false;
                         }
                         //std::cout << "ContentTest" << decoder.getContent() << std::endl;
@@ -187,7 +187,7 @@ namespace sgns
                             if (requestedCIDs_.end()->outstandingRequests_ <= 0)
                             {
                                 requestedCIDs_.end()->groupLinkedCIDs();
-                                requestedCIDs_.end()->writeFinalContentsToDirectories();
+                                handle_read(ioc, requestedCIDs_.end()->finalcontents, parse, save);
                             }
                             //std::cout << "IPFS Finish" << std::endl;
                             //status(0);
@@ -203,7 +203,36 @@ namespace sgns
         }
         return false;
     }
+    std::string base64Encode(const std::vector<uint8_t>& data) {
+        // Create a BIO object for Base64 encoding
+        BIO* base64Bio = BIO_new(BIO_f_base64());
+        BIO_set_flags(base64Bio, BIO_FLAGS_BASE64_NO_NL);
 
+        // Create a BIO object for memory buffer
+        BIO* memBio = BIO_new(BIO_s_mem());
+
+        // Chain the Base64 BIO to the memory BIO
+        BIO_push(base64Bio, memBio);
+
+        // Write the data to the Base64 BIO
+        BIO_write(base64Bio, data.data(), static_cast<int>(data.size()));
+        BIO_flush(base64Bio);
+
+        // Get the encoded data from the memory BIO
+        BUF_MEM* memPtr;
+        BIO_get_mem_ptr(memBio, &memPtr);
+
+        // Copy the encoded data to a string
+        std::string encodedData(memPtr->data, memPtr->length);
+
+        // Free the BIO objects
+        BIO_free_all(base64Bio);
+
+        return encodedData;
+    }
+    std::vector<uint8_t> stringToBytes(const std::string& str) {
+        return std::vector<uint8_t>(str.begin(), str.end());
+    }
     bool IPFSDevice::RequestBlockSub(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
@@ -248,7 +277,7 @@ namespace sgns
                         {
                             //Handle Error
                             status(-15);
-                            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                             return false;
                         }
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
@@ -271,6 +300,23 @@ namespace sgns
                         //If there are no links, this block is complete and we can see if we have all blocks for writing
                         if (decoder.getLinksCount() <= 0)
                         {
+                            //size_t numBytes = decoder.getContent().size();
+                            //std::cout << "Bytes-------------" << directory << std::endl;
+                            //std::cout << "Total " << decoder.getContent().size() << std::endl;
+                            //size_t numBytes = 6;
+                            //std::vector<char> test;
+                            //for (size_t i = 3; i < numBytes && i < decoder.getContent().size(); ++i) {
+                            //    std::cout << static_cast<int>(decoder.getContent()[i]) << " ";
+                            //    test.push_back(decoder.getContent()[i]);
+                            //}
+                            //size_t endBytes = 4;
+                            //for (size_t i = decoder.getContent().size(); decoder.getContent().size()-i < endBytes && i > 0; --i) {
+                            //    std::cout << static_cast<int>(decoder.getContent()[i]) << " ";
+                            //}
+                            //std::vector<uint8_t> contentBytes = stringToBytes(decoder.getContent());
+                            //std::string base64Data = base64Encode(contentBytes);
+                            //std::cout << base64Data << std::endl;
+                            //std::cout << std::endl;
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
                             //Set Content for linked CID, or otherwise push data to final contents if it has none

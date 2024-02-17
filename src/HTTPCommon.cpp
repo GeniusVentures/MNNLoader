@@ -55,14 +55,14 @@ namespace sgns
                         else {
                             std::cerr << "Handshake error: " << handshake_error.message() << std::endl;
                             status(-9);
-                            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                         }
                         });
                 }
                 else {
                     std::cerr << "Connection error: " << connect_error.message() << std::endl;
                     status(-1);
-                    handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                 }
             });
     }
@@ -98,19 +98,22 @@ namespace sgns
                         //Send this to handler to be processed.
                         std::cout << "HTTPS Finish" << std::endl;
                         status(0);
-                        handle_read(ioc, binaryData, self->parse_, self->save_);
+                        std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
+                        finaldata.first.push_back(self->http_path_);
+                        finaldata.second.push_back(*binaryData);
+                        handle_read(ioc, finaldata, self->parse_, self->save_);
                     }
                     else {
                         std::cerr << "Data does not contain header" << std::endl;
                         status(-7);
-                        handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                     }
                     });
             }
             else {
                 std::cerr << "Error in async_write: " << write_error.message() << std::endl;
                 status(-8);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
             }
             });
     }

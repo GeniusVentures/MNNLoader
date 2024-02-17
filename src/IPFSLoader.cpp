@@ -103,7 +103,7 @@ namespace sgns
             //Error Listening
             status(-16);
             std::cerr << "Cannot listen address " << ". Error: " << ipfsDeviceResult.error().message() << std::endl;
-            handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
             return result;
         }
         auto ipfsDevice = ipfsDeviceResult.value();

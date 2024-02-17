@@ -88,12 +88,15 @@ namespace sgns
                                 auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
                                 std::cout << "WSS Finish" << std::endl;
                                 status(0);
-                                handle_read(ioc, outbuf, self->parse_, self->save_);
+                                std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
+                                finaldata.first.push_back(self->ws_path_);
+                                finaldata.second.push_back(*outbuf);
+                                handle_read(ioc, finaldata, self->parse_, self->save_);
                             }
                             else {
                                 std::cerr << "File request read error: " << read_error.message() << std::endl;
                                 status(-7);
-                                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
                             }
                             });
                     }
@@ -106,7 +109,7 @@ namespace sgns
             else {
                 std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
                 status(-10);
-                handle_read(ioc, std::make_shared<std::vector<char>>(), false, false);
+                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
             }
             });
     }
