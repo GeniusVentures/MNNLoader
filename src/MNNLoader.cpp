@@ -53,17 +53,22 @@ namespace sgns
                 if (error.value() == 2)
                 {
                     std::cout << "LOCAL Finish" << std::endl;
-                    auto finalbuffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()));
+                    //auto finalbuffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()));
                     status(0);
-                    std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
-                    finaldata.first.push_back(filename);
-                    finaldata.second.push_back(*finalbuffer);
+                    auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
+                    std::filesystem::path p(filename);
+                    finaldata->first.push_back(p.filename().string());
+                    size_t dataSize = buffer->size();
+                    finaldata->second.emplace_back(
+                        boost::asio::buffers_begin(buffer->data()),
+                        boost::asio::buffers_begin(buffer->data()) + dataSize
+                    );
                     handle_read(ioc, finaldata, parse, save);
                 }
                 else {
                     std::cerr << "File read error: " << error.message() << std::endl;
                     status(-7);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
             });
        

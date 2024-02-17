@@ -35,7 +35,7 @@ namespace sgns
 		 * @param parse - Whether to parse file upon completion (for MNN)
 		 * @param save - Whether to save the file to local disk upon completion
 		 */
-		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>> buffers, bool parse, bool save)>;
+		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
 		using StatusCallback = std::function<void(const int&)>;
 
 		/**

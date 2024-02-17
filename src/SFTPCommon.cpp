@@ -53,7 +53,7 @@ namespace sgns
             else {
                 std::cerr << "Error connecting to server: " << connect_error.message() << std::endl;
                 status(-1);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
 
@@ -76,14 +76,14 @@ namespace sgns
                 else {
                     // Handle error
                     status(-2);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else
         {
             status(-2);
-            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
 
@@ -118,14 +118,14 @@ namespace sgns
                 else {
                     // Handle error
                     status(-3);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else
         {
             status(-3);
-            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
 
@@ -143,13 +143,13 @@ namespace sgns
                     }
                     else {
                         status(-4);
-                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                        handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
                 status(-4);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
         }
         else {
@@ -175,13 +175,13 @@ namespace sgns
                     }
                     else {
                         status(-5);
-                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                        handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
                 status(-5);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
         }
         else {
@@ -214,13 +214,13 @@ namespace sgns
                 }
                 else {
                     status(-6);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else {
             status(-6);
-            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
 
@@ -239,9 +239,10 @@ namespace sgns
                 //We've read all the data, send to parse/save
                 std::cout << "SFTP Finish" << std::endl;
                 status(0);
-                std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
-                finaldata.first.push_back(sftp_path_);
-                finaldata.second.push_back(*buffer);
+                auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
+                std::filesystem::path p(sftp_path_);
+                finaldata->first.push_back(p.filename().string());
+                finaldata->second.push_back(*buffer);
                 handle_read(ioc, finaldata, parse_, save_);
 
             }
@@ -256,7 +257,7 @@ namespace sgns
                         // Handle error
                         status(-7);
                         self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
-                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                        handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
@@ -273,7 +274,7 @@ namespace sgns
                     // Handle error
                     status(-7);
                     self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
@@ -281,7 +282,7 @@ namespace sgns
             // Handle other errors
             status(-7);
             StartSFTPCleanup(sftp2session, sftpHandle, sftp);
-            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
 

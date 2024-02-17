@@ -55,14 +55,14 @@ namespace sgns
                         else {
                             std::cerr << "Handshake error: " << handshake_error.message() << std::endl;
                             status(-9);
-                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                         }
                         });
                 }
                 else {
                     std::cerr << "Connection error: " << connect_error.message() << std::endl;
                     status(-1);
-                    handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                    handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
             });
     }
@@ -93,27 +93,32 @@ namespace sgns
                     //Check if we found an end
                     if (headerEnd != std::string::npos) {
                         //Create vector of binary data by cutting off the header.
-                        auto binaryData = std::make_shared<std::vector<char>>(buffer->begin() + headerEnd + 4, buffer->end());
+                        //auto binaryData = std::make_shared<std::vector<char>>(buffer->begin() + headerEnd + 4, buffer->end());
 
                         //Send this to handler to be processed.
                         std::cout << "HTTPS Finish" << std::endl;
                         status(0);
-                        std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
-                        finaldata.first.push_back(self->http_path_);
-                        finaldata.second.push_back(*binaryData);
+                        auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
+                        std::filesystem::path p(self->http_path_);
+                        finaldata->first.push_back(p.filename().string());
+                        //finaldata->second.push_back(*binaryData);
+                        finaldata->second.emplace_back(
+                            buffer->begin() + headerEnd + 4,  
+                            buffer->end()                     
+                        );
                         handle_read(ioc, finaldata, self->parse_, self->save_);
                     }
                     else {
                         std::cerr << "Data does not contain header" << std::endl;
                         status(-7);
-                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                        handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
                 std::cerr << "Error in async_write: " << write_error.message() << std::endl;
                 status(-8);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
     }

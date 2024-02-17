@@ -53,14 +53,14 @@ namespace sgns
                     else {
                         std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;
                         status(-9);
-                        handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                        handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
                 std::cerr << "Connect error: " << error.message() << std::endl;
                 status(-1);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
     }
@@ -85,18 +85,24 @@ namespace sgns
                         boost::asio::async_read_until(*ws, *buffer, "WSEOF", [self, ioc, ws, handle_read, status, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                             if (!read_error)
                             {
-                                auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
+                                //auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
                                 std::cout << "WSS Finish" << std::endl;
                                 status(0);
-                                std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finaldata;
-                                finaldata.first.push_back(self->ws_path_);
-                                finaldata.second.push_back(*outbuf);
+                                auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
+                                std::filesystem::path p(self->ws_path_);
+                                finaldata->first.push_back(p.filename().string());
+                                //finaldata->second.push_back(*outbuf);
+                                size_t dataSize = buffer->size()-5;
+                                finaldata->second.emplace_back(
+                                    boost::asio::buffers_begin(buffer->data()),
+                                    boost::asio::buffers_begin(buffer->data()) + dataSize
+                                );
                                 handle_read(ioc, finaldata, self->parse_, self->save_);
                             }
                             else {
                                 std::cerr << "File request read error: " << read_error.message() << std::endl;
                                 status(-7);
-                                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             }
                             });
                     }
@@ -109,7 +115,7 @@ namespace sgns
             else {
                 std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
                 status(-10);
-                handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
     }

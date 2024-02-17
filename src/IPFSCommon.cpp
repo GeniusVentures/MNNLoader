@@ -143,7 +143,7 @@ namespace sgns
                         {
                             //Handle Error
                             status(-14);
-                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
                         //std::cout << "ContentTest" << decoder.getContent() << std::endl;
@@ -181,17 +181,14 @@ namespace sgns
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
-                            requestedCIDs_.end()->finalcontents.first.push_back(filename);
-                            requestedCIDs_.end()->finalcontents.second.push_back(bindata);
+                            requestedCIDs_.end()->finalcontents->first.push_back(filename);
+                            requestedCIDs_.end()->finalcontents->second.push_back(bindata);
                             //bool allset = CheckIfAllSet(cid);
                             if (requestedCIDs_.end()->outstandingRequests_ <= 0)
                             {
                                 requestedCIDs_.end()->groupLinkedCIDs();
                                 handle_read(ioc, requestedCIDs_.end()->finalcontents, parse, save);
                             }
-                            //std::cout << "IPFS Finish" << std::endl;
-                            //status(0);
-                            //handle_read(ioc, bindata, parse, save);
                         }
                         return true;
                     }
@@ -248,7 +245,7 @@ namespace sgns
                         {
                             //Handle Error
                             status(-15);
-                            handle_read(ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>>(), false, false);
+                            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
@@ -271,42 +268,23 @@ namespace sgns
                         //If there are no links, this block is complete and we can see if we have all blocks for writing
                         if (decoder.getLinksCount() <= 0)
                         {
-                            //size_t numBytes = decoder.getContent().size();
-                            //std::cout << "Bytes-------------" << directory << std::endl;
-                            //std::cout << "Total " << decoder.getContent().size() << std::endl;
-                            //size_t numBytes = 6;
-                            //std::vector<char> test;
-                            //for (size_t i = 3; i < numBytes && i < decoder.getContent().size(); ++i) {
-                            //    std::cout << static_cast<int>(decoder.getContent()[i]) << " ";
-                            //    test.push_back(decoder.getContent()[i]);
-                            //}
-                            //size_t endBytes = 4;
-                            //for (size_t i = decoder.getContent().size(); decoder.getContent().size()-i < endBytes && i > 0; --i) {
-                            //    std::cout << static_cast<int>(decoder.getContent()[i]) << " ";
-                            //}
-                            //std::vector<uint8_t> contentBytes = stringToBytes(decoder.getContent());
-                            //std::string base64Data = base64Encode(contentBytes);
-                            //std::cout << base64Data << std::endl;
-                            //std::cout << std::endl;
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
                             //Set Content for linked CID, or otherwise push data to final contents if it has none
                             bool setsubdata = setContentForLinkedCID(cid, scid, bindata);
                             if (!setsubdata)
                             {
-                                requestedCIDs_[mainindex].finalcontents.first.push_back(directory);
-                                requestedCIDs_[mainindex].finalcontents.second.push_back(bindata);
+                                requestedCIDs_[mainindex].finalcontents->first.push_back(directory);
+                                requestedCIDs_[mainindex].finalcontents->second.push_back(bindata);
                             }
                             //bool allset = CheckIfAllSet(cid);
                             if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
                                 requestedCIDs_[mainindex].groupLinkedCIDs();
                                 //requestedCIDs_[mainindex].writeFinalContentsToDirectories();
+                                std::cout << "IPFS Finish" << std::endl;
                                 status(0);
                                 handle_read(ioc, requestedCIDs_[mainindex].finalcontents, parse, save);
-                                //std::cout << "IPFS Finish" << std::endl;
-                                //status(0);
-                                //handle_read(ioc, finaldata, parse, save);
                             }
                         }
 
@@ -375,6 +353,7 @@ namespace sgns
 
         // Add the CIDInfo to the list
         requestedCIDs_.push_back(std::move(cidInfo));
+
         return requestedCIDs_.size() - 1;
     }
 
@@ -412,10 +391,8 @@ namespace sgns
 
     void IpfsDHT::Start()
     {
-        std::cout << "DHT Start" << std::endl;
         auto&& bootstrapNodes = GetBootstrapNodes();
         for (auto& bootstrap_node : bootstrapNodes) {
-            std::cout << "node" << std::endl;
             kademlia_->addPeer(bootstrap_node, true);
         }
 

@@ -34,7 +34,8 @@ namespace sgns
 		libp2p::multi::ContentIdentifier mainCID;
 		std::vector<libp2p::multi::ContentIdentifier> mainCIDs;
 		std::vector<std::string> directories;
-		std::pair<std::vector<std::string>, std::vector<std::vector<char>>> finalcontents;
+		std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> finalcontents;
+
 		size_t outstandingRequests_;
 		struct LinkedCIDInfo
 		{
@@ -49,7 +50,7 @@ namespace sgns
 		std::vector<LinkedCIDInfo> linkedCIDs;
 
 		CIDInfo(const libp2p::multi::ContentIdentifier& cid)
-			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents(), outstandingRequests_() {}
+			: mainCID(cid), mainCIDs(), linkedCIDs(), finalcontents(std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>()), outstandingRequests_() {}
 
 		/**
 		 * Group data for linked CIDs to make a complete file
@@ -75,8 +76,8 @@ namespace sgns
 
 			// Populate finalcontents
 			for (const auto& entry : groupedData) {
-				finalcontents.first.push_back(entry.second.first);
-				finalcontents.second.push_back(entry.second.second);
+				finalcontents->first.push_back(entry.second.first);
+				finalcontents->second.push_back(entry.second.second);
 			}
 		}
 
@@ -86,9 +87,9 @@ namespace sgns
 		void writeFinalContentsToDirectories() {
 			auto basedir = boost::lexical_cast<std::string>((boost::uuids::random_generator())()) + "/";
 			//Iterate through finalcontents
-			for (size_t i = 0; i < finalcontents.first.size(); ++i) {
-				const std::string& directoryWithFile = basedir + finalcontents.first[i];
-				const std::vector<char>& content = finalcontents.second[i];
+			for (size_t i = 0; i < finalcontents->first.size(); ++i) {
+				const std::string& directoryWithFile = basedir + finalcontents->first[i];
+				const std::vector<char>& content = finalcontents->second[i];
 
 				//Extract the directory path from the full path including the filename
 				std::filesystem::path filePath(directoryWithFile);
@@ -209,7 +210,7 @@ namespace sgns
 		 * @param parse - Whether to parse file upon completion (for MNN)
 		 * @param save - Whether to save the file to local disk upon completion
 		 */
-		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::pair<std::vector<std::string>, std::vector<std::vector<char>>> buffers, bool parse, bool save)>;
+		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
 		/**
 		 * Status callback returns an error code as an async load proceeds
 		 * @param ioc - asio io context so we can stop this if no outstanding async tasks remain

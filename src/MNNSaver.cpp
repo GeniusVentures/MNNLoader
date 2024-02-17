@@ -48,9 +48,9 @@ namespace sgns
 
     void MNNSaver::SaveASync(std::shared_ptr<boost::asio::io_context> ioc, 
         std::function<void(std::shared_ptr<boost::asio::io_context> ioc)> handle_write,
-        std::string filename, std::pair<std::vector<std::string>, std::vector<std::vector<char>>> data, std::string suffix)
+        std::string filename, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> data, std::string suffix)
     {
-        if (data.second.data() == nullptr)
+        if (data->second.data() == nullptr)
         {
             throw range_error("Can not save with null data");
         }
@@ -61,12 +61,11 @@ namespace sgns
         
 
         //size_t remainingWrites = data.first.size();
-        auto remainingWrites = std::make_shared<size_t>(data.first.size());
-        std::cout << "Remaining Writes Origin:" << *remainingWrites << std::endl;
-
-        for (size_t i = 0; i < data.first.size(); ++i) {
+        auto remainingWrites = std::make_shared<size_t>(data->first.size());
+        for (size_t i = 0; i < data->first.size(); ++i) {
             //Create Directories for files
-            const std::string& directoryWithFile = filename + data.first[i];
+            const std::string& directoryWithFile = filename + data->first[i];
+            std::cout << "dirwithfile: " << directoryWithFile << std::endl;
             std::filesystem::path filePath(directoryWithFile);
             std::filesystem::path directory = filePath.parent_path();
             std::filesystem::create_directories(directory);
@@ -74,8 +73,8 @@ namespace sgns
             //Create Steam for async writes
             std::ofstream file(directoryWithFile, std::ios::binary);
             auto fileDevice = std::make_shared<FILEDevice>(ioc, directoryWithFile, 1);
-            std::cout << "Size: " << data.second[i].size() << std::endl;
-            async_write(fileDevice->getFile(), boost::asio::buffer(data.second[i].data(), data.second[i].size()), boost::asio::transfer_exactly(data.second[i].size()), [fileDevice, ioc, handle_write, data, remainingWrites](const boost::system::error_code& error, std::size_t bytes_transferred)
+
+            async_write(fileDevice->getFile(), boost::asio::buffer(data->second[i].data(), data->second[i].size()), boost::asio::transfer_exactly(data->second[i].size()), [fileDevice, ioc, handle_write, data, remainingWrites](const boost::system::error_code& error, std::size_t bytes_transferred)
                 {
                     std::cout << "wrote" << std::endl;
                     (*remainingWrites)--;
