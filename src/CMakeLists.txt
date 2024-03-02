@@ -6,6 +6,8 @@ add_library(AsyncIOManager STATIC
     ${FILELOADER_SRCS}
     )
 
+add_proto_library(ipfs-unixfs proto/unixfs.proto)
+
 target_link_libraries(AsyncIOManager PRIVATE
 	${Boost_LIBRARIES}
 	OpenSSL::SSL 
