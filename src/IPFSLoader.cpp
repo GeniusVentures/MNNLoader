@@ -110,10 +110,14 @@ namespace sgns
         //auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
 
         ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
-
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-1.hostnodes.pinata.cloud/ipfs/QmWaik1eJcGHq1ybTWe7sezRfqKNcDRNkeBaLnGwQJz1Cj").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-2.hostnodes.pinata.cloud/ipfs/QmNfpLrQQZr5Ns9FAJKpyzgnDL2GgC6xBug1yUZozKFgu4").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-3.hostnodes.pinata.cloud/ipfs/QmPo1ygpngghu5it8u4Mr3ym6SEU2Wp2wA66Z91Y1S1g29").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/nyc1-1.hostnodes.pinata.cloud/ipfs/QmRjLSisUCHVpFa5ELVvX3qVPfdxajxWJEHs9kN3EcxAW6").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/nyc1-2.hostnodes.pinata.cloud/ipfs/QmPySsdmbczdZYBpbi2oq2WMJ8ErbfxtkG8Mo192UHkfGP").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/nyc1-3.hostnodes.pinata.cloud/ipfs/QmSarArpxemsPESa6FNkmuu9iSE1QWqPX2R3Aw6f5jq4D5").value());
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
-
         status(13);
         ioc->post([=] {
             status(14);

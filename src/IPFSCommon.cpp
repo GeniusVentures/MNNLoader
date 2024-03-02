@@ -120,7 +120,7 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
-        //std::cout << "request main block" << std::endl;
+        std::cout << "request main block" << filename << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), cid,
@@ -155,21 +155,23 @@ namespace sgns
                             auto scid = libp2p::multi::ContentIdentifierCodec::fromString(libp2p::multi::ContentIdentifierCodec::toString(subcid.value()).value()).value();
                             //If we have a link name, this is a file CID, and not a linked CID for that file
                             //If we don't have a link name, this is a linked CID. This shouldn't happen here in the main request though.
+                            std::string passfilename = filename;
                             if (!decoder.getLinkName(i).empty())
                             {
                                 cidInfo.directories.push_back(decoder.getLinkName(i));
                                 cidInfo.mainCIDs.push_back(subcid.value());
+                                passfilename = decoder.getLinkName(i);
                             }
                             else
                             {
-                                CIDInfo::LinkedCIDInfo linkedCID(subcid.value(), maincid.value(), std::string());
+                                CIDInfo::LinkedCIDInfo linkedCID(subcid.value(), maincid.value(), passfilename);
                                 std::cout << "add Linked CID: nothing here" << std::endl;
-                                cidInfo.linkedCIDs.push_back(linkedCID);
+                                cidInfo.linkedCIDs.push_back(linkedCID); 
                             }
                             //Increment Outstanding
                             cidInfo.outstandingRequests_++;
                             //Request Additional CID
-                            RequestBlockSub(ioc, cid, cid, scid, decoder.getLinkName(i), 0, parse, save, handle_read, status);
+                            RequestBlockSub(ioc, cid, cid, scid, passfilename, 0, parse, save, handle_read, status);
                         }
 
                         //Add to list in IPFSDevice
@@ -198,6 +200,11 @@ namespace sgns
                     }
                 });
         }
+        else {
+            status(-17);
+            handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
+            return false;
+        }
         return false;
     }
 
@@ -213,7 +220,6 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
-        //std::cout << "Request SubBlock" << std::endl;
         //std::cout << "directory: " << directory << std::endl;
         if (addressoffset < peerAddresses_->size())
         {
