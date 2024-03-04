@@ -15,6 +15,7 @@
 #include "ipfs_lite/ipld/impl/ipld_node_decoder_pb.hpp"
 #include "libp2p/protocol/kademlia/kademlia.hpp"
 #include "libp2p/injector/kademlia_injector.hpp"
+#include <proto/unixfs.pb.h>
 //TEMP REmove
 #include <fstream>
 #include <boost/uuid/uuid.hpp>

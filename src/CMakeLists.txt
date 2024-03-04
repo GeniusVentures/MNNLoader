@@ -38,6 +38,7 @@ target_link_libraries(AsyncIOManager PRIVATE
 	ipfs-bitswap-proto
 	ipfs-bitswap-cpp 
 	spdlog::spdlog
+	ipfs-unixfs
 	)
 include_directories(../include )
 

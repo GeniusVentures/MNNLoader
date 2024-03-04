@@ -182,7 +182,10 @@ namespace sgns
                         {
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
                             //auto bindata = std::make_shared<std::vector<char>>(decoder.getContent().begin() + 4, decoder.getContent().end() - 2);
-                            auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
+                            ::unixfs_pb::Data unixfs;
+                            //unixfs.set_data(decoder.getContent());
+                            unixfs.ParseFromString(decoder.getContent());
+                            auto bindata = std::vector<char>(unixfs.data().begin(), unixfs.data().end());
                             requestedCIDs_.end()->finalcontents->first.push_back(filename);
                             requestedCIDs_.end()->finalcontents->second.push_back(bindata);
                             //bool allset = CheckIfAllSet(cid);
@@ -244,7 +247,8 @@ namespace sgns
 
                         //Create a PB Decoder to handle the data
                         auto decoder = ipfs_lite::ipld::IPLDNodeDecoderPB();
-
+                        
+                        
                         //Attempt to decode
                         auto diddecode = decoder.decode(byteSpan);
                         if (diddecode.has_error())
@@ -275,7 +279,9 @@ namespace sgns
                         if (decoder.getLinksCount() <= 0)
                         {
                             //Get data, ignoring bytes at beginning or end TODO: need a better way to do this, some contexts the offset is not 6/4.
-                            auto bindata = std::vector<char>(decoder.getContent().begin() + 6, decoder.getContent().end() - 4);
+                            ::unixfs_pb::Data unixfs;
+                            unixfs.ParseFromString(decoder.getContent());
+                            auto bindata = std::vector<char>(unixfs.data().begin(), unixfs.data().end());
                             //Set Content for linked CID, or otherwise push data to final contents if it has none
                             bool setsubdata = setContentForLinkedCID(cid, scid, bindata);
                             if (!setsubdata)
