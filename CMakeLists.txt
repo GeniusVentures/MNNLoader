@@ -17,6 +17,18 @@ if (NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 	set(CMAKE_CXX_EXTENSIONS OFF)
 endif ()
 
+find_package(Protobuf CONFIG REQUIRED)
+if(NOT TARGET protobuf::protoc)
+  add_executable(protobuf::protoc IMPORTED)
+endif()
+
+if(EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+  set_target_properties(protobuf::protoc PROPERTIES IMPORTED_LOCATION ${Protobuf_PROTOC_EXECUTABLE})
+endif()
+
+include(cmake/functions.cmake)
+
+
 find_package(GTest CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
@@ -64,6 +76,7 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "${CMAKE_INSTALL_IN
 
 #Install LIB
 install(TARGETS AsyncIOManager
+				ipfs-unixfs
         EXPORT AsyncIOManagerTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 		
 #Install Targets

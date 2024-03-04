@@ -44,7 +44,7 @@ endif()
 
 # protoc definition #####################################################################################
 get_target_property(PROTOC_LOCATION protobuf::protoc IMPORTED_LOCATION)
-print("PROTOC_LOCATION: ${PROTOC_LOCATION}")
+message(STATUS "PROTOC_LOCATION: ${PROTOC_LOCATION}")
 if ( Protobuf_FOUND )
     message( STATUS "Protobuf version : ${Protobuf_VERSION}" )
     message( STATUS "Protobuf compiler : ${Protobuf_PROTOC_EXECUTABLE}")
