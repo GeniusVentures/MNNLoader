@@ -108,8 +108,8 @@ namespace sgns
         }
         auto ipfsDevice = ipfsDeviceResult.value();
         //auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
-        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/104.131.26.28/tcp/4001/p2p/12D3KooWRKzxEmGJNf9MVtBdAqmFTyDKbGggH3VNHUjiG3Eipfut").value());
-        ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/3.92.45.153/tcp/4001/p2p/12D3KooWP6R6XVCBK7t76o8VDwZdxpzAqVeDtHYQNmntP2y8NHvK").value());
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-1.hostnodes.pinata.cloud/ipfs/QmWaik1eJcGHq1ybTWe7sezRfqKNcDRNkeBaLnGwQJz1Cj").value());
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-2.hostnodes.pinata.cloud/ipfs/QmNfpLrQQZr5Ns9FAJKpyzgnDL2GgC6xBug1yUZozKFgu4").value());
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-3.hostnodes.pinata.cloud/ipfs/QmPo1ygpngghu5it8u4Mr3ym6SEU2Wp2wA66Z91Y1S1g29").value());
@@ -121,8 +121,8 @@ namespace sgns
         status(13);
         ioc->post([=] {
             status(14);
-            ipfsDevice->RequestBlockMain(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
-            //ipfsDevice->StartFindingPeers(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
+            //ipfsDevice->RequestBlockMain(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
+            ipfsDevice->StartFindingPeers(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
             });
         
         return result;

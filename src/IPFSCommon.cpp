@@ -106,30 +106,14 @@ namespace sgns
             {
                 std::cout << "Empty providers list received" << std::endl;
                 status(-18);
-                //boost::asio::deadline_timer dhtretry(*ioc.get());
-                //boost::posix_time::time_duration timeout(boost::posix_time::milliseconds(10000));
-                //dhtretry.expires_from_now(timeout);
-                ////dhtretry.async_wait(std::bind(&IPFSDevice::StartFindingPeers, this));
-                //dhtretry.async_wait([=](const boost::system::error_code& ec) {
-                //if (!ec) {
-                //    // Timer expired, call StartFindingPeers again with captured parameters
-                //    this->StartFindingPeers(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
-                //}
-                //else {
-                //    // Handle error
-                //    std::cout << "errr?" << ec.message() << std::endl;
-                //}
-                //});
                 StartFindingPeersWithRetry(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
-                //return StartFindingPeers(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
-                //dht_->FindProviders(cid)
                 return false;
-                //std::exit(EXIT_FAILURE);
             }
             });
             //});
         return false;
     }
+
     void IPFSDevice::StartFindingPeersWithRetry(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
@@ -154,6 +138,7 @@ namespace sgns
             }
             });
     }
+
     bool IPFSDevice::RequestBlockMain(
         std::shared_ptr<boost::asio::io_context> ioc,
         const sgns::ipfs_bitswap::CID& cid,
@@ -230,13 +215,16 @@ namespace sgns
                             //unixfs.set_data(decoder.getContent());
                             unixfs.ParseFromString(decoder.getContent());
                             auto bindata = std::vector<char>(unixfs.data().begin(), unixfs.data().end());
-                            requestedCIDs_.end()->finalcontents->first.push_back(filename);
-                            requestedCIDs_.end()->finalcontents->second.push_back(bindata);
+                            std::cout << "REQCIDS: " << requestedCIDs_.size() << std::endl;
+                            std::string passfilename = filename;
+                            size_t mainindex = findRequestedCIDIndex(cid);
+                            requestedCIDs_[mainindex].finalcontents->first.push_back(passfilename);
+                            requestedCIDs_[mainindex].finalcontents->second.push_back(bindata);
                             //bool allset = CheckIfAllSet(cid);
-                            if (requestedCIDs_.end()->outstandingRequests_ <= 0)
+                            if (requestedCIDs_[mainindex].outstandingRequests_ <= 0)
                             {
-                                requestedCIDs_.end()->groupLinkedCIDs();
-                                handle_read(ioc, requestedCIDs_.end()->finalcontents, parse, save);
+                                requestedCIDs_[mainindex].groupLinkedCIDs();
+                                handle_read(ioc, requestedCIDs_[mainindex].finalcontents, parse, save);
                             }
                         }
                         return true;
