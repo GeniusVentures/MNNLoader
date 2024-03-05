@@ -42,7 +42,7 @@ void FileManager::InitializeSingletons() {
     sgns::IPFSSaver::InitializeSingleton();
     sgns::MNNSaver::InitializeSingleton();
 }
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, StatusCallback status, std::string savetype)
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, StatusCallback status, FinalCallback finalcall, std::string savetype)
 {
     std::string prefix;
     std::string filePath;
@@ -60,7 +60,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
     //Increment Operations
     IncrementOutstandingOperations();
     //Create a handler
-    auto handle_read = [this, savetype, suffix](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save) {
+    auto handle_read = [this, savetype, suffix, finalcall](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save) {
         std::cout << "Callback!" << std::endl;
         //Parse Data
         if (parse)
@@ -83,6 +83,7 @@ shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool
             // Handle completion
             DecrementOutstandingOperations(ioc);
         }
+        finalcall(buffers);
 
     };
     auto loader = loaderIter->second;

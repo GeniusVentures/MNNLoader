@@ -123,7 +123,10 @@ int main(int argc, char **argv)
         auto data = FileManager::GetInstance().LoadASync(file_names[i], false, true, ioc, [](const int& status)
         {
                 std::cout << "status: " << status << std::endl;
-        },"file");
+            }, [](std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers)
+                {
+                    std::cout << "Final Callback" << std::endl;
+                },"file");
         //FileManager::GetInstance().IncrementOutstandingOperations();
 
         //std::cout << "LoadFile: " << file_names[i] << std::endl;
