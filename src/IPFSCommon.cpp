@@ -31,7 +31,7 @@ namespace sgns
         return instance_;
     }
 
-    IPFSDevice::IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) 
+    IPFSDevice::IPFSDevice(std::shared_ptr<boost::asio::io_context> ioc) : dhtretry_(*ioc)
     {
         //Make Kademlia Injector
         libp2p::protocol::kademlia::Config kademlia_config;
@@ -71,6 +71,8 @@ namespace sgns
     )
     {
         status(16);
+        auto peer_id =
+            libp2p::peer::PeerId::fromHash(cid.content_address).value();
         dht_->FindProviders(cid, [=](libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> res) {
             status(17);
             if (!res) {
@@ -86,9 +88,9 @@ namespace sgns
                 //for (auto& provider : providers) {
                 //    std::cout << provider.id.toBase58() << std::endl;
                 //    auto providerid = provider.id.toBase58();
-                    
+
                     //for (const auto& address : provider.addresses) {
-                        
+
                         // Assuming addAddress function accepts a multiaddress as argument
                         //bool hasPeerId = address.hasProtocol(libp2p::multi::Protocol::Code::P2P);
                         //if (hasPeerId) {
@@ -97,18 +99,60 @@ namespace sgns
                         //}
                     //}
                 //}
-
+                
                 return RequestBlockMain(ioc, cid, filename, 0, parse, save, handle_read, status);
             }
             else
             {
                 std::cout << "Empty providers list received" << std::endl;
                 status(-18);
+                //boost::asio::deadline_timer dhtretry(*ioc.get());
+                //boost::posix_time::time_duration timeout(boost::posix_time::milliseconds(10000));
+                //dhtretry.expires_from_now(timeout);
+                ////dhtretry.async_wait(std::bind(&IPFSDevice::StartFindingPeers, this));
+                //dhtretry.async_wait([=](const boost::system::error_code& ec) {
+                //if (!ec) {
+                //    // Timer expired, call StartFindingPeers again with captured parameters
+                //    this->StartFindingPeers(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
+                //}
+                //else {
+                //    // Handle error
+                //    std::cout << "errr?" << ec.message() << std::endl;
+                //}
+                //});
+                StartFindingPeersWithRetry(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
+                //return StartFindingPeers(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
+                //dht_->FindProviders(cid)
                 return false;
                 //std::exit(EXIT_FAILURE);
             }
             });
+            //});
         return false;
+    }
+    void IPFSDevice::StartFindingPeersWithRetry(
+        std::shared_ptr<boost::asio::io_context> ioc,
+        const sgns::ipfs_bitswap::CID& cid,
+        std::string filename,
+        int addressoffset,
+        bool parse,
+        bool save,
+        CompletionCallback handle_read,
+        StatusCallback status)
+    {
+        boost::asio::deadline_timer dhtretry(*ioc.get());
+        boost::posix_time::time_duration timeout(boost::posix_time::milliseconds(10000));
+        dhtretry_.expires_from_now(timeout);
+        dhtretry_.async_wait([ioc, cid, filename, addressoffset, parse, save, handle_read, status, this](const boost::system::error_code& ec) {
+            if (!ec) {
+                // Timer expired, call StartFindingPeers again with captured parameters
+                this->StartFindingPeers(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
+            }
+            else {
+                // Handle error
+                std::cout << "Error: " << ec.message() << std::endl;
+            }
+            });
     }
     bool IPFSDevice::RequestBlockMain(
         std::shared_ptr<boost::asio::io_context> ioc,
@@ -407,7 +451,7 @@ namespace sgns
         for (auto& bootstrap_node : bootstrapNodes) {
             kademlia_->addPeer(bootstrap_node, true);
         }
-
+        
         kademlia_->start();
     }
 
@@ -430,6 +474,7 @@ namespace sgns
         else
         {
             std::cout << "actually find providers" << std::endl;
+            kademlia_->bootstrap();
             [[maybe_unused]] auto res = kademlia_->findProviders(
                 kadCID.value(), 0, onProvidersFound);
             return true;

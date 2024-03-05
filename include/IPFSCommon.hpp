@@ -260,7 +260,15 @@ namespace sgns
 			CompletionCallback handle_read,
 			StatusCallback status
 		);
-
+		void StartFindingPeersWithRetry(
+			std::shared_ptr<boost::asio::io_context> ioc,
+			const sgns::ipfs_bitswap::CID& cid,
+			std::string filename,
+			int addressoffset,
+			bool parse,
+			bool save,
+			CompletionCallback handle_read,
+			StatusCallback status);
 		/**
 		 * Add the Main CID for a file to bitswap wantlist to get information or file(if small enough)
 		 * @param ioc - Asio io context to use
@@ -353,6 +361,7 @@ namespace sgns
 		std::shared_ptr<sgns::IpfsDHT> dht_;
 		std::shared_ptr<libp2p::Host> host_;
 		std::shared_ptr<sgns::ipfs_bitswap::Bitswap> bitswap_;
+		boost::asio::deadline_timer dhtretry_;
 		//std::shared_ptr<std::vector<libp2p::multi::Multiaddress>> peerAddresses_;
 		std::shared_ptr<std::vector<libp2p::peer::PeerInfo>> peerAddresses_;
 
@@ -385,6 +394,7 @@ namespace sgns
 			//"/dnsaddr/bootstrap.libp2p.io/ipfs/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
 			//"/dnsaddr/bootstrap.libp2p.io/ipfs/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
 			//"/dnsaddr/bootstrap.libp2p.io/ipfs/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+			//"/ip4/64.225.105.42/tcp/4001/p2p/QmPo1ygpngghu5it8u4Mr3ym6SEU2Wp2wA66Z91Y1S1g29",
 			"/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",            // mars.i.ipfs.io
 			"/ip4/104.236.179.241/tcp/4001/ipfs/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM",           // pluto.i.ipfs.io
 			"/ip4/128.199.219.111/tcp/4001/ipfs/QmSoLSafTMBsPKadTEgaXctDQVcqN88CNLHXMkTNwMKPnu",           // saturn.i.ipfs.io

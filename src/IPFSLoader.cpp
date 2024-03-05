@@ -108,7 +108,7 @@ namespace sgns
         }
         auto ipfsDevice = ipfsDeviceResult.value();
         //auto ma = libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/40000").value();
-
+        //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/104.131.26.28/tcp/4001/p2p/12D3KooWRKzxEmGJNf9MVtBdAqmFTyDKbGggH3VNHUjiG3Eipfut").value());
         ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFMdNiBFk5ojGNzWjqSTL1HGLu8rXns5kwqUPTrbFNtEN").value());
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-1.hostnodes.pinata.cloud/ipfs/QmWaik1eJcGHq1ybTWe7sezRfqKNcDRNkeBaLnGwQJz1Cj").value());
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/fra1-2.hostnodes.pinata.cloud/ipfs/QmNfpLrQQZr5Ns9FAJKpyzgnDL2GgC6xBug1yUZozKFgu4").value());
