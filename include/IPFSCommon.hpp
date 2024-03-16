@@ -309,7 +309,7 @@ namespace sgns
 			const sgns::ipfs_bitswap::CID& linkedCID,
 			const std::vector<char>& content);
 
-		bool IPFSDevice::CheckIfAllSet(const sgns::ipfs_bitswap::CID& mainCID);
+		bool CheckIfAllSet(const sgns::ipfs_bitswap::CID& mainCID);
 		/**
 		 * Get a buffer of the combineed data of all linked CIDs to create an entire file.
 		 * @param mainCID - Main CID of file we are getting
