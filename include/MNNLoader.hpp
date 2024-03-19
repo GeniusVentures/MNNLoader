@@ -8,7 +8,7 @@
 #include <string>
 #include "FileLoader.hpp"
 #include "MNNCommon.hpp"
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 
 namespace sgns
 {

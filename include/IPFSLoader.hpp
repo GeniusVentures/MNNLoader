@@ -9,7 +9,7 @@
 #include <string>
 #include "IPFSCommon.hpp"
 #include "FileLoader.hpp"
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 #include "ipfs_lite/ipfs/impl/ipfs_block_service.hpp"
 #include "ipfs_lite/ipfs/impl/in_memory_datastore.hpp"
 

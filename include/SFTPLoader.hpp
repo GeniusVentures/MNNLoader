@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 #include "FileLoader.hpp"
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 
 namespace sgns
 {

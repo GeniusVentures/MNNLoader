@@ -6,7 +6,7 @@
 #define INCLUDE_MNNSAVER_HPP_
 
 #include "FileSaver.hpp"
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 
 namespace sgns
 {

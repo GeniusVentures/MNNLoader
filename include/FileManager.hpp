@@ -8,7 +8,7 @@
 #include <cassert>
 #include <future>
 #include <memory>
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 #include "FileLoader.hpp"
 #include "FileParser.hpp"
 #include "FileSaver.hpp"

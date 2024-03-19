@@ -4,7 +4,7 @@
 #define IPFSSAVER_HPP
 
 #include "FileSaver.hpp"
-#include "Singleton.hpp"
+#include "ASIOSingleton.hpp"
 #include "ipfs_lite/rocksdb/rocksdb.hpp"
 #include "ipfs_lite/rocksdb/rocksdb_error.hpp"
 #include "ipfs_lite/ipfs/impl/datastore_rocksdb.hpp"
