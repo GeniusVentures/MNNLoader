@@ -7,7 +7,7 @@ namespace sgns
     std::shared_ptr<IPFSDevice> IPFSDevice::instance_;
     std::mutex IPFSDevice::mutex_;
 
-    outcome::result<std::shared_ptr<IPFSDevice>> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) 
+    IPFS::outcome::result<std::shared_ptr<IPFSDevice>> IPFSDevice::getInstance(std::shared_ptr<boost::asio::io_context> ioc) 
     {
         //Create IPFSDevice if needed
         std::lock_guard<std::mutex> lock(mutex_);

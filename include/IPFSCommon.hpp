@@ -225,7 +225,7 @@ namespace sgns
 		 * Create an IPFS Singlelton Device and return instance
 		 * @param ioc - Asio io context to use
 		 */
-		static outcome::result<std::shared_ptr<IPFSDevice>> getInstance(std::shared_ptr<boost::asio::io_context> ioc);
+		static IPFS::outcome::result<std::shared_ptr<IPFSDevice>> getInstance(std::shared_ptr<boost::asio::io_context> ioc);
 		/**
 		 * Get bitswap from device
 		 */
