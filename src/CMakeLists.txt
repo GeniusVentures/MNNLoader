@@ -35,6 +35,7 @@ target_link_libraries(AsyncIOManager PRIVATE
 	ipfs-lite-cpp::ipfs_blockservice
 	ipfs-lite-cpp::ipfs_datastore_in_memory
 	ipfs-lite-cpp::ipfs_datastore_rocksdb
+	ipfs-lite-cpp::ipfs_kad_dht
 	ipfs-bitswap-proto
 	ipfs-bitswap-cpp 
 	spdlog::spdlog

@@ -13,7 +13,7 @@
 #include "libp2p/multi/content_identifier_codec.hpp"
 #include "libp2p/protocol/ping/ping.hpp"
 #include "ipfs_lite/ipld/impl/ipld_node_decoder_pb.hpp"
-#include "libp2p/protocol/kademlia/kademlia.hpp"
+#include "ipfs_lite/dht/kademlia_dht.hpp"
 #include "libp2p/injector/kademlia_injector.hpp"
 #include <proto/unixfs.pb.h>
 //TEMP REmove
@@ -168,34 +168,6 @@ namespace sgns
 	 */
 	struct Peer {
 		libp2p::peer::PeerInfo info;
-	};
-
-
-	/**
-	 * This class creates an DHT for finding peers with CIDs we want
-	 * from IPFS node(s).
-	 */
-	class IpfsDHT
-	{
-	public:
-		IpfsDHT(
-			std::shared_ptr<libp2p::protocol::kademlia::Kademlia> kademlia,
-			std::vector<std::string> bootstrapAddresses);
-
-		void Start();
-
-		bool FindProviders(
-			const libp2p::multi::ContentIdentifier& cid,
-			std::function<void(libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> onProvidersFound)> onProvidersFound);
-
-		void FindPeer(
-			const libp2p::peer::PeerId& peerId,
-			std::function<void(libp2p::outcome::result<libp2p::peer::PeerInfo>)> onPeerFound);
-	private:
-		std::vector<libp2p::peer::PeerInfo> GetBootstrapNodes() const;
-
-		std::shared_ptr<libp2p::protocol::kademlia::Kademlia> kademlia_;
-		std::vector<std::string> bootstrapAddresses_;
 	};
 
 	/**
@@ -358,7 +330,7 @@ namespace sgns
 		static std::shared_ptr<IPFSDevice> instance_;
 		static std::mutex mutex_;
 
-		std::shared_ptr<sgns::IpfsDHT> dht_;
+		std::shared_ptr<sgns::ipfs_lite::ipfs::dht::IpfsDHT> dht_;
 		std::shared_ptr<libp2p::Host> host_;
 		std::shared_ptr<sgns::ipfs_bitswap::Bitswap> bitswap_;
 		boost::asio::deadline_timer dhtretry_;
