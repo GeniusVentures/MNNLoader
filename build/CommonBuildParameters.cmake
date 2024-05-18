@@ -198,12 +198,6 @@ set(CBOR_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/ipfs-lite-cpp/include/deps/tinycb
 find_package(ipfs-lite-cpp CONFIG REQUIRED)
 include_directories(${ipfs-lite-cpp_INCLUDE_DIR} ${CBOR_INCLUDE_DIR})
 
-# --------------------------------------------------------
-# Set config of ipfs-pubsub
-set(ipfs-pubsub_INCLUDE_DIR "${_THIRDPARTY_BUILD_DIR}/ipfs-pubsub/include")
-set(ipfs-pubsub_DIR "${_THIRDPARTY_BUILD_DIR}/ipfs-pubsub/lib/cmake/ipfs-pubsub")
-find_package(ipfs-pubsub CONFIG REQUIRED)
-include_directories(${ipfs-pubsub_INCLUDE_DIR})
 
 # --------------------------------------------------------
 # Set config of ipfs-bitswap-cpp
