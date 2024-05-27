@@ -14,8 +14,6 @@ target_link_libraries(AsyncIOManager PRIVATE
 	OpenSSL::Crypto
 	libssh2::libssh2_static
 	${MNN_LIBS}
-    graphsync
-    ipfs_merkledag_service
     p2p::asio_scheduler
 	p2p::p2p_logger
 	p2p::p2p_default_network
