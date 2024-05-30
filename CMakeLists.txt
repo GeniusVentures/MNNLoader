@@ -49,8 +49,8 @@ include_directories(${ipfs-lite-cpp_INCLUDE_DIR} ${CBOR_INCLUDE_DIR})
 find_package(ipfs-bitswap-cpp CONFIG REQUIRED)
 include_directories(${ipfs-bitswap-cpp_INCLUDE_DIR})
 include_directories(${MNN_INCLUDE_DIR})
-find_package(Libssh2 CONFIG REQUIRED)
-include_directories(${libssh2_INCLUDE_DIR})
+#find_package(Libssh2 CONFIG REQUIRED)
+#include_directories(${libssh2_INCLUDE_DIR})
 
 # ---------------------------
 # Set version

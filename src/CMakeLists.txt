@@ -3,7 +3,20 @@ file(GLOB FILELOADER_HEADER "../include/*.h*")
 file(GLOB FILELOADER_SRCS "*.cpp")
 FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
 add_library(AsyncIOManager STATIC
-    ${FILELOADER_SRCS}
+    #${FILELOADER_SRCS}
+	FILECommon.cpp
+	FileManager.cpp
+	HTTPCommon.cpp
+	HTTPLoader.cpp
+	IPFSCommon.cpp
+	IPFSLoader.cpp
+	IPFSSaver.cpp
+	MNNLoader.cpp
+	MNNParser.cpp
+	MNNSaver.cpp
+	URLStringUtil.cpp
+	WSCommon.cpp
+	WSLoader.cpp
     )
 
 add_proto_library(ipfs-unixfs proto/unixfs.proto)
@@ -12,7 +25,7 @@ target_link_libraries(AsyncIOManager PRIVATE
 	${Boost_LIBRARIES}
 	OpenSSL::SSL 
 	OpenSSL::Crypto
-	libssh2::libssh2_static
+	#libssh2::libssh2
 	${MNN_LIBS}
     p2p::asio_scheduler
 	p2p::p2p_logger
