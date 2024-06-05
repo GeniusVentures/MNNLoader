@@ -12,7 +12,7 @@ add_library(AsyncIOManager STATIC
 	IPFSLoader.cpp
 	IPFSSaver.cpp
 	MNNLoader.cpp
-	MNNParser.cpp
+	#MNNParser.cpp
 	MNNSaver.cpp
 	URLStringUtil.cpp
 	WSCommon.cpp

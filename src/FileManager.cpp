@@ -34,7 +34,7 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 
 void FileManager::InitializeSingletons() {
     sgns::MNNLoader::InitializeSingleton();
-    sgns::MNNParser::InitializeSingleton();
+    //sgns::MNNParser::InitializeSingleton();
     //sgns::SFTPLoader::InitializeSingleton();
     sgns::HTTPLoader::InitializeSingleton();
     //sgns::WSLoader::InitializeSingleton();
