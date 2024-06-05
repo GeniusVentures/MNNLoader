@@ -26,7 +26,7 @@ target_link_libraries(AsyncIOManager PRIVATE
 	OpenSSL::SSL 
 	OpenSSL::Crypto
 	#libssh2::libssh2
-	${MNN_LIBS}
+	#${MNN_LIBS}
     p2p::asio_scheduler
 	p2p::p2p_logger
 	p2p::p2p_default_network
