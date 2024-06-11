@@ -9,8 +9,8 @@ set(
 add_definitions(-D_WIN32_WINNT=0x0601)
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
+project(AsyncIOManager LANGUAGES C CXX)
 include(GNUInstallDirs)
-project(AsyncIOManager C CXX)
 
 if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
     set(CMAKE_CXX_STANDARD 17)
