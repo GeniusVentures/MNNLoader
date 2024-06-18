@@ -9,14 +9,12 @@ set(
 add_definitions(-D_WIN32_WINNT=0x0601)
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
-project(AsyncIOManager LANGUAGES C CXX)
+project(AsyncIOManager LANGUAGES CXX)
 include(GNUInstallDirs)
 
-if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Protobuf CONFIG REQUIRED)
 
@@ -102,6 +100,7 @@ write_basic_package_version_file(
     VERSION "${VERSION_STRING}.${SUBVERSION_STRING}"
     COMPATIBILITY AnyNewerVersion
 )
+
 # install the configuration file
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/AsyncIOManagerConfig.cmake
