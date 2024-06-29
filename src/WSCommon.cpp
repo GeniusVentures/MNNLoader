@@ -40,7 +40,7 @@ namespace sgns
         //Create Socket
         auto ws = std::make_shared<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(*ioc, *ctx);
         //Connect to server
-        status(1);
+        status(CustomResult(outcome::success("Starting WS Connection")));
         boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [self = shared_from_this(), ioc, ws, handle_read, status](const boost::system::error_code& error, const auto&) {
             if (!error) {
                 // Perform the SSL asynchronous handshake
@@ -71,23 +71,23 @@ namespace sgns
         StatusCallback status)
     {
         // Perform the WebSocket asynchronous handshake
-        status(10);
+        status(CustomResult(outcome::success("Starting WS Handshake")));
         ws->async_handshake(ws_host_, ws_path_, [self = shared_from_this(), ioc, ws, handle_read, status](const boost::system::error_code& handshakeError) {
             if (!handshakeError) {
                 //Request the file
-                status(11);
+                status(CustomResult(outcome::success("Getting WS File")));
                 std::string request = "GET_FILE";
                 ws->async_write(boost::asio::buffer(request), [self, ioc, ws, handle_read, status](const boost::system::error_code& write_error, std::size_t bytes_transferred) {
                     if (!write_error) {
                         //Read until WSEOF
-                        status(7);
+                        status(CustomResult(outcome::success("Reading WS File")));
                         auto buffer = std::make_shared<boost::asio::streambuf>();
                         boost::asio::async_read_until(*ws, *buffer, "WSEOF", [self, ioc, ws, handle_read, status, buffer](const boost::system::error_code& read_error, std::size_t bytes_transferred) {
                             if (!read_error)
                             {
                                 //auto outbuf = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()) - 5);
-                                std::cout << "WSS Finish" << std::endl;
-                                status(0);
+                                //std::cout << "WSS Finish" << std::endl;
+                                status(CustomResult(outcome::success("Finished Reading WS File")));
                                 auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
                                 std::filesystem::path p(self->ws_path_);
                                 finaldata->first.push_back(p.filename().string());
@@ -101,20 +101,20 @@ namespace sgns
                             }
                             else {
                                 std::cerr << "File request read error: " << read_error.message() << std::endl;
-                                status(-7);
+                                status(CustomResult(outcome::failure(ErrorCode::ERR_READFAILED)));
                                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             }
                             });
                     }
                     else {
                         std::cerr << "File request write error: " << write_error.message() << std::endl;
-                        status(11);
+                        status(CustomResult(outcome::failure(ErrorCode::ERR_WEBSOCKGET)));
                     }
                     });
             }
             else {
                 std::cerr << "WebSocket handshake error: " << handshakeError.message() << std::endl;
-                status(-10);
+                status(CustomResult(outcome::failure(ErrorCode::ERR_WEBSOCKHANDSHAKE)));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });

@@ -9,6 +9,9 @@
 #include <string>
 #include "FileLoader.hpp"
 #include "ASIOSingleton.hpp"
+#include <boost/outcome.hpp>
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace sgns
 {
@@ -21,6 +24,7 @@ namespace sgns
         SINGLETON_PTR(SFTPLoader);
     public:
         static void InitializeSingleton();
+
         /**
          * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
          * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
@@ -29,14 +33,12 @@ namespace sgns
          * @param save - Whether to save the file to local disk upon completion
          */
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+        using CustomResult = outcome::result<std::string, ErrorCode>;
         /**
          * Status callback returns an error code as an async load proceeds
-         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
-         * @param buffer - Contains data loaded
-         * @param parse - Whether to parse file upon completion (for MNN)
-         * @param save - Whether to save the file to local disk upon completion
+         * @param int - Status code
          */
-        using StatusCallback = std::function<void(const int&)>;
+        using StatusCallback = std::function<void(const CustomResult&)>;
         /**ok
          * Load Data on the MNN file
          * @param filename - MNN file part

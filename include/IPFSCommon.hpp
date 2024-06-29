@@ -1,4 +1,8 @@
-//IPFSCommon.hpp
+/**
+ * Header file for the IPFSCommon
+ */
+#ifndef IPFSCOMMON_HPP
+#define IPFSCOMMON_HPP
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -22,8 +26,10 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#ifndef IPFSCOMMON_HPP
-#define IPFSCOMMON_HPP
+#include <boost/outcome.hpp>
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+
 namespace sgns
 {
 	struct CIDInfo
@@ -176,6 +182,27 @@ namespace sgns
 	 */
 	class IPFSDevice {
 	public:
+		enum class ErrorCode {
+			ERR_CONN,
+			ERR_HANDSHAKE,
+			ERR_AUTH,
+			ERR_SFTPHANDLER,
+			ERR_SFTPOPEN,
+			ERR_SFTPFILESIZE,
+			ERR_READFAILED,
+			ERR_HTTPGETFAIL,
+			ERR_SSLHANDSHAKE,
+			ERR_WEBSOCKHANDSHAKE,
+			ERR_WEBSOCKGET,
+			ERR_LOCALOPEN,
+			ERR_STARTIPFS,
+			ERR_IPFSBLOCKREAD,
+			ERR_IPFSSUBBLOCK,
+			ERR_IPFSLISTEN,
+			ERR_NOADDRBITSWAP,
+			ERR_NOPROVBITSWAP,
+			ERR_BADDHTRES
+		};
 		/**
 		 * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
 		 * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
@@ -184,14 +211,12 @@ namespace sgns
 		 * @param save - Whether to save the file to local disk upon completion
 		 */
 		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+		using CustomResult = outcome::result<std::string, ErrorCode>;
 		/**
 		 * Status callback returns an error code as an async load proceeds
-		 * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
-		 * @param buffer - Contains data loaded
-		 * @param parse - Whether to parse file upon completion (for MNN)
-		 * @param save - Whether to save the file to local disk upon completion
+		 * @param int - Status code
 		 */
-		using StatusCallback = std::function<void(const int&)>;
+		using StatusCallback = std::function<void(const CustomResult&)>;
 
 		/**
 		 * Create an IPFS Singlelton Device and return instance

@@ -14,8 +14,9 @@
 #include "FileSaver.hpp"
 #include "boost/asio.hpp"
 #include "boost/bind.hpp"
+#include <boost/outcome.hpp>
 
-
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 /// \brief FileManager class handles all the registration of the file loaders, parsers and savers and proxies the basic
 ///         functionality to the registered handlers
 class FileManager
@@ -41,11 +42,12 @@ class FileManager
          * @param save - Whether to save the file to local disk upon completion
          */
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+        using CustomResult = outcome::result<std::string, ErrorCode>;
         /**
          * Status callback returns an error code as an async load proceeds
          * @param int - Status code
          */
-        using StatusCallback = std::function<void(const int&)>;
+        using StatusCallback = std::function<void(const CustomResult&)>;
         /**
          * Final callback returns data to application
          * @param buffers - Contains path/data loaded

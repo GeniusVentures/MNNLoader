@@ -70,14 +70,14 @@ namespace sgns
         StatusCallback status
     )
     {
-        status(16);
+        status(CustomResult(outcome::success("Starting Bitswap DHT")));
         auto peer_id =
             libp2p::peer::PeerId::fromHash(cid.content_address).value();
         dht_->FindProviders(cid, [=](libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> res) {
-            status(17);
+            status(CustomResult(outcome::success("Got Provider Results")));
             if (!res) {
                 std::cerr << "Cannot find providers: " << res.error().message() << std::endl;
-                status(-17);
+                status(CustomResult(outcome::failure(ErrorCode::ERR_BADDHTRES)));
                 return false;
             }
             std::cout << "Providers: " << std::endl;
@@ -105,7 +105,7 @@ namespace sgns
             else
             {
                 std::cout << "Empty providers list received" << std::endl;
-                status(-18);
+                status(CustomResult(outcome::failure(ErrorCode::ERR_NOPROVBITSWAP)));
                 StartFindingPeersWithRetry(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
                 return false;
             }
@@ -149,7 +149,8 @@ namespace sgns
         CompletionCallback handle_read,
         StatusCallback status)
     {
-        std::cout << "request main block" << filename << std::endl;
+        //std::cout << "request main block" << filename << std::endl;
+        status(CustomResult(outcome::success("Reading IPFS Blocks")));
         if (addressoffset < peerAddresses_->size())
         {
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), cid,
@@ -171,12 +172,12 @@ namespace sgns
                         if (diddecode.has_error())
                         {
                             //Handle Error
-                            status(-14);
+                            status(CustomResult(outcome::failure(ErrorCode::ERR_IPFSBLOCKREAD)));
                             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
                         //std::cout << "ContentTest" << decoder.getContent() << std::endl;
-                        status(15);
+                        status(CustomResult(outcome::success("Reading IPFS Sub-Blocks")));
                         //Start Adding to list
                         CIDInfo cidInfo(maincid.value());
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
@@ -236,7 +237,7 @@ namespace sgns
                 });
         }
         else {
-            status(-17);
+            status(CustomResult(outcome::failure(ErrorCode::ERR_NOADDRBITSWAP)));
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             return false;
         }
@@ -286,7 +287,7 @@ namespace sgns
                         if (diddecode.has_error())
                         {
                             //Handle Error
-                            status(-15);
+                            status(CustomResult(outcome::failure(ErrorCode::ERR_IPFSSUBBLOCK)));
                             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
@@ -326,8 +327,8 @@ namespace sgns
                             {
                                 requestedCIDs_[mainindex].groupLinkedCIDs();
                                 //requestedCIDs_[mainindex].writeFinalContentsToDirectories();
-                                std::cout << "IPFS Finish" << std::endl;
-                                status(0);
+                                //std::cout << "IPFS Finish" << std::endl;
+                                status(CustomResult(outcome::success("Bitswap Completed")));
                                 handle_read(ioc, requestedCIDs_[mainindex].finalcontents, parse, save);
                             }
                         }
