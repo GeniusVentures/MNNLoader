@@ -5,30 +5,9 @@
 
 #include <string>
 #include "boost/asio.hpp"
-#include <boost/outcome.hpp>
-
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
-enum class ErrorCode {
-    ERR_CONN,
-    ERR_HANDSHAKE,
-    ERR_AUTH,
-    ERR_SFTPHANDLER,
-    ERR_SFTPOPEN,
-    ERR_SFTPFILESIZE,
-    ERR_READFAILED,
-    ERR_HTTPGETFAIL,
-    ERR_SSLHANDSHAKE,
-    ERR_WEBSOCKHANDSHAKE,
-    ERR_WEBSOCKGET,
-    ERR_LOCALOPEN,
-    ERR_STARTIPFS,
-    ERR_IPFSBLOCKREAD,
-    ERR_IPFSSUBBLOCK,
-    ERR_IPFSLISTEN,
-    ERR_NOADDRBITSWAP,
-    ERR_NOPROVBITSWAP,
-    ERR_BADDHTRES
-};
+#include "FILEError.hpp"
+using ErrorCode = sgns::AsyncError::ErrorCode;
+using CustomResult = sgns::AsyncError::CustomResult;
 
 class FileLoader {
 public:
@@ -40,7 +19,7 @@ public:
      * @param save - Whether to save the file to local disk upon completion
      */
     using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
-    using CustomResult = outcome::result<std::string, ErrorCode>;
+
     /**
      * Status callback returns an error code as an async load proceeds
      * @param int - Status code

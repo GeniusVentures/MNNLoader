@@ -8,7 +8,7 @@
 #include "HTTPLoader.hpp"
 #include "SFTPLoader.hpp"
 #include "WSLoader.hpp"
-#pragma message("Including FileManager.hpp")
+
 void FileManager::RegisterLoader(const std::string &prefix,
         FileLoader *handlerLoader)
 {   

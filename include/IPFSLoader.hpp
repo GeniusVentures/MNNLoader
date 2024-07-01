@@ -12,7 +12,9 @@
 #include "ASIOSingleton.hpp"
 #include "ipfs_lite/ipfs/impl/ipfs_block_service.hpp"
 #include "ipfs_lite/ipfs/impl/in_memory_datastore.hpp"
-#include <boost/outcome.hpp>
+#include "FILEError.hpp"
+using ErrorCode = sgns::AsyncError::ErrorCode;
+using CustomResult = sgns::AsyncError::CustomResult;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
@@ -36,7 +38,6 @@ namespace sgns
          * @param save - Whether to save the file to local disk upon completion
          */
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
-        using CustomResult = outcome::result<std::string, ErrorCode>;
         /**
          * Status callback returns an error code as an async load proceeds
          * @param int - Status code

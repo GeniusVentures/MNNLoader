@@ -47,12 +47,12 @@ namespace sgns
                 //Setup Socket
                 auto sock = tcpSocket->native_handle();
                 libssh2_session_set_blocking(sftp2session, 0);
-                status(2);
+                status(CustomResult(outcome::success("SFTP SSL Handshake Started")));
                 self->StartSFTPHandshake(ioc, sftp2session, tcpSocket, sock, handle_read, status);
             }
             else {
                 std::cerr << "Error connecting to server: " << connect_error.message() << std::endl;
-                status(-1);
+                status(CustomResult(outcome::failure(ErrorCode::ERR_CONN)));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });

@@ -44,7 +44,7 @@ namespace sgns
         boost::asio::async_connect(ws->next_layer().next_layer(), results.begin(), results.end(), [self = shared_from_this(), ioc, ws, handle_read, status](const boost::system::error_code& error, const auto&) {
             if (!error) {
                 // Perform the SSL asynchronous handshake
-                status(9);
+                status(CustomResult(outcome::success("WS SSL Handshake Started")));
                 ws->next_layer().async_handshake(boost::asio::ssl::stream_base::client, [self, ioc, ws, handle_read, status](const boost::system::error_code& handshakeError) {
                     if (!handshakeError) {
                         // Perform the WebSocket asynchronous handshake
@@ -52,14 +52,14 @@ namespace sgns
                     }
                     else {
                         std::cerr << "SSL handshake error: " << handshakeError.message() << std::endl;
-                        status(-9);
+                        status(CustomResult(outcome::failure(ErrorCode::ERR_HANDSHAKE)));
                         handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
                 std::cerr << "Connect error: " << error.message() << std::endl;
-                status(-1);
+                status(CustomResult(outcome::failure(ErrorCode::ERR_CONN)));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
