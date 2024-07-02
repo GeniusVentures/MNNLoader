@@ -22,7 +22,6 @@
 using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace sgns
 {

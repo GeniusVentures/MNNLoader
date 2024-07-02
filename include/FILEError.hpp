@@ -6,15 +6,15 @@
 
 #include <boost/outcome.hpp>
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 namespace sgns
 {
     namespace AsyncError
     {
+		namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
         struct Success {
             std::string message;
         };
-        using CustomResult = outcome::result<Success, std::string>;
+        using CustomResult = sgns::AsyncError::outcome::result<Success, std::string>;
     }
 }
 

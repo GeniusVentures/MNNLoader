@@ -70,14 +70,14 @@ namespace sgns
         StatusCallback status
     )
     {
-        status(CustomResult(outcome::success(Success{ "Starting Bitswap DHT" })));
+        status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Starting Bitswap DHT" })));
         auto peer_id =
             libp2p::peer::PeerId::fromHash(cid.content_address).value();
         dht_->FindProviders(cid, [=](libp2p::outcome::result<std::vector<libp2p::peer::PeerInfo>> res) {
-            status(CustomResult(outcome::success(Success{ "Got Provider Results" })));
+            status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Got Provider Results" })));
             if (!res) {
                 std::cerr << "Cannot find providers: " << res.error().message() << std::endl;
-                status(CustomResult(outcome::failure("DHT Failed, no address")));
+                status(CustomResult(sgns::AsyncError::outcome::failure("DHT Failed, no address")));
                 return false;
             }
             std::cout << "Providers: " << std::endl;
@@ -105,7 +105,7 @@ namespace sgns
             else
             {
                 std::cout << "Empty providers list received" << std::endl;
-                status(CustomResult(outcome::failure("DHT Failed, no providers.")));
+                status(CustomResult(sgns::AsyncError::outcome::failure("DHT Failed, no providers.")));
                 StartFindingPeersWithRetry(ioc, cid, filename, addressoffset, parse, save, handle_read, status);
                 return false;
             }
@@ -150,7 +150,7 @@ namespace sgns
         StatusCallback status)
     {
         //std::cout << "request main block" << filename << std::endl;
-        status(CustomResult(outcome::success(Success{ "Reading IPFS Blocks" })));
+        status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Reading IPFS Blocks" })));
         if (addressoffset < peerAddresses_->size())
         {
             bitswap_->RequestBlock(peerAddresses_->at(addressoffset), cid,
@@ -172,12 +172,12 @@ namespace sgns
                         if (diddecode.has_error())
                         {
                             //Handle Error
-                            status(CustomResult(outcome::failure("Bitswap failed, could not decode")));
+                            status(CustomResult(sgns::AsyncError::outcome::failure("Bitswap failed, could not decode")));
                             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
                         //std::cout << "ContentTest" << decoder.getContent() << std::endl;
-                        status(CustomResult(outcome::success(Success{ "Reading IPFS Sub-Blocks" })));
+                        status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Reading IPFS Sub-Blocks" })));
                         //Start Adding to list
                         CIDInfo cidInfo(maincid.value());
                         for (size_t i = 0; i < decoder.getLinksCount(); ++i) {
@@ -237,7 +237,7 @@ namespace sgns
                 });
         }
         else {
-            status(CustomResult(outcome::failure("Bitswap failed, ran out of addresses to get from")));
+            status(CustomResult(sgns::AsyncError::outcome::failure("Bitswap failed, ran out of addresses to get from")));
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             return false;
         }
@@ -287,7 +287,7 @@ namespace sgns
                         if (diddecode.has_error())
                         {
                             //Handle Error
-                            status(CustomResult(outcome::failure("Bitswap failed, could not decode data")));
+                            status(CustomResult(sgns::AsyncError::outcome::failure("Bitswap failed, could not decode data")));
                             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                             return false;
                         }
@@ -328,7 +328,7 @@ namespace sgns
                                 requestedCIDs_[mainindex].groupLinkedCIDs();
                                 //requestedCIDs_[mainindex].writeFinalContentsToDirectories();
                                 //std::cout << "IPFS Finish" << std::endl;
-                                status(CustomResult(outcome::success(Success{ "Bitswap Completed" })));
+                                status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Bitswap Completed" })));
                                 handle_read(ioc, requestedCIDs_[mainindex].finalcontents, parse, save);
                             }
                         }

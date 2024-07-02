@@ -45,7 +45,7 @@ namespace sgns
         // Create a file device which will have a stream_descriptor or stream_file based on whether we are on posix OS or not.
         auto fileDevice = std::make_shared<FILEDevice>(ioc, filename, 0);
         auto buffer = std::make_shared<boost::asio::streambuf>();
-        status(CustomResult(outcome::success(Success{ "Starting local file read" })));
+        status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Starting local file read" })));
         ////Async Read.
        boost::asio::async_read(fileDevice->getFile(), *buffer,
             boost::asio::transfer_all(),
@@ -54,7 +54,7 @@ namespace sgns
                 {
                     std::cout << "LOCAL Finish" << std::endl;
                     //auto finalbuffer = std::make_shared<std::vector<char>>(boost::asio::buffers_begin(buffer->data()), boost::asio::buffers_end(buffer->data()));
-                    status(CustomResult(outcome::success(Success{ "Local File Finished Reading" })));
+                    status(CustomResult(sgns::AsyncError::outcome::success(Success{ "Local File Finished Reading" })));
                     auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
                     std::filesystem::path p(filename);
                     finaldata->first.push_back(p.filename().string());
@@ -67,7 +67,7 @@ namespace sgns
                 }
                 else {
                     std::cerr << "File read error: " << error.message() << std::endl;
-                    status(CustomResult(outcome::failure("Local File Read Fail")));
+                    status(CustomResult(sgns::AsyncError::outcome::failure("Local File Read Fail")));
                     handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
             });
