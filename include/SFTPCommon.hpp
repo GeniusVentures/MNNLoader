@@ -1,6 +1,8 @@
 /**
  * Header file for the SFTPCommon
  */
+#ifndef SFTPCOMMON_HPP
+#define SFTPCOMMON_HPP
 #include <iostream>
 #include <sstream>
 #include <filesystem>
@@ -16,9 +18,12 @@
 #include "libssh2.h"
 #include "libssh2_sftp.h"
 #include <thread>
+#include "FILEError.hpp"
+using Success = sgns::AsyncError::Success;
+using CustomResult = sgns::AsyncError::CustomResult;
 
-#ifndef SFTPCOMMON_HPP
-#define SFTPCOMMON_HPP
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+
 namespace sgns
 {
 	using namespace boost::asio;
@@ -36,7 +41,11 @@ namespace sgns
 		 * @param save - Whether to save the file to local disk upon completion
 		 */
 		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
-		using StatusCallback = std::function<void(const int&)>;
+		/**
+		 * Status callback returns an error code as an async load proceeds
+		 * @param int - Status code
+		 */
+		using StatusCallback = std::function<void(const CustomResult&)>;
 
 		/**
 		 * Create an SFTP Device to load a file from SFTP. Will authenticate with priority towards private key, public key, and lastly user/pass

@@ -1,6 +1,8 @@
 /**
  * Header file for the FILECommon
  */
+#ifndef FILECOMMON_HPP
+#define FILECOMMON_HPP
 #ifndef _WIN32
 #include <fcntl.h>
 #include "boost/asio/posix/stream_descriptor.hpp"
@@ -8,8 +10,7 @@
 #include <iostream>
 #include <memory>
 #include "boost/asio.hpp"
-#ifndef FILECOMMON_HPP
-#define FILECOMMON_HPP
+
 
 namespace sgns
 {

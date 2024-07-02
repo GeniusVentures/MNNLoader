@@ -5,6 +5,9 @@
 
 #include <string>
 #include "boost/asio.hpp"
+#include "FILEError.hpp"
+using Success = sgns::AsyncError::Success;
+using CustomResult = sgns::AsyncError::CustomResult;
 
 class FileLoader {
 public:
@@ -16,14 +19,12 @@ public:
      * @param save - Whether to save the file to local disk upon completion
      */
     using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+
     /**
      * Status callback returns an error code as an async load proceeds
-     * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
-     * @param buffer - Contains data loaded
-     * @param parse - Whether to parse file upon completion (for MNN)
-     * @param save - Whether to save the file to local disk upon completion
+     * @param int - Status code
      */
-    using StatusCallback = std::function<void(const int&)>;
+    using StatusCallback = std::function<void(const CustomResult&)>;
     /// @brief virtual destructor to prevent memory leaks from derived classes
     virtual ~FileLoader() {}
     /// @brief Load a file into memory

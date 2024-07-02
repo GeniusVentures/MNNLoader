@@ -14,8 +14,11 @@
 #include "FileSaver.hpp"
 #include "boost/asio.hpp"
 #include "boost/bind.hpp"
+#include "FILEError.hpp"
+using Success = sgns::AsyncError::Success;
+using CustomResult = sgns::AsyncError::CustomResult;
 
-
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 /// \brief FileManager class handles all the registration of the file loaders, parsers and savers and proxies the basic
 ///         functionality to the registered handlers
 class FileManager
@@ -45,7 +48,7 @@ class FileManager
          * Status callback returns an error code as an async load proceeds
          * @param int - Status code
          */
-        using StatusCallback = std::function<void(const int&)>;
+        using StatusCallback = std::function<void(const CustomResult&)>;
         /**
          * Final callback returns data to application
          * @param buffers - Contains path/data loaded

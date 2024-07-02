@@ -12,7 +12,11 @@
 #include "ASIOSingleton.hpp"
 #include "ipfs_lite/ipfs/impl/ipfs_block_service.hpp"
 #include "ipfs_lite/ipfs/impl/in_memory_datastore.hpp"
+#include "FILEError.hpp"
+using Success = sgns::AsyncError::Success;
+using CustomResult = sgns::AsyncError::CustomResult;
 
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace sgns
 {
@@ -25,6 +29,7 @@ namespace sgns
         SINGLETON_PTR(IPFSLoader);
     public:
         static void InitializeSingleton();
+
         /**
          * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
          * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
@@ -35,12 +40,9 @@ namespace sgns
         using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
         /**
          * Status callback returns an error code as an async load proceeds
-         * @param ioc - asio io context so we can stop this if no outstanding async tasks remain
-         * @param buffer - Contains data loaded
-         * @param parse - Whether to parse file upon completion (for MNN)
-         * @param save - Whether to save the file to local disk upon completion
+         * @param int - Status code
          */
-        using StatusCallback = std::function<void(const int&)>;
+        using StatusCallback = std::function<void(const CustomResult&)>;
         /**ok
          * Load Data on the MNN file
          * @param filename - MNN file part
