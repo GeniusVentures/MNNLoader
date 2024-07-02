@@ -6,7 +6,7 @@
 #include <string>
 #include "boost/asio.hpp"
 #include "FILEError.hpp"
-using ErrorCode = sgns::AsyncError::ErrorCode;
+using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
 class FileLoader {

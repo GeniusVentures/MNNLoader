@@ -10,7 +10,7 @@
 #include "MNNCommon.hpp"
 #include "ASIOSingleton.hpp"
 #include "FILEError.hpp"
-using ErrorCode = sgns::AsyncError::ErrorCode;
+using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;

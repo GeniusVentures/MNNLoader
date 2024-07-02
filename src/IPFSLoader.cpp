@@ -101,7 +101,7 @@ namespace sgns
         if (!ipfsDeviceResult)
         {   
             //Error Listening
-            status(CustomResult(outcome::failure(ErrorCode::ERR_IPFSLISTEN)));
+            status(CustomResult(outcome::failure("Bitswap failed, cannot listen on address")));
             std::cerr << "Cannot listen address " << ". Error: " << ipfsDeviceResult.error().message() << std::endl;
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             return result;
@@ -118,7 +118,7 @@ namespace sgns
         //ipfsDevice->addAddress(libp2p::multi::Multiaddress::create("/dnsaddr/nyc1-3.hostnodes.pinata.cloud/ipfs/QmSarArpxemsPESa6FNkmuu9iSE1QWqPX2R3Aw6f5jq4D5").value());
         //CID of File
         auto cid = libp2p::multi::ContentIdentifierCodec::fromString(ipfs_cid).value();
-        status(CustomResult(outcome::success("Starting IPFS Bitswap")));
+        status(CustomResult(outcome::success(Success{ "Starting IPFS Bitswap" })));
         ioc->post([=] {
             ipfsDevice->RequestBlockMain(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);
             //ipfsDevice->StartFindingPeers(ioc, cid, ipfs_file, 0, parse, save, handle_read, status);

@@ -125,10 +125,10 @@ int main(int argc, char **argv)
                 //std::cout << "status: " << status << std::endl;
                 if (status.has_value())
                 {
-                    std::cout << "Success: " << status.value() << std::endl;
+                    std::cout << "Success: " << status.value().message << std::endl;
                 }
                 else {
-                    //std::cout << "Error: " << errorCodeToString(result.error()) << std::endl;
+                    std::cout << "Error: " << status.error() << std::endl;
                 }
             }, [](std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers)
                 {

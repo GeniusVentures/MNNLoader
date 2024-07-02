@@ -11,7 +11,7 @@
 //#include "MNNCommon.hpp"
 #include "ASIOSingleton.hpp"
 #include "FILEError.hpp"
-using ErrorCode = sgns::AsyncError::ErrorCode;
+using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
 namespace sgns

@@ -37,22 +37,37 @@ namespace sgns
         }
         downloading_ = true;
         ip::tcp::resolver resolver(*ioc);
-        auto resolvedaddr = resolver.resolve(sftp_host_, "22");
+        boost::asio::ip::tcp::resolver::results_type resolvedaddr;
+        try {
+            resolvedaddr = resolver.resolve(sftp_host_, "22");
+        }
+        catch (const boost::system::system_error& e) {
+            std::cerr << "Error resolving address: " << e.what() << std::endl;
+            status(CustomResult(outcome::failure("SFTP Could not resolve address")));
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+            status(CustomResult(outcome::failure("SFTP Could not resolve address")));
+        }
+        catch (...) {
+            std::cerr << "Unknown error occurred during address resolution." << std::endl;
+            status(CustomResult(outcome::failure("SFTP Could not resolve address")));
+        }
 
         //auto tcpSocket = std::make_shared<boost::asio::ip::tcp::socket>(*ioc);
-        status(CustomResult(outcome::success("Starting SFTP Connection")));
+        status(CustomResult(outcome::success(Success{ "Starting SFTP Connection" })));
         async_connect(*tcpSocket, resolvedaddr, [self = shared_from_this(), ioc, sftp2session, tcpSocket, handle_read, status](const boost::system::error_code& connect_error, const auto&) {
             if (!connect_error)
             {
                 //Setup Socket
                 auto sock = tcpSocket->native_handle();
                 libssh2_session_set_blocking(sftp2session, 0);
-                status(CustomResult(outcome::success("SFTP SSL Handshake Started")));
+                status(CustomResult(outcome::success(Success{ "SFTP SSL Handshake Started" })));
                 self->StartSFTPHandshake(ioc, sftp2session, tcpSocket, sock, handle_read, status);
             }
             else {
                 std::cerr << "Error connecting to server: " << connect_error.message() << std::endl;
-                status(CustomResult(outcome::failure(ErrorCode::ERR_CONN)));
+                status(CustomResult(outcome::failure("SFTP Connection Error")));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
             });
@@ -64,7 +79,7 @@ namespace sgns
 
         if (rc == 0) {
             // Handshake successful, proceed with authentication
-            status(CustomResult(outcome::success("Starting SFTP Auth")));
+            status(CustomResult(outcome::success(Success{ "Starting SFTP Auth" })));
             StartSFTPAuth(ioc, sftp2session, tcpSocket, handle_read, status);
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN) {
@@ -75,14 +90,14 @@ namespace sgns
                 }
                 else {
                     // Handle error
-                    status(CustomResult(outcome::failure(ErrorCode::ERR_HANDSHAKE)));
+                    status(CustomResult(outcome::failure("SFTP Handshake Error")));
                     handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else
         {
-            status(CustomResult(outcome::failure(ErrorCode::ERR_HANDSHAKE)));
+            status(CustomResult(outcome::failure("SFTP Handshake Error")));
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
@@ -105,7 +120,7 @@ namespace sgns
 
         if (auth_result == 0) {
             // Auth successful, create sftp instance
-            status(CustomResult(outcome::success("Creating SFTP Handler")));
+            status(CustomResult(outcome::success(Success{ "Creating SFTP Handler" })));
             StartCreateSFTP(ioc, sftp2session, tcpSocket, handle_read, status);
 
         }
@@ -117,14 +132,14 @@ namespace sgns
                 }
                 else {
                     // Handle error
-                    status(CustomResult(outcome::failure(ErrorCode::ERR_AUTH)));
+                    status(CustomResult(outcome::failure("SFTP Fail, authentication fail")));
                     handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else
         {
-            status(CustomResult(outcome::failure(ErrorCode::ERR_AUTH)));
+            status(CustomResult(outcome::failure("SFTP Fail, authentication fail")));
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
@@ -142,19 +157,19 @@ namespace sgns
                         self->StartCreateSFTP(ioc, sftp2session, tcpSocket, handle_read, status);
                     }
                     else {
-                        status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPHANDLER)));
+                        status(CustomResult(outcome::failure("SFTP Create Error")));
                         handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
-                status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPHANDLER)));
+                status(CustomResult(outcome::failure("SFTP Create Error")));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
         }
         else {
             // SFTP instance initialization succeeded
-            status(CustomResult(outcome::success("Starting SFTP Open")));
+            status(CustomResult(outcome::success(Success{ "Starting SFTP Open" })));
             StartSFTPOpen(ioc, sftp2session, tcpSocket, sftp, handle_read, status);
         }
     }
@@ -174,19 +189,19 @@ namespace sgns
                         self->StartSFTPOpen(ioc, sftp2session, tcpSocket, sftp, handle_read, status);
                     }
                     else {
-                        status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPOPEN)));
+                        status(CustomResult(outcome::failure("SFTP Open Error")));
                         handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
                     });
             }
             else {
-                status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPOPEN)));
+                status(CustomResult(outcome::failure("SFTP Open Error")));
                 handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
             }
         }
         else {
             //SFTP Opened, get file size
-            status(CustomResult(outcome::success("Getting SFTP File Size")));
+            status(CustomResult(outcome::success(Success{ "Getting SFTP File Size" })));
             StartSFTPGetSize(ioc, sftp2session, tcpSocket, sftp, sftpHandle, handle_read, status);
         }
     }
@@ -202,7 +217,7 @@ namespace sgns
             //Got size, start reading to buffer
             file_size_ = sftpAttrs.filesize;
             auto buffer = std::make_shared<std::vector<char>>(file_size_);
-            status(CustomResult(outcome::success("Reading SFTP File")));
+            status(CustomResult(outcome::success(Success{ "Reading SFTP File" })));
             StartSFTPGetBlocks(ioc, sftp2session, tcpSocket, sftp, sftpHandle, buffer, 0, handle_read, status);
         }
         else if (rc == LIBSSH2_ERROR_EAGAIN)
@@ -213,13 +228,13 @@ namespace sgns
                     self-> StartSFTPGetSize(ioc, sftp2session, tcpSocket, sftp, sftpHandle, handle_read, status);
                 }
                 else {
-                    status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPFILESIZE)));
+                    status(CustomResult(outcome::failure("SFTP File Size does not match")));
                     handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
                 });
         }
         else {
-            status(CustomResult(outcome::failure(ErrorCode::ERR_SFTPFILESIZE)));
+            status(CustomResult(outcome::failure("SFTP File Size does not match")));
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }
     }
@@ -238,7 +253,7 @@ namespace sgns
             {
                 //We've read all the data, send to parse/save
                 std::cout << "SFTP Finish" << std::endl;
-                status(CustomResult(outcome::success("SFTP Read Finished")));
+                status(CustomResult(outcome::success(Success{ "SFTP Read Finished" })));
                 auto finaldata = std::make_shared<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>();
                 std::filesystem::path p(sftp_path_);
                 finaldata->first.push_back(p.filename().string());
@@ -255,7 +270,7 @@ namespace sgns
                     }
                     else {
                         // Handle error
-                        status(CustomResult(outcome::failure(ErrorCode::ERR_READFAILED)));
+                        status(CustomResult(outcome::failure("SFTP Read Failure. Next Part not obtained")));
                         self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
                         handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                     }
@@ -272,7 +287,7 @@ namespace sgns
                 }
                 else {
                     // Handle error
-                    status(CustomResult(outcome::failure(ErrorCode::ERR_READFAILED)));
+                    status(CustomResult(outcome::failure("SFTP Read Failed. Socket not readable")));
                     self->StartSFTPCleanup(sftp2session, sftpHandle, sftp);
                     handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
                 }
@@ -280,7 +295,7 @@ namespace sgns
         }
         else {
             // Handle other errors
-            status(CustomResult(outcome::failure(ErrorCode::ERR_READFAILED)));
+            status(CustomResult(outcome::failure("SFTP Read Failed.")));
             StartSFTPCleanup(sftp2session, sftpHandle, sftp);
             handle_read(ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>>(), false, false);
         }

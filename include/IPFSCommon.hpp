@@ -27,7 +27,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "FILEError.hpp"
-using ErrorCode = sgns::AsyncError::ErrorCode;
+using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
