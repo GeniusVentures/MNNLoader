@@ -8,7 +8,6 @@ set(
 )
 add_definitions(-D_WIN32_WINNT=0x0601)
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
-add_definitions(-H)
 
 project(AsyncIOManager LANGUAGES CXX)
 include(GNUInstallDirs)
@@ -40,12 +39,9 @@ find_package(yaml-cpp CONFIG REQUIRED)
 find_package(tsl_hat_trie CONFIG REQUIRED)
 find_package(Boost.DI CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem random regex system thread log program_options)
-include_directories(${Boost_INCLUDE_DIRS})
 find_package(libp2p CONFIG REQUIRED)
 find_package(ipfs-lite-cpp CONFIG REQUIRED)
-include_directories(${ipfs-lite-cpp_INCLUDE_DIR} ${CBOR_INCLUDE_DIR})
 find_package(ipfs-bitswap-cpp CONFIG REQUIRED)
-include_directories(${ipfs-bitswap-cpp_INCLUDE_DIR})
 include_directories(${MNN_INCLUDE_DIR})
 
 # find_package(Libssh2 CONFIG REQUIRED)
@@ -68,7 +64,6 @@ set(PROJECT.Source_DIR
 # -----------------------------------
 # Include external plugin need
 include_directories(
-    ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/include
 )
 add_subdirectory(${PROJECT.Path})

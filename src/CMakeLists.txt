@@ -23,7 +23,6 @@ add_proto_library(ipfs-unixfs proto/unixfs.proto)
 
 target_link_libraries(AsyncIOManager PRIVATE
 	spdlog::spdlog
-	${Boost_LIBRARIES}
 	OpenSSL::SSL 
 	OpenSSL::Crypto
 	#libssh2::libssh2
@@ -52,5 +51,3 @@ target_link_libraries(AsyncIOManager PRIVATE
 	ipfs-bitswap-cpp 
 	ipfs-unixfs
 	)
-include_directories(../include )
-
