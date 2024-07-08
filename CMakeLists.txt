@@ -8,6 +8,7 @@ set(
 )
 add_definitions(-D_WIN32_WINNT=0x0601)
 add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
+add_definitions(-H)
 
 project(AsyncIOManager LANGUAGES CXX)
 include(GNUInstallDirs)
@@ -46,9 +47,9 @@ include_directories(${ipfs-lite-cpp_INCLUDE_DIR} ${CBOR_INCLUDE_DIR})
 find_package(ipfs-bitswap-cpp CONFIG REQUIRED)
 include_directories(${ipfs-bitswap-cpp_INCLUDE_DIR})
 include_directories(${MNN_INCLUDE_DIR})
-#find_package(Libssh2 CONFIG REQUIRED)
-#include_directories(${libssh2_INCLUDE_DIR})
 
+# find_package(Libssh2 CONFIG REQUIRED)
+# include_directories(${libssh2_INCLUDE_DIR})
 if(BUILD_TESTING)
     find_package(GTest CONFIG REQUIRED)
 endif()
@@ -103,7 +104,6 @@ write_basic_package_version_file(
     VERSION "${VERSION_STRING}.${SUBVERSION_STRING}"
     COMPATIBILITY AnyNewerVersion
 )
-
 # install the configuration file
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/AsyncIOManagerConfig.cmake
