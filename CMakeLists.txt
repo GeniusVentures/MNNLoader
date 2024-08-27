@@ -28,7 +28,6 @@ endif()
 
 include(cmake/functions.cmake)
 
-find_package(GTest CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${GSL_INCLUDE_DIR})
@@ -49,6 +48,10 @@ include_directories(${ipfs-bitswap-cpp_INCLUDE_DIR})
 include_directories(${MNN_INCLUDE_DIR})
 #find_package(Libssh2 CONFIG REQUIRED)
 #include_directories(${libssh2_INCLUDE_DIR})
+
+if(BUILD_TESTING)
+    find_package(GTest CONFIG REQUIRED)
+endif()
 
 # ---------------------------
 # Set version
