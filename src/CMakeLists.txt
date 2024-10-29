@@ -1,7 +1,7 @@
 #add_subdirectory(application)
 file(GLOB FILELOADER_HEADER "../include/*.h*")
 file(GLOB FILELOADER_SRCS "*.cpp")
-FILE(GLOB MNN_LIBS "${MNN_LIBRARY_DIR}/*")
+
 add_library(AsyncIOManager STATIC
     #${FILELOADER_SRCS}
 	FILECommon.cpp
