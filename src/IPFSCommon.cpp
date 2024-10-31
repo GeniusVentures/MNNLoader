@@ -56,7 +56,7 @@ namespace sgns
             .create<std::shared_ptr<libp2p::protocol::kademlia::Kademlia>>();
 
         //Initialize DHT
-        dht_ = std::make_shared<sgns::ipfs_lite::ipfs::dht::IpfsDHT>(kademlia, bootstrapAddresses_);
+        dht_ = std::make_shared<sgns::ipfs_lite::ipfs::dht::IpfsDHT>(kademlia, bootstrapAddresses_,ioc);
     }
 
     bool IPFSDevice::StartFindingPeers(
