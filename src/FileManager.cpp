@@ -1,13 +1,13 @@
 #include "FileManager.hpp"
 #include "URLStringUtil.h"
-#include "MNNLoader.hpp"
-#include "MNNParser.hpp"
-#include "MNNSaver.hpp"
-#include "IPFSLoader.hpp"
-#include "IPFSSaver.hpp"
+//#include "MNNLoader.hpp"
+//#include "MNNParser.hpp"
+//#include "MNNSaver.hpp"
+//#include "IPFSLoader.hpp"
+//#include "IPFSSaver.hpp"
 #include "HTTPLoader.hpp"
-#include "SFTPLoader.hpp"
-#include "WSLoader.hpp"
+//#include "SFTPLoader.hpp"
+//#include "WSLoader.hpp"
 
 void FileManager::RegisterLoader(const std::string &prefix,
         FileLoader *handlerLoader)
@@ -32,66 +32,78 @@ void AsyncHandler(boost::system::error_code ec, std::size_t n, std::vector<char>
 
 }
 
+FileManager::FileManager()
+    : ioc_(std::make_shared<boost::asio::io_context>()), strand_(boost::asio::make_strand(*ioc_))  // Initialize io_context
+{
+}
+
+
 void FileManager::InitializeSingletons() {
-    sgns::MNNLoader::InitializeSingleton();
+    //sgns::MNNLoader::InitializeSingleton();
     //sgns::MNNParser::InitializeSingleton();
     //sgns::SFTPLoader::InitializeSingleton();
-    sgns::HTTPLoader::InitializeSingleton();
+    sgns::HTTPLoader::InitializeSingleton(FileManager::GetInstance().ioc_);
     //sgns::WSLoader::InitializeSingleton();
-    sgns::IPFSLoader::InitializeSingleton();
-    sgns::IPFSSaver::InitializeSingleton();
-    sgns::MNNSaver::InitializeSingleton();
+    //sgns::IPFSLoader::InitializeSingleton();
+    //sgns::IPFSSaver::InitializeSingleton();
+    //sgns::MNNSaver::InitializeSingleton();
 }
-shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, StatusCallback status, FinalCallback finalcall, std::string savetype)
+shared_ptr<void> FileManager::LoadASync(const std::string& url, bool parse, bool save, StatusCallback status, FinalCallback finalcall, std::string savetype)
 {
-    std::string prefix;
-    std::string filePath;
-    std::string suffix;
-	
-    getURLComponents(url, prefix, filePath, suffix);
-#if 0
-    std::cout << "DEBUG: URL: " << url << " -prefix: " << prefix << " -filePath: " << filePath << " -suffix: " << suffix << std::endl;
-#endif
-    auto loaderIter = loaders.find(prefix);
-    if (loaderIter == loaders.end())
-    {
-        throw std::range_error("No loader registered for prefix " + prefix);
-    }
-    //Increment Operations
-    IncrementOutstandingOperations();
-    //Create a handler
-    auto handle_read = [this, savetype, suffix, finalcall](std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save) {
-        std::cout << "Callback!" << std::endl;
-        //Parse Data
-        if (parse)
-        {
-            auto parserIter = parsers.find("mnn");
-            auto parser = dynamic_cast<FileParser*>(parserIter->second);
-            //shared_ptr<void> data = parser->ParseASync(buffer);
-        }
-        //Save data or otherwise decrement counter of operations
-        if (save)
-        {
-            auto handle_write = [this](std::shared_ptr<boost::asio::io_context> ioc) {
-                DecrementOutstandingOperations(ioc);
-            };
-            auto saverIter = savers.find(savetype);
-            auto saver = saverIter->second;
-            saver->SaveASync(ioc,handle_write,"",buffers, suffix);
-        }
-        else {
-            // Handle completion
-            DecrementOutstandingOperations(ioc);
-        }
-        finalcall(buffers);
+    boost::asio::post(strand_, [this, url, parse, save, status, finalcall, savetype]() {
+        std::string prefix, filePath, suffix;
+        getURLComponents(url, prefix, filePath, suffix);
 
-    };
-    auto loader = loaderIter->second;
-    // double check pointer is to a FileLoader class
-    assert(dynamic_cast<FileLoader*>(loader));
-    shared_ptr<void> data = loader->LoadASync(filePath,parse,save,ioc,handle_read,status);
-    return data;
+        auto loaderIter = loaders.find(prefix);
+        if (loaderIter == loaders.end()) {
+            throw std::range_error("No loader registered for prefix " + prefix);
+        }
+
+        IncrementOutstandingOperations();
+
+        auto handle_read = [this, savetype, suffix, finalcall](std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save) {
+            std::cout << "Callback!" << std::endl;
+
+            if (save) {
+                auto handle_write = [this]() {
+                    DecrementOutstandingOperations();
+                };
+                auto saverIter = savers.find(savetype);
+                auto saver = saverIter->second;
+            }
+            else {
+                DecrementOutstandingOperations();
+            }
+            finalcall(buffers);
+        };
+
+        auto loader = loaderIter->second;
+        assert(dynamic_cast<FileLoader*>(loader));
+
+        loader->LoadASync(filePath, parse, save, handle_read, status);
+    });
+
+    return nullptr;
 }
+
+
+void FileManager::Start()
+{
+    if (!work_guard_) {  // Ensure io_context hasn't already been started
+        std::cout << "Starting FileManager io_context thread..." << std::endl;
+
+        // Keep io_context alive by creating a work guard
+        work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
+            boost::asio::make_work_guard(*ioc_)
+        );
+
+        // Start io_context in a separate thread (it will run forever)
+        std::thread([this] {
+            ioc_->run();  // Run once and never stop
+        }).detach();
+    }
+}
+
 
 shared_ptr<void> FileManager::LoadFile(const std::string &url, bool parse)
 {
@@ -158,7 +170,7 @@ void FileManager::SaveFile(const std::string &url, std::shared_ptr<void> data)
 }
 
 /// @brief Function to decrement operation count
-void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc)
+void FileManager::DecrementOutstandingOperations()
 {
     // Decrement the counter
     outstandingOperations_--;
@@ -166,7 +178,8 @@ void FileManager::DecrementOutstandingOperations(std::shared_ptr<boost::asio::io
     // If all operations are complete, perform additional cleanup
     if (outstandingOperations_ == 0) {
         // Clean up io_context
-        ioc->stop();
+        // ioc_->stop();
+        // work_guard_.reset();
     }
 }
 

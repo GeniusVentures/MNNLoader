@@ -15,6 +15,8 @@
 #include "boost/asio.hpp"
 #include "boost/bind.hpp"
 #include "FILEError.hpp"
+#include <optional>
+
 using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
@@ -22,8 +24,7 @@ using CustomResult = sgns::AsyncError::CustomResult;
 ///         functionality to the registered handlers
 class FileManager
 {
-    SINGLETON_REF(FileManager)
-        ;
+    SINGLETON_REF(FileManager);
     private:
         /// @brief a map from std::string to loader handlers
         map<std::string, FileLoader*> loaders;
@@ -33,7 +34,12 @@ class FileManager
         map<std::string, FileSaver*> savers;
 
         int outstandingOperations_ = 0;
+
+        std::shared_ptr<boost::asio::io_context> ioc_;
+        std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_;
+        boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     public:
+       
         static void InitializeSingletons();
         /**
          * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
@@ -42,7 +48,7 @@ class FileManager
          * @param parse - Whether to parse file upon completion (for MNN)
          * @param save - Whether to save the file to local disk upon completion
          */
-        using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+        using CompletionCallback = std::function<void(std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
         /**
          * Status callback returns an error code as an async load proceeds
          * @param int - Status code
@@ -55,7 +61,7 @@ class FileManager
         using FinalCallback = std::function<void(std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers)>;
         /// @brief Decrement operations counter so io_context thread can be shut down when all are complete.
         /// @param The io_context that we have been reading on
-        void DecrementOutstandingOperations(std::shared_ptr<boost::asio::io_context> ioc);
+        void DecrementOutstandingOperations();
         /// @brief Increment operations counter so io_context thread can be shut down when all are complete.
         void IncrementOutstandingOperations();
         shared_ptr<int> GetOutstandingOperationsPointer();
@@ -85,7 +91,7 @@ class FileManager
          * @param status - Status function that will be updated with status codes as operation progresses
          * @return String indicating init
          */
-        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, StatusCallback status, FinalCallback finalcall, std::string savetype);
+        shared_ptr<void> LoadASync(const std::string& url, bool parse, bool save, StatusCallback status, FinalCallback finalcall, std::string savetype);
 
         /// @brief Load a file given a filePath and optional parse the data
         /// @param url the full path and filename to load
@@ -104,6 +110,8 @@ class FileManager
         /// @param url URL prefix filename and extension
         /// @param data shared pointer to void * of the data to save
         void SaveFile(const std::string &url, std::shared_ptr<void> data);
+
+        void Start();
 };
 
 #endif

@@ -11,6 +11,7 @@
 //#include "MNNCommon.hpp"
 #include "ASIOSingleton.hpp"
 #include "FILEError.hpp"
+#include "boost/asio/ssl.hpp"
 using Success = sgns::AsyncError::Success;
 using CustomResult = sgns::AsyncError::CustomResult;
 
@@ -24,7 +25,7 @@ namespace sgns
     {
         SINGLETON_PTR(HTTPLoader);
     public:
-        static void InitializeSingleton();
+        static void InitializeSingleton(std::shared_ptr<boost::asio::io_context> ioc);
 
         /**
          * Completion callback template. We expect an io_context so the thread can be shut down if no outstanding async loads exist, and a buffer with the read information
@@ -33,7 +34,7 @@ namespace sgns
          * @param parse - Whether to parse file upon completion (for MNN)
          * @param save - Whether to save the file to local disk upon completion
          */
-        using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+        using CompletionCallback = std::function<void(std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
         /**
          * Status callback returns an error code as an async load proceeds
          * @param int - Status code
@@ -55,9 +56,12 @@ namespace sgns
          * @param status - Status function that will be updated with status codes as operation progresses
          * @return String indicating init
          */
-        std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback callback, StatusCallback status) override;
+        std::shared_ptr<void> LoadASync(std::string filename, bool parse, bool save, CompletionCallback callback, StatusCallback status) override;
     protected:
-
+    private:
+        std::shared_ptr<boost::asio::ssl::context> ssl_context_;
+        std::shared_ptr<boost::asio::io_context> ioc_;
+        explicit HTTPLoader(std::shared_ptr<boost::asio::io_context> ioc);
     };
 
 } // End namespace sgns

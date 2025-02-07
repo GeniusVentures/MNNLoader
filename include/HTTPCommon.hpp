@@ -35,7 +35,7 @@ namespace sgns
 		 * @param parse - Whether to parse file upon completion (for MNN)
 		 * @param save - Whether to save the file to local disk upon completion
 		 */
-		using CompletionCallback = std::function<void(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
+		using CompletionCallback = std::function<void(std::shared_ptr<std::pair<std::vector<std::string>, std::vector<std::vector<char>>>> buffers, bool parse, bool save)>;
 		
 		/**
 		 * Status callback returns an error code as an async load proceeds
@@ -58,6 +58,7 @@ namespace sgns
 			bool parse, bool save);
 		~HTTPDevice() {
 			// Cleanup
+			std::cout << "HTTPDevice destroyed!" << std::endl;
 		}
 		/**
 		 * Start downloading file on an HTTPDevice
@@ -65,7 +66,7 @@ namespace sgns
 		 * @param handle_read - Filemanager callback on completion
 		 * @param status - Status function that will be updated with status codes as operation progresses
 		 */
-		void StartHTTPDownload(std::shared_ptr<boost::asio::io_context> ioc, CompletionCallback handle_read, StatusCallback status);
+		void StartHTTPDownload(std::shared_ptr<boost::asio::io_context> ioc, std::shared_ptr<boost::asio::ssl::context> ssl_context, CompletionCallback handle_read, StatusCallback status);
 	private:
 		/**
 		 * Post HTTP Get to download file
@@ -78,6 +79,8 @@ namespace sgns
 			std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket,
 			CompletionCallback handle_read,
 			StatusCallback status);
+
+		void HTTPDevice::shutdownSocket(std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket);
 
 		//Common vars used for getting file from HTTP
 		std::string http_host_;
