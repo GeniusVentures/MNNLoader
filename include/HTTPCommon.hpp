@@ -80,7 +80,7 @@ namespace sgns
 			CompletionCallback handle_read,
 			StatusCallback status);
 
-		void HTTPDevice::shutdownSocket(std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket);
+		void shutdownSocket(std::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> socket);
 
 		//Common vars used for getting file from HTTP
 		std::string http_host_;
